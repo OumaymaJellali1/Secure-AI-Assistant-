@@ -1,0 +1,20 @@
+# ── PDF ──────────────────────────────
+pymupdf
+camelot-py[cv]
+pdf2image
+pytesseract
+docling
+
+# ── WORD ─────────────────────────────
+python-docx
+
+# ── CSV ──────────────────────────────
+pandas
+
+# ── VISION / OCR ─────────────────────
+google-generativeai
+ollama
+Pillow
+
+# ── FILE DETECTION ───────────────────
+python-magic
