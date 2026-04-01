@@ -14,14 +14,52 @@ from config import DEBUG, TEMP_DIR
 # ── IMPORT HANDLERS ───────────────────────────────────
 from ingestion.digital_pdf        import extract_digital_pdf
 from ingestion.image_handler       import extract_image
-from ingestion.scanned_pdf import extract_scanned_pdf
+from ingestion.scanned_pdf        import extract_scanned_pdf
 from ingestion.csv_handler         import extract_csv
 from ingestion.txt_handler         import extract_txt
 from ingestion.pptx_handler        import extract_pptx
 
+
+# ── CLEANUP SIDE-EFFECT JSON ──────────────────────────
+def _cleanup_json(file_path: str):
+    """Delete the _parsed.json side-effect file created by handlers."""
+    json_path = Path(Path(file_path).stem + "_parsed.json")
+    try:
+        if json_path.exists():
+            os.remove(json_path)
+            if DEBUG:
+                print(f"[EML HANDLER] Deleted side-effect JSON: {json_path}")
+    except Exception as e:
+        if DEBUG:
+            print(f"[EML HANDLER] Could not delete {json_path}: {e}")
+
+
+# ── SMART PDF ROUTER ──────────────────────────────────
+def _smart_pdf_handler(file_path: str) -> dict:
+    result = extract_digital_pdf(file_path)
+
+    # Delete the JSON side-effect file created by extract_digital_pdf
+    _cleanup_json(file_path)
+
+    # Only count actual text chunks, not image/table descriptions
+    has_text = any(
+        c.get("type") == "text" and c.get("content", "").strip()
+        for c in result.get("chunks", [])
+    )
+
+    if not has_text:
+        if DEBUG:
+            print(f"[EML HANDLER] No text chunks from digital PDF → trying OCR")
+        result = extract_scanned_pdf(file_path)
+        # Delete the JSON side-effect file created by extract_scanned_pdf
+        _cleanup_json(file_path)
+
+    return result
+
+
 # ── EXTENSION → HANDLER MAP ───────────────────────────
 HANDLER_MAP = {
-    ".pdf" : extract_digital_pdf,
+    ".pdf" : _smart_pdf_handler,
     ".jpg" : extract_image,
     ".jpeg": extract_image,
     ".png" : extract_image,
@@ -108,7 +146,7 @@ def extract_eml(file_path: str) -> dict:
                     body_content = body.strip()
                     found_plain  = True
                     if DEBUG:
-                        print(f"[EML HANDLER] Body extracted ✅")
+                        print(f"[EML HANDLER] Body extracted ")
             except Exception as e:
                 if DEBUG:
                     print(f"[EML HANDLER] Body error: {e}")
@@ -135,7 +173,7 @@ def extract_eml(file_path: str) -> dict:
                 if plain:
                     body_content = plain
                     if DEBUG:
-                        print(f"[EML HANDLER] HTML body extracted ✅")
+                        print(f"[EML HANDLER] HTML body extracted ")
             except Exception as e:
                 if DEBUG:
                     print(f"[EML HANDLER] HTML error: {e}")
@@ -162,8 +200,6 @@ def extract_eml(file_path: str) -> dict:
                 attachment_counter += 1
 
                 # ── SAFE TEMP FILENAME ────────────────
-                # avoid pdfium/Windows issues with
-                # special chars, spaces, parentheses
                 safe_name = f"attachment_{attachment_counter}{ext}"
                 temp_path = TEMP_DIR / safe_name
 
@@ -178,13 +214,14 @@ def extract_eml(file_path: str) -> dict:
 
                     # ── CALL HANDLER ──────────────────
                     result = handler(str(temp_path))
+                    _cleanup_json(str(temp_path))  
                     attachments_results.append({
                         "name"  : attach_name,
                         "result": result,
                     })
 
                     if DEBUG:
-                        print(f"[EML HANDLER] {attach_name} ✅")
+                        print(f"[EML HANDLER] {attach_name} ")
 
                 except Exception as e:
                     if DEBUG:
@@ -193,16 +230,13 @@ def extract_eml(file_path: str) -> dict:
 
                 finally:
                     # ── CLEANUP ───────────────────────
-                    # gc.collect + sleep needed because
-                    # pdfium holds the file handle open
-                    # briefly after handler returns
                     gc.collect()
                     time.sleep(0.5)
                     try:
                         if temp_path.exists():
                             os.remove(temp_path)
                             if DEBUG:
-                                print(f"[EML HANDLER] Temp deleted ✅")
+                                print(f"[EML HANDLER] Temp deleted ")
                     except PermissionError:
                         if DEBUG:
                             print(f"[EML HANDLER] Could not delete "
@@ -232,7 +266,7 @@ def extract_eml(file_path: str) -> dict:
 
 # ── TEST ──────────────────────────────────────────────
 if __name__ == "__main__":
-    result = extract_eml("../test.eml")
+    result = extract_eml("../copy.eml")
 
     print("\n===== METADATA =====")
     for k, v in result["metadata"].items():
@@ -243,7 +277,7 @@ if __name__ == "__main__":
 
     print("\n===== ATTACHMENTS =====")
     for att in result["attachments"]:
-        print(f"\n  📎 {att['name']}")
+        print(f"\n   {att['name']}")
         print(f"     Keys: {list(att['result'].keys())}")
 
-    print(f"\n📄 Saved to: {Path('../test.eml').stem}_parsed.json")
+    print(f"\n Saved to: {Path('../copy.eml').stem}_parsed.json")

@@ -285,7 +285,7 @@ def extract_digital_pdf(file_path: str) -> dict:
 
 # ── TEST ──────────────────────────────────────────────
 if __name__ == "__main__":
-    result = extract_digital_pdf(r"C:\Users\Dell\Desktop\PFE\test.pdf")
+    result = extract_digital_pdf("../di.pdf")
 
     print("\n===== CHUNKS PREVIEW =====")
     for i, chunk in enumerate(result["chunks"][:5]):

@@ -100,7 +100,7 @@ def extract_docx(file_path: str) -> dict:
             try:
                 pdf_path.unlink()
                 if DEBUG:
-                    print(f"[DOCX] Temp PDF deleted: {pdf_path.name} 🗑️")
+                    print(f"[DOCX] Temp PDF deleted: {pdf_path.name} ")
             except Exception as e:
                 if DEBUG:
                     print(f"[DOCX] Could not delete temp PDF: {e}")
@@ -108,7 +108,7 @@ def extract_docx(file_path: str) -> dict:
 
 # ── TEST ──────────────────────────────────────────────
 if __name__ == "__main__":
-    result = extract_docx(r"C:\Users\Dell\Desktop\PFE\test.docx")
+    result = extract_docx("../test10.docx")
 
     print("\n===== CHUNKS PREVIEW =====")
     for i, chunk in enumerate(result["chunks"][:5]):

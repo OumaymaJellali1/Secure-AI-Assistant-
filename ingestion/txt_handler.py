@@ -50,7 +50,7 @@ def extract_txt(file_path: str) -> dict:
 
 # ── TEST ──────────────────────────────────────────────
 if __name__ == "__main__":
-    path = sys.argv[1] if len(sys.argv) > 1 else "../test2.txt"
+    path = sys.argv[1] if len(sys.argv) > 1 else "../test11.txt"
     result = extract_txt(path)
 
     print(f"\n===== METADATA =====")
