@@ -26,6 +26,8 @@ SUPPORTED_EXTENSIONS = {
     "txt"  : [".txt"],
     "docx" : [".docx"],
     "csv"  : [".csv"],
+    "eml"  : [".eml"],
+
 }
 
 # ── DEBUG ─────────────────────────────────────────────

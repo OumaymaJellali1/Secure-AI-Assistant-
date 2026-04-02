@@ -42,14 +42,18 @@ def detect_file_type(file_path: str) -> str:
             if DEBUG:
                 print(f"[DETECTOR] PDF error: {e}")
             return "pdf_digital"
-        
+
     elif ext == ".pptx":
-     if DEBUG:
-        print(f"[DETECTOR] Type: pptx ")
-     return "pptx"
+        if DEBUG:
+            print(f"[DETECTOR] Type: pptx ")
+        return "pptx"
+
+    elif ext == ".eml":
+        if DEBUG:
+            print(f"[DETECTOR] Type: eml ")
+        return "eml"
 
     else:
         if DEBUG:
             print(f"[DETECTOR] Type: unknown ")
         return "unknown"
- 
