@@ -1,0 +1,424 @@
+{
+  "filename": "test3.pptx",
+  "chunks": [
+    {
+      "type": "text",
+      "content": "StackRAG:\n\nSmarter Answers for Developers\n\nPresented By:\n\nMayssa Ben Soussia\n\nOumayma Jellali\n\n‹#›",
+      "metadata": {
+        "source": "test3.pptx",
+        "slide": 1,
+        "section": "Slide 1"
+      }
+    },
+    {
+      "type": "text",
+      "content": "Table of contents\n\n01\n\nContext & Problem\n\n02\n\nState Of The Art\n\n03\n\nOur Solution\n\n04\n\nReinforcement Learning Application\n\n05\n\nConclusion\n\n‹#›",
+      "metadata": {
+        "source": "test3.pptx",
+        "slide": 2,
+        "section": "Slide 2"
+      }
+    },
+    {
+      "type": "text",
+      "content": "01\n\nContext & Problem\n\n‹#›",
+      "metadata": {
+        "source": "test3.pptx",
+        "slide": 3,
+        "section": "Slide 3"
+      }
+    },
+    {
+      "type": "text",
+      "content": "LLMs (GPT-4, Qwen2.5-7B) can generate useful answers but often lack factual accuracy and hallucinate.\n\nDevelopers depend on Stack Overflow and web searches that are slow and inconsistent.\n\nStackRAG improves accuracy using Stack Overflow retrieval, while WebFilter enhances web search precision through reinforcement learning.\n\n⇒  no existing system combines both strengths — domain-reliable Stack Overflow data and adaptive web reasoning.\n\nGoal of the Project\n\nDevelop a hybrid RAG pipeline combining StackRAG and WebFilter, capable of producing accurate, up-to-date, and verifiable developer answers grounded in both Stack Overflow and credible web data.\n\n‹#›",
+      "metadata": {
+        "source": "test3.pptx",
+        "slide": 4,
+        "section": "Slide 4"
+      }
+    },
+    {
+      "type": "text",
+      "content": "02\n\nState Of The Art\n\n‹#›",
+      "metadata": {
+        "source": "test3.pptx",
+        "slide": 5,
+        "section": "Slide 5"
+      }
+    },
+    {
+      "type": "text",
+      "content": "StackRAG Agent: Improving Developer Answers with Retrieval-Augmented Generation\n\nStackRAG is a multi-agent tool built on Large Language Models (LLMs) and Retrieval-Augmented Generation (RAG).\n\nIt aims to improve the quality and reliability of developer answers by combining:\n\nThe up-to-date, verified knowledge from Stack Overflow\n\nThe language generation power of GPT.\n\nGoal: Deliver accurate, relevant, and trustworthy answers while reducing LLM hallucinations.\n\n‹#›",
+      "metadata": {
+        "source": "test3.pptx",
+        "slide": 6,
+        "section": "Slide 6"
+      }
+    },
+    {
+      "type": "text",
+      "content": "‹#›",
+      "metadata": {
+        "source": "test3.pptx",
+        "slide": 7,
+        "section": "Slide 7"
+      }
+    },
+    {
+      "type": "image",
+      "content": "The diagram depicts a comprehensive system designed to facilitate efficient question answering by collecting data from Stack Overflow. The process begins with an **Input Question** provided by a user. This question is sent to the **Keyword Extractor Tool** for analysis. If necessary, the question is divided into sub-questions. **Keywords** are then extracted and forwarded to the **LLM Agent** and the **Search and Storage Tool**.\n\nThe **Search and Storage Tool** searches Stack Overflow for similar questions, storing question-answer pairs in a **Vector DB**. These pairs are then filtered, and their IDs are saved to a **JSON file**.\n\nThe **LLM Agent** sends the questions to the **Gather Evidence Tool**, which embeds and searches for them in the **Vector DB**. An **Answer LLM** provides the top-N answers, which are then verified for sufficiency.\n\nThe **LLM Agent** evaluates the evidence; if deemed sufficient, the question and question-answer pairs are sent to the **Answer Generator Tool**.",
+      "metadata": {
+        "source": "test3.pptx",
+        "slide": 7,
+        "section": "Slide 7",
+        "image_index": 1
+      }
+    },
+    {
+      "type": "text",
+      "content": "Key Advantages\n\nMore reliable and grounded answers StackRAG builds every response using real, verified Stack Overflow discussions retrieved through its vector database.\n\nReduces hallucinations\n\nSaves time for developers by automating search and synthesis.\n\nTransparent results — includes the original Stack Overflow links.\n\nBetter performance than GPT-4 on correctness, accuracy, relevance, and usefulness.\n\n‹#›",
+      "metadata": {
+        "source": "test3.pptx",
+        "slide": 8,
+        "section": "Slide 8"
+      }
+    },
+    {
+      "type": "image",
+      "content": "The image presents a table comparing metrics across four models. \n\n**Table Structure:**\nThe table consists of five columns and four rows, including the header row. \n\n**Columns:**\nThe columns are labeled as follows:\n- **Metric/Model** (first column)\n- **C** (second column)\n- **A** (third column)\n- **R** (fourth column)\n- **U** (fifth column)\n\n**Rows:**\nThe rows represent different models:\n- **StackRAG** (first row)\n- **GPT-3.5** (second row)\n- **GPT-4** (third row)\n\n**Data:**\nEach cell contains a numerical value representing a metric for a specific model. \n\n**Summary:**\nThe table provides a concise comparison of metrics across three models, StackRAG, GPT-3.5, and GPT-4, with values for metrics C, A, R, and U.",
+      "metadata": {
+        "source": "test3.pptx",
+        "slide": 8,
+        "section": "Slide 8",
+        "image_index": 2
+      }
+    },
+    {
+      "type": "text",
+      "content": "Careful Queries, Credible Results: Teaching RAG Models Advanced Web Search Tools with Reinforcement Learning\n\nWebFilter is an advanced Retrieval-Augmented Generation (RAG) framework designed to make Large Language Models (LLMs) better at searching, evaluating, and reasoning over real web information.\n\nIt tackles two key problems in web-based RAG systems:\n\nMisinformation and noisy data — the open web often contains outdated or unreliable content.\n\nUnderuse of advanced search tools — most models fail to use operators like site:, after:, or logical filters that could improve accuracy.\n\nGoal: Train RAG models to issue precise, source-aware web queries and filter misinformation, producing credible, up-to-date answers.\n\n‹#›",
+      "metadata": {
+        "source": "test3.pptx",
+        "slide": 9,
+        "section": "Slide 9"
+      }
+    },
+    {
+      "type": "text",
+      "content": "‹#›",
+      "metadata": {
+        "source": "test3.pptx",
+        "slide": 10,
+        "section": "Slide 10"
+      }
+    },
+    {
+      "type": "image",
+      "content": "The image presents a comprehensive flowchart illustrating the process of finding answers to user queries using a search engine and reinforcement learning. The flowchart is divided into several sections, each representing a stage in the information retrieval process.\n\n**User Query**\nThe flowchart begins with a user query, which is then fed into the \"Rollout Module.\" This module consists of two key components:\n\n*   **Search Engine**: This component is responsible for retrieving relevant information from a vast database.\n*   **Policy LLM (Large Language Model)**: This component uses natural language processing techniques to analyze the user's query and generate a response.\n\nThe output from the Rollout Module is then passed through the \"Reward Module,\" which evaluates the quality of the response based on various criteria, including:\n\n*   **Source-restricting Reward**: This criterion assesses the reliability and credibility of the sources used to generate the response.\n*   **Retrieval-precision Reward**: This criterion evaluates the accuracy and relevance of the retrieved information.\n\nThe Reward Module also considers additional",
+      "metadata": {
+        "source": "test3.pptx",
+        "slide": 10,
+        "section": "Slide 10",
+        "image_index": 3
+      }
+    },
+    {
+      "type": "text",
+      "content": "Key Advantages\n\nReduces Misinformation WebFilter greatly limits the spread of false or unreliable information that LLMs often pick up from open web searches.\n\nEncourages Intelligent Use of Search Tools use search operators such as: site:  /AND, OR, - / after:\n\nImproves Factual Accuracy By combining reinforcement learning with retrieval evaluation, it learns to prefer evidence that is both reliable and consistent across multiple sources.\n\nBalances Exploration and Precision A key innovation of WebFilter is its ability to decide when to explore new information and when to refine existing evidence.\n\n‹#›",
+      "metadata": {
+        "source": "test3.pptx",
+        "slide": 11,
+        "section": "Slide 11"
+      }
+    },
+    {
+      "type": "text",
+      "content": "03\n\nOur Solution\n\n‹#›",
+      "metadata": {
+        "source": "test3.pptx",
+        "slide": 12,
+        "section": "Slide 12"
+      }
+    },
+    {
+      "type": "text",
+      "content": "Combination between StackRAG and WebFilter\n\n‹#›",
+      "metadata": {
+        "source": "test3.pptx",
+        "slide": 13,
+        "section": "Slide 13"
+      }
+    },
+    {
+      "type": "image",
+      "content": "The image presents a flowchart illustrating the process of information retrieval and filtering, comprising four main components: StackRAG, WebFilter, RL WebFilter, and an unlabeled central section. The flowchart is written in French.\n\n*   **StackRAG (Analyse, orchestration, génération)**\n    *   Located on the left side of the image\n    *   Represented by a yellow rectangle\n    *   Labeled as \"StackRAG (Analyse, orchestration, génération)\"\n    *   Has three arrows pointing to different parts of the flowchart\n*   **WebFilter (Recherche avancée & filtrage des sources)**\n    *   Positioned at the top-right corner of the image\n    *   Represented by a blue rectangle\n    *   Labeled as \"WebFilter (Recherche avancée & filtrage des sources)\"\n    *   Has one arrow pointing to the central section\n*   **RL WebFilter (Ranking & Filtrage des traject",
+      "metadata": {
+        "source": "test3.pptx",
+        "slide": 13,
+        "section": "Slide 13",
+        "image_index": 4
+      }
+    },
+    {
+      "type": "table",
+      "content": "| Source | Role | Reason |\n| --- | --- | --- |\n| Stack Overflow API | Technical Q&A base | Validated by community, accepted answers |\n| ChromaDB | Local vector cache | Semantic search, prevents redundant API calls, open source |\n| Groq LLM (llama-3.3-70b)/Mistral | Reasoning model | Free API, high speed |\n",
+      "metadata": {
+        "source": "test3.pptx",
+        "slide": 14,
+        "section": "Slide 14",
+        "table_index": 1
+      }
+    },
+    {
+      "type": "text",
+      "content": "Global Architecture\n\n(See The diagram)\n\n4 specialized tools in sequence\n\nFlow: Question → Keywords → Search → Evidence → Answer\n\nKnowledge Bases:\n\n‹#›",
+      "metadata": {
+        "source": "test3.pptx",
+        "slide": 14,
+        "section": "Slide 14"
+      }
+    },
+    {
+      "type": "table",
+      "content": "| Layer | Technology | Justification |\n| --- | --- | --- |\n| LLM | Groq (llama-3.3-70b)\nMistral(open-mixtral-8x7b) | Fast, free API |\n| Embeddings | SentenceTransformers | Lightweight, local |\n| Vector DB | ChromaDB | Persistent, open source |\n| Re-ranking | BM25 | Proven  algorithm |\n| API | Stack Exchange API | Reliable, official |\n| Backend | LangChain | Orchestrates tools |\n| Frontend | Streamlit | Interactive UI |\n",
+      "metadata": {
+        "source": "test3.pptx",
+        "slide": 15,
+        "section": "Slide 15",
+        "table_index": 2
+      }
+    },
+    {
+      "type": "text",
+      "content": "Technical Stack\n\n‹#›",
+      "metadata": {
+        "source": "test3.pptx",
+        "slide": 15,
+        "section": "Slide 15"
+      }
+    },
+    {
+      "type": "table",
+      "content": "| Step | Description |\n| --- | --- |\n| Input | User question |\n| 1. Complexity Analysis | Uses an LLM chain to detect if the question is complex (multi-intent or multi-topic). |\n| 2. Question Decomposition | If complex → divide into sub-questions using an LLM-based question divider. |\n| 3. Keyword Extraction | Extracts up to 4 concise keywords per question using an LLM extractor or fallback regex method. |\n| Output | JSON: { is_complex, sub_questions, keywords, original_question } |\n",
+      "metadata": {
+        "source": "test3.pptx",
+        "slide": 16,
+        "section": "Slide 16",
+        "table_index": 3
+      }
+    },
+    {
+      "type": "text",
+      "content": "TOOL 1: Keyword Extractor\n\nObjective:Understand and decompose the user’s question into manageable and searchable sub-components.\n\n‹#›",
+      "metadata": {
+        "source": "test3.pptx",
+        "slide": 16,
+        "section": "Slide 16"
+      }
+    },
+    {
+      "type": "table",
+      "content": "| Step | Description |\n| --- | --- |\n| Input | keywords, original_question |\n| 1. Query Reformulation | The WebFilter module uses LLM to rephrase and generate optimized search queries. |\n| 2. Source Retrieval | Calls Stack Overflow API using the generated queries . |\n| 3. Deduplication & Filtering | Removes duplicates, keeps high-quality entries (based on score & answer status). |\n| 4. Vectorization & Storage | Embeds title + body with Sentence Transformers, stores them in ChromaDB (vector DB). |\n",
+      "metadata": {
+        "source": "test3.pptx",
+        "slide": 17,
+        "section": "Slide 17",
+        "table_index": 4
+      }
+    },
+    {
+      "type": "text",
+      "content": "TOOL 2: Search & Storage\n\nObjective:Reformulate and expand queries to collect relevant Stack Overflow results and store them in a vector database.\n\n‹#›",
+      "metadata": {
+        "source": "test3.pptx",
+        "slide": 17,
+        "section": "Slide 17"
+      }
+    },
+    {
+      "type": "table",
+      "content": "| Step | Description |\n| --- | --- |\n| Input | original_question, so_results |\n| 1. Semantic Retrieval | Queries the vector DB for similar documents (contextual match). |\n| 2. Merge & Deduplicate | Combines SO and vector results → removes duplicates. |\n| 3. Lexical Scoring (BM25) | Computes BM25 score for textual similarity. |\n| 4. Ranking & Filtering | Combines scores (llm score+BM25)\nfinal_score = 70% webfilter + 30% bm25 |\n| 5. Evidence Validation | Decides if enough evidence exists |\n",
+      "metadata": {
+        "source": "test3.pptx",
+        "slide": 18,
+        "section": "Slide 18",
+        "table_index": 5
+      }
+    },
+    {
+      "type": "text",
+      "content": "TOOL 3: Gather Evidence\n\nObjective: Combine all retrieved data, score its relevance, and select the best evidence for answer generation.\n\n‹#›",
+      "metadata": {
+        "source": "test3.pptx",
+        "slide": 18,
+        "section": "Slide 18"
+      }
+    },
+    {
+      "type": "table",
+      "content": "| Step | Description |\n| --- | --- |\n| Input | original_question, evidences (top-K results) |\n| 1. Context Construction | Builds a prompt context with titles, snippets, and scores from each evidence. |\n| 2. LLM Answer Generation | Uses StackRAG prompt template to synthesize an answer while grounding it in the evidence. |\n| 3. Citation Extraction | Extracts sources used in the final answer (title + URL + score). |\n| 4. Output Structuring | Returns formatted JSON: { answer, sources, num_sources, timestamp } |\n",
+      "metadata": {
+        "source": "test3.pptx",
+        "slide": 19,
+        "section": "Slide 19",
+        "table_index": 6
+      }
+    },
+    {
+      "type": "text",
+      "content": "TOOL 4: Answer Generator\n\nObjective: Generate a coherent, accurate, and traceable answer based on the selected evidence.\n\n‹#›",
+      "metadata": {
+        "source": "test3.pptx",
+        "slide": 19,
+        "section": "Slide 19"
+      }
+    },
+    {
+      "type": "text",
+      "content": "WebFilter\n\nThe WebFilter is used as follows:\n\nIn 2 sequential LLM steps:\n\n1.Reformulates the question into 2–3 simple queries\n\n2.Selects the appropriate search filters\n\nBefore WebFilter:\n\nquestion = \"Comment implémenter JWT auth en Flask avec refresh tokens?\"\n\nAfter WebFilter:\n\nqueries = [\n\n{  \"base_query\": \"flask jwt authentication\",\n\n\"search_params\": {\"min_score\": 1, \"accepted_only\": false} },\n\n‹#›",
+      "metadata": {
+        "source": "test3.pptx",
+        "slide": 20,
+        "section": "Slide 20"
+      }
+    },
+    {
+      "type": "text",
+      "content": "04\n\nReinforcement Learning Application\n\n‹#›",
+      "metadata": {
+        "source": "test3.pptx",
+        "slide": 21,
+        "section": "Slide 21"
+      }
+    },
+    {
+      "type": "text",
+      "content": "❓ Problem Statement\n\nTraditional RAG System:\n\n- Manually fixed parameters                         - Stack Overflow results: 10, 15, 20?\n\n- Number of keywords: 3, 4, 5?                     - Top-k documents: 3, 5, 7?\n\n⚠️ Limitations:\n\n❌ No adaptation to question type\n\n❌ Suboptimal performance\n\n❌ Time-consuming trial & error\n\n❌ One-size-fits-all approach fails\n\n‹#›",
+      "metadata": {
+        "source": "test3.pptx",
+        "slide": 22,
+        "section": "Slide 22"
+      }
+    },
+    {
+      "type": "text",
+      "content": "The 5 Key Components\n\n‹#›",
+      "metadata": {
+        "source": "test3.pptx",
+        "slide": 23,
+        "section": "Slide 23"
+      }
+    },
+    {
+      "type": "image",
+      "content": "The image presents a flowchart illustrating the components of a reinforcement learning (RL) system. The flowchart consists of five rectangular boxes, each representing a distinct component of the RL system.\n\n*   **REWARD CALCULATOR**\n    *   Evaluates result quality\n*   **STATE ENCODER**\n    *   Represents current situation\n*   **TRAINER**\n    *   Manages learning process\n*   **Q-LEARNING AGENT**\n    *   Makes decisions\n*   **ENVIRONMENT**\n    *   Simulates interaction\n\nThe flowchart shows the following sequence of events:\n\n1.  The **TRAINER** manages the learning process.\n2.  The **STATE ENCODER** represents the current situation.\n3.  The **Q-LEARNING AGENT** makes decisions based on the current situation.\n4.  The **ENVIRONMENT** simulates interaction with the agent's decisions.\n5.  The **REWARD CALCULATOR** evaluates the result quality.\n\nThe",
+      "metadata": {
+        "source": "test3.pptx",
+        "slide": 23,
+        "section": "Slide 23",
+        "image_index": 5
+      }
+    },
+    {
+      "type": "image",
+      "content": "The image displays a table with four rows, each representing a different metric. \n\nThe table consists of the following metrics: \n* **Answer Quality** (30%): evaluated based on the number of sources cited, with 0 sources resulting in a score of -1.0 and 5 or more sources yielding a score of +1.0. \n* **Search Efficiency** (20%): assessed based on the quality-to-quantity ratio. \n* **Relevance Score** (30%): determined by the average relevance score. \n* **User Feedback** (20%): an optional metric scored on a scale of 0 to 1.",
+      "metadata": {
+        "source": "test3.pptx",
+        "slide": 23,
+        "section": "Slide 23",
+        "image_index": 6
+      }
+    },
+    {
+      "type": "text",
+      "content": "Global Architecture\n\n‹#›",
+      "metadata": {
+        "source": "test3.pptx",
+        "slide": 24,
+        "section": "Slide 24"
+      }
+    },
+    {
+      "type": "image",
+      "content": "The image presents a flowchart illustrating the process of user question handling, comprising five distinct sections. Each section is represented by a rectangular box with a unique color and label.\n\n* **User Question**\n\t+ The first section, labeled \"USER QUESTION,\" is depicted in peach-colored text on a light peach background.\n* **RL Agent (Q-Learning)**\n\t+ The second section, titled \"RL AGENT (Q-Learning),\" features black text on a blue background and includes three bullet points:\n\t\t- Observes state\n\t\t- Chooses optimal action\n\t\t- Adjusts parameters\n* **Stackrag Pipeline**\n\t+ The third section, labeled \"STACKRAG PIPELINE,\" displays black text on a green background and lists four tools: Tool 1 → Tool 2 → Tool 3 → Tool 4.\n* **Reward Calculation**\n\t+ The fourth section, titled \"REWARD CALCULATION,\" presents black text on a pink background and includes three bullet points:\n\t",
+      "metadata": {
+        "source": "test3.pptx",
+        "slide": 24,
+        "section": "Slide 24",
+        "image_index": 7
+      }
+    },
+    {
+      "type": "image",
+      "content": "The image presents a flowchart illustrating the decision-making process of a Q-learning agent. The chart is divided into four distinct sections, each representing a different action or state.\n\n*   **Q-LEARNING AGENT Makes decisions**\n    *   This section serves as the central hub of the flowchart, indicating that the Q-learning agent is responsible for making decisions.\n*   **Action 0: ↑ Increase keywords (2 → 3 → ... → 6)**\n    *   This section represents an action where the number of keywords increases from 2 to 6 in increments of 1.\n    *   The action is denoted by \"↑\" and is labeled as \"Action 0\".\n*   **Action 1: ↓ Decrease keywords (6 → 5 → ... → 2)**\n    *   This section represents an action where the number of keywords decreases from 6 to 2 in decrements of 1.\n    *   The action is denoted by \"↓\" and",
+      "metadata": {
+        "source": "test3.pptx",
+        "slide": 24,
+        "section": "Slide 24",
+        "image_index": 8
+      }
+    },
+    {
+      "type": "text",
+      "content": "Example\n\n‹#›",
+      "metadata": {
+        "source": "test3.pptx",
+        "slide": 25,
+        "section": "Slide 25"
+      }
+    },
+    {
+      "type": "image",
+      "content": "The image presents a flowchart illustrating the optimization of parameters for a query using reinforcement learning (RL). The flowchart consists of three main sections: \"BEFORE (Fixed Parameters),\" \"AFTER (RL Optimized),\" and an improvement section.\n\n**BEFORE (Fixed Parameters)**\n\n*   **Question:** \"JWT Flask\"\n*   **Params:** max_results=15, kw=4\n*   **Result:** 4 sources\n*   **Reward:** +0.5\n*   **Not optimal**\n\n**RL Optimization**\n\n*   An arrow points from the \"BEFORE\" section to the \"AFTER\" section, indicating the application of RL optimization.\n\n**AFTER (RL Optimized)**\n\n*   **Question:** \"JWT Flask\"\n*   **Params:** max_results=22, kw=5\n*   **Result:** 7 sources\n*   **Reward:** +0.87\n*   **Learned from 50+ examples**\n\n**Improvement**\n\n*   **Impro",
+      "metadata": {
+        "source": "test3.pptx",
+        "slide": 25,
+        "section": "Slide 25",
+        "image_index": 9
+      }
+    },
+    {
+      "type": "text",
+      "content": "DEMO\n\n‹#›",
+      "metadata": {
+        "source": "test3.pptx",
+        "slide": 26,
+        "section": "Slide 26"
+      }
+    },
+    {
+      "type": "image",
+      "content": "The image depicts a screenshot of the StackRAG-Pipeline en Temps Réel webpage, featuring a predominantly white background with black text. A gray sidebar on the left provides configuration options. The top section displays a browser toolbar and navigation menu.\n\n**Key Features:**\n\n* **Title:** StackRAG - Pipeline en Temps Réel\n* **Input Field:** A text box for entering questions or queries, accompanied by:\n\t+ Example questions\n\t+ A red button labeled \"Lancer le Pipeline\" (Run the Pipeline)\n* **Configuration Options:** A gray sidebar on the left offers various settings and tools, including:\n\t+ Configuration Pipeline\n\t+ Questions Exemples (Example Questions)\n* **Browser Toolbar:** Located at the top, providing standard browser functions\n\n**Overall:** The image showcases a user-friendly interface designed for interacting with the StackRAG-Pipeline en Temps Réel tool, facilitating the exploration and configuration of pipeline-related features.",
+      "metadata": {
+        "source": "test3.pptx",
+        "slide": 26,
+        "section": "Slide 26",
+        "image_index": 10
+      }
+    },
+    {
+      "type": "text",
+      "content": "05\n\nConclusion\n\n‹#›",
+      "metadata": {
+        "source": "test3.pptx",
+        "slide": 27,
+        "section": "Slide 27"
+      }
+    },
+    {
+      "type": "text",
+      "content": "The proposed system combines StackRAG and WebFilter to build a hybrid RAG pipeline that delivers accurate, up-to-date, and verifiable answers.\n\nThis approach creates a smarter assistant for developers, capable of understanding complex queries, searching efficiently, and generating trustworthy, source-grounded responses.\n\nFuture Optimizing the Scoring and Rewarding with RL\n\n‹#›",
+      "metadata": {
+        "source": "test3.pptx",
+        "slide": 28,
+        "section": "Slide 28"
+      }
+    }
+  ],
+  "metadata": {
+    "source": "test3.pptx",
+    "slide_count": 28,
+    "text_count": 28,
+    "table_count": 6,
+    "image_count": 10
+  }
+}
