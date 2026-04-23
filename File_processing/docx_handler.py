@@ -6,7 +6,7 @@ from config import DEBUG
 from pathlib import Path
 import subprocess
 
-from ingestion.digital_pdf import extract_digital_pdf
+from File_processing.digital_pdf import extract_digital_pdf
 
 
 # ── LIBREOFFICE PATH (Windows default) ───────────────

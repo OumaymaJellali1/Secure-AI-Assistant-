@@ -7,12 +7,13 @@ from groq import Groq
 from pathlib import Path
 import base64
 import json
+import uuid
 
 # ── CONFIGURE GROQ ────────────────────────────────────
 groq_client = Groq(api_key=GROQ_API_KEY)
 
 
-def extract_image(file_path: str) -> dict:
+def extract_image(file_path: str) -> list[dict]:
     """
     Extract description from a standalone image file.
     - Image → Groq llama-4-scout → text description
@@ -101,6 +102,7 @@ def extract_image(file_path: str) -> dict:
 
     # ── BUILD JSON ────────────────────────────────────
     result = {
+        "chunk_id" : str(uuid.uuid4()),
         "type"    : "image",
         "content" : description,
         "metadata": {
@@ -122,7 +124,7 @@ def extract_image(file_path: str) -> dict:
 
 # ── TEST ──────────────────────────────────────────────
 if __name__ == "__main__":
-    result = extract_image("../1.png")
+    result = extract_image("1.png")
 
     print("\n===== JSON OUTPUT =====")
     print(json.dumps(result, indent=4, ensure_ascii=False))

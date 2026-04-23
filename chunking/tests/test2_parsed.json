@@ -1,0 +1,47 @@
+{
+  "filename": "test2.pdf",
+  "chunks": [
+    {
+      "type": "text",
+      "content": "Intégration réussie du pipeline StackRAG avec les concepts de WebFilter Intégration des étapes 1 à 4 du pipeline dans le code : (le diagramme du pipeline au dessous): Étape 1 : Réception de la question Étape 2 : Analyse de la complexité de la question ( décomposition ou non) par un agent orchestre (StackRAG) Étape 3 : Extraction des mots clés Étape 4 : Reformulation de la requète avec webFilter Tests unitaires des quatre premières étapes du pipeline Recherche et mise en place d'alternatives aux API payantes Développement des étapes restantes du pipeline (étapes 5 à 8) Tests avec Llama : évaluation de la qualité des réponses et temps de réponse Tests avec Mistral 7B : comparaison des performances et de la précision Affiner le système de Reinforcement Learning pour améliorer le rewarding",
+      "metadata": {
+        "source": "test2.pdf",
+        "page_start": 1,
+        "page_end": 1,
+        "section": "1. Liste des tâches réalisées et finalisées"
+      }
+    },
+    {
+      "type": "text",
+      "content": "https://github.com/OumaymaJellali1/Stack_WebFilter_RAG",
+      "metadata": {
+        "source": "test2.pdf",
+        "page_start": 1,
+        "page_end": 1,
+        "section": "Dépôt GitHub du projet"
+      }
+    },
+    {
+      "type": "image",
+      "content": "The image presents a flowchart illustrating the process of generating a response to a user's question. The flowchart consists of eight distinct steps, each represented by a rectangle with a unique color and labeled with a number and a brief description in French.\n\n**Step-by-Step Breakdown:**\n\n*   **Step 1: Question Utilisateur (Green)**\n    *   The first step involves the user's question.\n*   **Step 2: Analyse Complexité (Orange)**\n    *   This step analyzes the complexity of the question using GPT-4/Qwen2.5-7B.\n*   **Step 3: Extraction Mots-Clés (Yellow)**\n    *   The third step extracts key words (max 4 mots/concept).\n*   **Step 4: Reformulation Requête (Blue)**\n    *   This step reformulates the query using StackRAG and advanced operators.\n*   **Step 5: Recherche & Filtres (Grey Box with Blue and Green Rectangles)**\n    *   The fifth step involves searching and filtering:\n        *   **Recherche WebFILTER (Blue)**: Searches using Stack Overflow API and other sources.\n        *   **Application de Filtres Dynamiques (Green)**: Applies dynamic filters (date, score, accepted response...).\n*   **Steps 6-7: Filtrage & Re-ranking (Grey Box with Orange and Purple Rectangles)**\n    *   The sixth and seventh steps involve filtering and re-ranking:\n        *   **Filtrage RL WebFilter (Orange)**: Filters using RL WebFilter (pertinence/qualité/fiabilité).\n        *   **Re-ranking BM25 (Purple)**: Re-ranks using BM25 (top k relevant results).\n*   **Step 8: Génération Finale (Grey Box with Pink and Teal Rectangles)**\n    *   The eighth step generates the final response:\n        *   **Génération Réponse StackRAG (Pink)**: Generates a response using StackRAG.\n        *   **Réponse Finale + Liens Sources (Teal)**: Provides the final response with source links.\n\nThe flowchart outlines a structured approach to processing user queries, from initial analysis to final response generation, incorporating various tools and techniques for filtering and ranking relevant information.",
+      "metadata": {
+        "source": "test2.pdf",
+        "page_start": 2,
+        "page_end": 2,
+        "section": "Dépôt GitHub du projet",
+        "image_index": 1
+      }
+    },
+    {
+      "type": "table",
+      "content": "| gender   | name   |   nombre |   amount |\n|:---------|:-------|---------:|---------:|\n| f        | souad  |      582 |      111 |\n| m        | hamda  |      251 |      215 |\n| f        | basma  |      222 |      785 |",
+      "metadata": {
+        "source": "test2.pdf",
+        "page_start": 3,
+        "page_end": 3,
+        "section": "Dépôt GitHub du projet",
+        "table_index": 1
+      }
+    }
+  ]
+}

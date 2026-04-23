@@ -1,0 +1,39 @@
+{
+  "filename": "222.pdf",
+  "chunks": [
+    {
+      "chunk_id": "cc97d87a-d27a-4a81-ad90-6f1ea9360b6a",
+      "type": "text",
+      "content": "---\nPage 1\nEnoncé du mini-Projet Développement d'applications Web\nRealisation d'une application Web pour la gestion d' un\nlaboratoire de recherche\nNous souhaitons creer un site Web permettant la gestion d'un laboratoire de recherche. Un\nlaboratoire de recherche est generalement caracterise par un code, son nom, son adresse, son\nétablissement et ses axes de recherche.",
+      "metadata": {
+        "source": "222.pdf"
+      }
+    },
+    {
+      "chunk_id": "d1be93d9-f68d-429b-ada2-90584a36ace2",
+      "type": "text",
+      "content": "Il est forme de plusieurs membres. Chacun\nest\ncaracterise par son cin, nom, prenom, date de naissance, cv, photo, email et mot de passe. Il\netablissement. L'étudiant est generalement soit un étudiant en mastere ou bien en these qui est\nencadre par un seul enseignant chercheur. Chaque membre peut contribuer dans le\nlaboratoire soit en publiant ses travaux de recherche en terme d' article de journal, chapitre de\nlivre, livre, poster, etc. Il a la possibilite aussi de developper un ou plusieurs outils et les\nrendre open source a la communaute de recherche. De plus, il peut participer dans\nI'organisation d'un ou plusieurs évenements au sein du laboratoire. Comme illustre dans le diagramme de classes, chaque membre peut publier plusieurs\npublications et chaque publication peut etre redigee par plusieurs membres. Pour simplifier,\nnous supposons que les auteurs d'une publication sont des membres dans le meme laboratoire. Chaque visiteur a la possibilite de consulter les membres du laboratoire, telecharger leurs\nCVs, telecharger leurs publications, telecharger le code source des outils developpes au sein\ndu laboratoire et visualiser les evenements a venir organises par le laboratoire. De plus, il peut\nfaire des recherches avancees sur les membres (par exemple par grade, par établissement), sur\nles publications (par annee, par type). Chaque membre accede a son profil et il a la possibilite de modifier ses informations personnelles\net gerer son profil. De plus, il peut gerer ses publications, ses outils ainsi que les evenements\nauxquels il a participe ou bien participera prochainement. Il peut gerer ses encadrements aussi,\ntout en identifiant les étudiants qu'il encadre en these ou bien en mastere. ---\nPage 2",
+      "metadata": {
+        "source": "222.pdf"
+      }
+    },
+    {
+      "chunk_id": "d3473e55-8bf4-40f0-9e92-7335e82a4cdf",
+      "type": "text",
+      "content": "Un administrateur a la possibilite de consulter et de gerer les membres ainsi que leurs\npublications, évenements et outils. Voicil'architecturearespecter :\nOutil\nEtudiant\nMembre\nId: Long\ndatelnscription:Date\nId:Long\nDate: Date\nDiplome: String\nSource: String\nCin: string\nNom: String\nPrenom: String\nOutil-service\nDate :Date\nPhoto: byte\nEnseignantChercheur\nCv: String\nEmail: String\nPublication-service\nGrade: String\npassword: String\nEtablissement:String\nPublication\nMembre-service\nId:Long\nEvenement\ntype: String\nTitre: String\nId: Long\nlien: String\nTitre:String\nDate:Date\nDate: Date\nSourcepdf:String\nLieu: String\nEvenement-service",
+      "metadata": {
+        "source": "222.pdf"
+      }
+    },
+    {
+      "chunk_id": "0741079e-a85b-4b9c-ada7-4abedeb62c9c",
+      "type": "image",
+      "content": "The image presents a complex diagram comprising multiple interconnected boxes, lines, and text. The diagram is divided into several sections, each containing various elements.\n\n**Main Components:**\n\n*   A large red box on the right side of the image contains three smaller boxes:\n    *   **Membre**: This box has several lines of text, including \"Id: Long\", \"Cin: string\", \"Nom: String\", \"Prénom: String\", \"Date :Date\", \"Photo: byte[]\", \"Cv: String\", \"Émail: String\", and \"password: String\".\n    *   **Etudiant**: This box has two lines of text, including \"dateInscription: Date\" and \"Diplôme: String\".\n    *   **EnseignantChercheur**: This box has two lines of text, including \"Grade: String\" and \"Etablissement : String\".\n*   A purple dashed line connects to a box labeled **Outil**, which contains three lines of text: \"Id: Long\", \"Date: Date\", and \"Source: String\".\n*   A green dashed line connects to a box labeled **Publication**, which contains five lines of text: \"Id:Long\", \"type: String\", \"Titre: String\", \"Date :Date\", and \"Sourcepdf: String\".\n*   An orange dashed line connects to a box labeled **Evenement**, which contains four lines of text: \"Id: Long\", \"Titre:String\", \"Date: Date\", and \"Lieu : String\".\n\n**Relationships Between Components:**\n\n*   The **Membre** box has a line connecting it to the **Outil** box.\n*   The **Membre** box also has lines connecting it to the **Etudiant** and **EnseignantChercheur** boxes.\n*   The **Publication** and **Evenement** boxes are connected to the **Membre** box through dashed lines.\n\n**Overall Structure:**\n\n*   The diagram appears to be a flowchart or entity-relationship diagram, illustrating the relationships between different entities or components.\n*   The use of different colors and line styles helps to distinguish between various types of connections and relationships.\n\n**Data Values or Trends:**\n\n*   No specific data values or trends are visible in the diagram.",
+      "metadata": {
+        "source": "222.pdf",
+        "image_index": 1,
+        "page": 2
+      }
+    }
+  ]
+}

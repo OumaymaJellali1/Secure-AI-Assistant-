@@ -1,0 +1,92 @@
+﻿Phase 1 : Analyse et préparation (1 semaine)
+* Objectif : Comprendre le projet Java et préparer l’environnement de test.
+
+* Tâches communes :
+
+   * Lire et comprendre le projet Java.
+
+   * Identifier les fonctionnalités clés à tester.
+
+   * Installer TestNG et préparer l’environnement IA.
+
+      * Répartition concrète :
+
+         * Personne 1 : Documente les modules A et B et prépare leurs cas de test.
+
+         * Personne 2 : Documente les modules C et D et prépare leurs cas de test.
+
+________________
+
+
+Phase 2 : Création des tests TestNG classiques (1-2 semaines)
+            * Objectif : Avoir un socle solide de tests automatisés.
+
+            * Tâches communes :
+
+               * Écrire des tests unitaires et d’intégration pour toutes les fonctionnalités.
+
+               * Paramétrer les tests et créer les suites TestNG.
+
+                  * Répartition concrète :
+
+                     * Personne 1 : Implémente les tests pour les modules A et C.
+
+                     * Personne 2 : Implémente les tests pour les modules B et D.
+
+                        * Les deux vérifient mutuellement les tests pour améliorer la qualité.
+
+________________
+
+
+Phase 3 : Intégration IA pour génération automatique de tests (2-3 semaines)
+                           * Objectif : Ajouter une couche d’automatisation intelligente.
+
+                           * Tâches communes :
+
+                              * Choisir une approche IA (génération de données de test ou cas de test à partir du code).
+
+                              * Préparer un modèle simple pour générer des tests.
+
+                                 * Répartition concrète :
+
+                                    * Personne 1 : Génère automatiquement les tests pour les modules A et B.
+
+                                    * Personne 2 : Génère automatiquement les tests pour les modules C et D.
+
+                                       * Les deux intègrent leurs tests IA à TestNG et vérifient leur validité.
+
+________________
+
+
+Phase 4 : Optimisation et amélioration (1-2 semaines)
+                                          * Objectif : Améliorer la couverture et la fiabilité des tests.
+
+                                          * Tâches communes :
+
+                                             * Revue croisée des tests classiques et générés par l’IA.
+
+                                             * Ajouter des tests pour les cas limites et erreurs possibles.
+
+                                                * Répartition concrète :
+
+                                                   * Personne 1 : Optimise les tests des modules A et C.
+
+                                                   * Personne 2 : Optimise les tests des modules B et D.
+
+________________
+
+
+Phase 5 : Documentation et présentation (1 semaine)
+                                                      * Objectif : Livrer un projet complet, documenté et prêt à présenter.
+
+                                                      * Tâches communes :
+
+                                                         * Rédaction de la documentation et des instructions d’exécution.
+
+                                                         * Préparation de la présentation et démonstration.
+
+                                                            * Répartition concrète :
+
+                                                               * Personne 1 : Rédige la partie TestNG + méthodologie IA.
+
+                                                               * Personne 2 : Rédige la partie résultats, couverture de tests et statistiques.

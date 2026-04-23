@@ -246,7 +246,7 @@ def get_section_name(slide, sorted_shapes, slide_num: int) -> str:
     return title_texts[0] if title_texts else f"Section {slide_num}"
 
 # ── SLIDE PARSER ──────────────────────────────────────
-def parse_pptx(file_path: str) -> dict:
+def parse_pptx(file_path: str) -> list[dict]:
     """
     Parse a PPTX file and return a structured dict of slides.
 

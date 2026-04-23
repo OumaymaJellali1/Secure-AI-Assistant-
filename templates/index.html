@@ -1,0 +1,1270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pipeline</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,400;0,600;1,300&family=DM+Mono:wght@400;500&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:        #faf8f5;
+  --surface:   #ffffff;
+  --surface2:  #f5f2ee;
+  --border:    #e8e2d9;
+  --border2:   #d4cdc3;
+
+  --sage:      #a8c4a2;
+  --sage-light:#e8f2e6;
+  --sage-dark: #6a9b63;
+
+  --lavender:  #b8aed4;
+  --lav-light: #ede9f7;
+  --lav-dark:  #7b6faa;
+
+  --peach:     #e8b89a;
+  --peach-light:#fceee6;
+  --peach-dark: #c07850;
+
+  --sky:       #9ec4d8;
+  --sky-light: #e4f1f8;
+  --sky-dark:  #4a8faa;
+
+  --rose:      #d4a0b0;
+  --rose-light:#f7e8ee;
+  --rose-dark: #9b5a72;
+
+  --butter:    #e8d898;
+  --butter-light:#fdf7e0;
+  --butter-dark: #a88c30;
+
+  --text:      #2d2820;
+  --text2:     #6b6058;
+  --text3:     #9e9288;
+
+  --radius:    12px;
+  --radius-sm: 8px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Nunito', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: grid;
+  grid-template-rows: auto 1fr;
+}
+
+/* ── Header ──────────────────────────────────────────────── */
+header {
+  padding: 18px 32px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+.logo {
+  font-family: 'Fraunces', serif;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -.3px;
+}
+.logo em { font-style: italic; color: var(--lav-dark); }
+
+.nav-tabs {
+  display: flex;
+  gap: 4px;
+  margin-left: 28px;
+}
+.nav-tab {
+  padding: 7px 18px;
+  border-radius: 100px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1.5px solid transparent;
+  background: transparent;
+  color: var(--text2);
+  font-family: 'Nunito', sans-serif;
+  transition: all .15s;
+}
+.nav-tab:hover { background: var(--surface2); color: var(--text); }
+.nav-tab.active {
+  background: var(--lav-light);
+  border-color: var(--lavender);
+  color: var(--lav-dark);
+}
+.nav-tab.csv-tab.active {
+  background: var(--sage-light);
+  border-color: var(--sage);
+  color: var(--sage-dark);
+}
+.header-right { margin-left: auto; font-size: 12px; color: var(--text3); font-family: 'DM Mono', monospace; }
+
+/* ── Page layout ─────────────────────────────────────────── */
+.page { display: none; }
+.page.active { display: flex; height: calc(100vh - 61px); overflow: hidden; }
+
+/* ── CHUNKER PAGE ────────────────────────────────────────── */
+.chunker-sidebar {
+  width: 280px;
+  min-width: 280px;
+  border-right: 1px solid var(--border);
+  background: var(--surface);
+  padding: 24px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  overflow-y: auto;
+}
+
+.sec-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color: var(--text3);
+  margin-bottom: 10px;
+}
+
+.chunker-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+}
+.cpill {
+  padding: 10px 6px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  color: var(--text2);
+  background: var(--surface2);
+  transition: all .14s;
+  user-select: none;
+}
+.cpill .ext { display: block; font-family: 'DM Mono', monospace; font-size: 9px; color: var(--text3); margin-top: 3px; font-weight: 400; }
+.cpill:hover { border-color: var(--lavender); color: var(--lav-dark); }
+.cpill.active { border-color: var(--lavender); background: var(--lav-light); color: var(--lav-dark); }
+.cpill.active .ext { color: var(--lavender); }
+
+.dropzone {
+  border: 2px dashed var(--border2);
+  border-radius: var(--radius);
+  padding: 24px 12px;
+  text-align: center;
+  cursor: pointer;
+  position: relative;
+  transition: all .18s;
+  background: var(--surface2);
+}
+.dropzone:hover, .dropzone.over { border-color: var(--lavender); background: var(--lav-light); }
+.dropzone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.dz-icon { font-size: 26px; display: block; margin-bottom: 8px; }
+.dz-text { font-size: 12px; color: var(--text3); line-height: 1.5; }
+.dz-file { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--lav-dark); margin-top: 6px; word-break: break-all; }
+
+.run-btn {
+  width: 100%;
+  padding: 13px;
+  background: var(--lav-dark);
+  color: white;
+  border: none;
+  border-radius: var(--radius);
+  font-family: 'Nunito', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .14s;
+}
+.run-btn:hover { background: var(--lavender); transform: translateY(-1px); }
+.run-btn:disabled { background: var(--border2); color: var(--text3); cursor: not-allowed; transform: none; }
+
+.stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.stat-box {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  opacity: 0;
+  transform: translateY(5px);
+  transition: all .25s;
+}
+.stat-box.vis { opacity: 1; transform: none; }
+.stat-val { font-size: 20px; font-weight: 700; color: var(--text); font-family: 'Fraunces', serif; }
+.stat-lbl { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--text3); margin-top: 2px; }
+
+/* Chunker main area */
+.chunker-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.toolbar {
+  padding: 14px 24px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.filter-btn {
+  padding: 5px 14px;
+  border-radius: 100px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1.5px solid var(--border);
+  background: transparent;
+  color: var(--text2);
+  cursor: pointer;
+  font-family: 'Nunito', sans-serif;
+  transition: all .12s;
+}
+.filter-btn:hover { border-color: var(--border2); color: var(--text); }
+.filter-btn.active { background: var(--lav-light); border-color: var(--lavender); color: var(--lav-dark); }
+.filter-btn[data-filter="text"].active  { background: var(--sky-light);    border-color: var(--sky);    color: var(--sky-dark); }
+.filter-btn[data-filter="table"].active { background: var(--sage-light);   border-color: var(--sage);   color: var(--sage-dark); }
+.filter-btn[data-filter="image"].active { background: var(--peach-light);  border-color: var(--peach);  color: var(--peach-dark); }
+
+.search-input {
+  margin-left: auto;
+  padding: 6px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 100px;
+  background: var(--surface2);
+  color: var(--text);
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  width: 200px;
+  outline: none;
+  transition: border-color .14s;
+}
+.search-input:focus { border-color: var(--lavender); }
+.search-input::placeholder { color: var(--text3); }
+
+.chunk-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 18px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+.chunk-list::-webkit-scrollbar { width: 5px; }
+.chunk-list::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+.state-view {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: var(--text3);
+  text-align: center;
+  padding: 40px;
+}
+.state-view .ico { font-size: 44px; }
+.state-view p { font-size: 14px; line-height: 1.7; }
+.spinner {
+  width: 36px; height: 36px;
+  border: 3px solid var(--border);
+  border-top-color: var(--lav-dark);
+  border-radius: 50%;
+  animation: spin .65s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Chunk cards */
+.chunk-card {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  transition: border-color .14s, box-shadow .14s;
+  animation: fadeUp .18s ease both;
+}
+@keyframes fadeUp { from { opacity:0; transform:translateY(7px); } to { opacity:1; transform:none; } }
+.chunk-card:hover { border-color: var(--border2); box-shadow: 0 2px 12px rgba(0,0,0,.05); }
+.chunk-card.open  { border-color: var(--lavender); box-shadow: 0 2px 16px rgba(184,174,212,.2); }
+
+.card-hd {
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
+}
+.type-badge {
+  padding: 3px 10px;
+  border-radius: 100px;
+  font-size: 10px;
+  font-weight: 700;
+  font-family: 'DM Mono', monospace;
+}
+.tb-text  { background: var(--sky-light);   color: var(--sky-dark); }
+.tb-table { background: var(--sage-light);  color: var(--sage-dark); }
+.tb-image { background: var(--peach-light); color: var(--peach-dark); }
+.tb-other { background: var(--lav-light);   color: var(--lav-dark); }
+
+.card-idx     { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text3); }
+.card-preview { flex: 1; font-size: 13px; color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.card-tok     { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text3); }
+.card-chev    { font-size: 9px; color: var(--text3); transition: transform .18s; }
+.chunk-card.open .card-chev { transform: rotate(180deg); }
+
+/* Expand button */
+.card-expand-btn {
+  padding: 3px 10px;
+  border: 1.5px solid var(--lavender);
+  border-radius: 6px;
+  background: var(--lav-light);
+  color: var(--lav-dark);
+  font-size: 10px;
+  font-family: 'DM Mono', monospace;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all .13s;
+  flex-shrink: 0;
+}
+.card-expand-btn:hover {
+  background: var(--lavender);
+  color: white;
+}
+
+.card-body {
+  display: none;
+  padding: 0 16px 14px;
+  border-top: 1px solid var(--border);
+}
+.chunk-card.open .card-body { display: block; }
+
+.card-meta { display: flex; flex-wrap: wrap; gap: 5px; padding: 10px 0 6px; }
+.meta-tag { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 2px 8px; font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text3); }
+
+.btabs { display: flex; gap: 4px; margin: 6px 0; }
+.btab {
+  padding: 3px 12px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-family: 'DM Mono', monospace;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  color: var(--text3);
+  transition: all .12s;
+}
+.btab.active { background: var(--surface2); color: var(--text2); }
+.tab-pane { display: none; }
+.tab-pane.active { display: block; }
+.code-block {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  line-height: 1.7;
+  color: var(--text2);
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 400px;   /* increased from 260px */
+  overflow-y: auto;
+}
+.code-block::-webkit-scrollbar { width: 4px; }
+.code-block::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+.error-box {
+  background: var(--rose-light);
+  border: 1px solid var(--rose);
+  border-radius: var(--radius);
+  padding: 14px;
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--rose-dark);
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin: 20px 24px;
+}
+
+/* ── Fullscreen Chunk Modal ───────────────────────────────── */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(30,24,18,.55);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+}
+.modal-overlay.open { display: flex; }
+.modal-box {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  width: min(860px, 94vw);
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0,0,0,.18);
+  animation: fadeUp .2s ease;
+}
+.modal-hd {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+.modal-title { font-family: 'Fraunces', serif; font-size: 15px; font-weight: 600; color: var(--text); flex: 1; }
+.modal-close {
+  width: 28px; height: 28px;
+  border: 1.5px solid var(--border);
+  border-radius: 6px;
+  background: transparent;
+  font-size: 14px;
+  cursor: pointer;
+  color: var(--text2);
+  display: flex; align-items: center; justify-content: center;
+  transition: all .13s;
+}
+.modal-close:hover { background: var(--rose-light); border-color: var(--rose); color: var(--rose-dark); }
+.modal-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.modal-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 10px 20px 0;
+  flex-shrink: 0;
+}
+.modal-tab {
+  padding: 4px 14px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-family: 'DM Mono', monospace;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  color: var(--text3);
+  transition: all .12s;
+}
+.modal-tab.active { background: var(--surface2); color: var(--text2); }
+.modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px;
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  line-height: 1.85;
+  color: var(--text2);
+  white-space: pre-wrap;
+  word-break: break-word;
+  min-height: 0;
+}
+.modal-body::-webkit-scrollbar { width: 5px; }
+.modal-body::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+.modal-ft {
+  padding: 12px 20px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+}
+.modal-ft-info { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text3); }
+.modal-nav { display: flex; gap: 6px; align-items: center; }
+.modal-nav-btn {
+  padding: 6px 16px;
+  border: 1.5px solid var(--border);
+  border-radius: 6px;
+  background: transparent;
+  font-family: 'Nunito', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text2);
+  cursor: pointer;
+  transition: all .12s;
+}
+.modal-nav-btn:hover:not(:disabled) { border-color: var(--lavender); color: var(--lav-dark); background: var(--lav-light); }
+.modal-nav-btn:disabled { opacity: .35; cursor: not-allowed; }
+.modal-nav-pos { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text3); padding: 0 6px; }
+.modal-hint { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text3); }
+
+
+/* ── CSV PAGE ─────────────────────────────────────────────── */
+.csv-page {
+  display: none;
+  height: calc(100vh - 61px);
+  overflow: hidden;
+}
+.csv-page.active { display: grid; grid-template-columns: 300px 1fr; }
+
+.csv-sidebar {
+  border-right: 1px solid var(--border);
+  background: var(--surface);
+  padding: 24px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  overflow-y: auto;
+}
+
+.csv-main { display: flex; flex-direction: column; overflow: hidden; background: var(--bg); }
+
+.csv-dropzone {
+  border: 2px dashed var(--border2);
+  border-radius: var(--radius);
+  padding: 22px 12px;
+  text-align: center;
+  cursor: pointer;
+  position: relative;
+  transition: all .18s;
+  background: var(--surface2);
+}
+.csv-dropzone:hover, .csv-dropzone.over { border-color: var(--sage); background: var(--sage-light); }
+.csv-dropzone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.csv-file-name { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--sage-dark); margin-top: 6px; word-break: break-all; }
+
+.import-btn {
+  width: 100%;
+  padding: 12px;
+  background: var(--sage-dark);
+  color: white;
+  border: none;
+  border-radius: var(--radius);
+  font-family: 'Nunito', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .14s;
+}
+.import-btn:hover { background: var(--sage); transform: translateY(-1px); }
+.import-btn:disabled { background: var(--border2); color: var(--text3); cursor: not-allowed; transform: none; }
+
+.table-list { display: flex; flex-direction: column; gap: 6px; }
+.table-item {
+  padding: 10px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface2);
+  cursor: pointer;
+  transition: all .13s;
+}
+.table-item:hover { border-color: var(--sage); background: var(--sage-light); }
+.table-item.selected { border-color: var(--sage); background: var(--sage-light); }
+.table-item-name { font-size: 13px; font-weight: 700; color: var(--text); }
+.table-item-meta { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text3); margin-top: 3px; }
+
+.refresh-btn {
+  width: 100%;
+  padding: 9px;
+  background: transparent;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text2);
+  font-family: 'Nunito', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .13s;
+}
+.refresh-btn:hover { border-color: var(--sage); color: var(--sage-dark); background: var(--sage-light); }
+
+.csv-content { flex: 1; overflow-y: auto; padding: 24px 28px; }
+.csv-content::-webkit-scrollbar { width: 5px; }
+.csv-content::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+.csv-empty {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  height: 100%; gap: 12px; color: var(--text3); text-align: center; padding: 40px;
+}
+.csv-empty .ico { font-size: 44px; }
+
+.preview-card {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+.preview-hd {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.preview-title { font-family: 'Fraunces', serif; font-size: 16px; font-weight: 600; color: var(--text); }
+.preview-meta  { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text3); }
+
+.cols-list {
+  padding: 12px 18px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  border-bottom: 1px solid var(--border);
+}
+.col-pill {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 3px 10px;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--text2);
+}
+
+.sample-wrap { overflow-x: auto; padding: 12px 18px; }
+.sample-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.sample-table th { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text3); text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+.sample-table td { padding: 6px 10px; color: var(--text2); border-bottom: 1px solid var(--border); white-space: nowrap; max-width: 180px; overflow: hidden; text-overflow: ellipsis; }
+.sample-table tr:last-child td { border-bottom: none; }
+.sample-table tr:hover td { background: var(--surface2); }
+
+.query-card {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px;
+  margin-bottom: 20px;
+}
+.query-label { font-size: 12px; font-weight: 700; color: var(--text2); margin-bottom: 8px; }
+.query-row { display: flex; gap: 10px; }
+.query-input {
+  flex: 1;
+  padding: 10px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface2);
+  color: var(--text);
+  font-family: 'Nunito', sans-serif;
+  font-size: 13px;
+  outline: none;
+  transition: border-color .14s;
+}
+.query-input:focus { border-color: var(--sage); }
+.query-input::placeholder { color: var(--text3); }
+.ask-btn {
+  padding: 10px 22px;
+  background: var(--sage-dark);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: 'Nunito', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all .13s;
+}
+.ask-btn:hover { background: var(--sage); transform: translateY(-1px); }
+.ask-btn:disabled { background: var(--border2); color: var(--text3); cursor: not-allowed; transform: none; }
+
+.answer-card {
+  background: var(--surface);
+  border: 1.5px solid var(--sage);
+  border-radius: var(--radius);
+  padding: 18px;
+  margin-bottom: 16px;
+  animation: fadeUp .2s ease;
+}
+.answer-q { font-size: 12px; color: var(--text3); margin-bottom: 8px; font-family: 'DM Mono', monospace; }
+.answer-a { font-size: 15px; font-weight: 600; color: var(--text); line-height: 1.6; margin-bottom: 12px; }
+.answer-code { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text2); white-space: pre-wrap; max-height: 200px; overflow-y: auto; }
+
+.import-toast {
+  background: var(--sage-light);
+  border: 1px solid var(--sage);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  font-size: 13px;
+  color: var(--sage-dark);
+  font-weight: 600;
+  display: none;
+  margin-top: 8px;
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Pipeline <em>Studio</em></div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="switchPage('chunker', this)">Chunk Inspector</button>
+    <button class="nav-tab csv-tab" onclick="switchPage('csv', this)">CSV Analyst</button>
+  </div>
+  <div class="header-right">localhost:5000</div>
+</header>
+
+<!-- ══════════════════════════════════════════════════════════
+     CHUNKER PAGE
+══════════════════════════════════════════════════════════ -->
+<div class="page active" id="page-chunker">
+
+  <aside class="chunker-sidebar">
+
+    <div>
+      <div class="sec-label">Chunker</div>
+      <div class="chunker-grid" id="chunkerGrid">
+        <div class="cpill active" data-chunker="pdf_digital" data-ext=".pdf">PDF digital<span class="ext">.pdf</span></div>
+        <div class="cpill" data-chunker="pdf_scanned" data-ext=".pdf">PDF scanned<span class="ext">.pdf</span></div>
+        <div class="cpill" data-chunker="docx" data-ext=".docx">DOCX<span class="ext">.docx</span></div>
+        <div class="cpill" data-chunker="eml" data-ext=".eml">EML<span class="ext">.eml</span></div>
+        <div class="cpill" data-chunker="pptx" data-ext=".pptx">PPTX<span class="ext">.pptx</span></div>
+        <div class="cpill" data-chunker="txt" data-ext=".txt">TXT<span class="ext">.txt</span></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="sec-label">File</div>
+      <div class="dropzone" id="chunkDz">
+        <input type="file" id="chunkFile">
+        <span class="dz-icon">📄</span>
+        <div class="dz-text">Drop a file here<br>or click to browse</div>
+        <div class="dz-file" id="chunkFileName"></div>
+      </div>
+    </div>
+
+    <button class="run-btn" id="runBtn" disabled onclick="runChunker()">Run chunker</button>
+
+    <div>
+      <div class="sec-label">Stats</div>
+      <div class="stats-grid">
+        <div class="stat-box" id="sb0"><div class="stat-val" id="sTotal">—</div><div class="stat-lbl">chunks</div></div>
+        <div class="stat-box" id="sb1"><div class="stat-val" id="sAvg">—</div><div class="stat-lbl">avg tok</div></div>
+        <div class="stat-box" id="sb2"><div class="stat-val" id="sMax">—</div><div class="stat-lbl">max tok</div></div>
+        <div class="stat-box" id="sb3"><div class="stat-val" id="sMin">—</div><div class="stat-lbl">min tok</div></div>
+      </div>
+    </div>
+
+  </aside>
+
+  <div class="chunker-main">
+    <!-- States -->
+    <div class="state-view" id="cState-empty">
+      <span class="ico">✦</span>
+      <p>Choose a chunker, upload a file,<br>then hit <strong>Run chunker</strong>.</p>
+    </div>
+    <div class="state-view" id="cState-loading" style="display:none">
+      <div class="spinner"></div>
+      <p>Chunking in progress…</p>
+    </div>
+    <div id="cState-error" style="display:none">
+      <div class="error-box" id="cErrorText"></div>
+    </div>
+
+    <!-- Results -->
+    <div id="cResults" style="display:none; flex:1; flex-direction:column; overflow:hidden;">
+      <div class="toolbar">
+        <button class="filter-btn active" data-filter="all" onclick="setFilter(this)">All</button>
+        <button class="filter-btn" data-filter="text" onclick="setFilter(this)">Text</button>
+        <button class="filter-btn" data-filter="table" onclick="setFilter(this)">Table</button>
+        <button class="filter-btn" data-filter="image" onclick="setFilter(this)">Image</button>
+        <input class="search-input" id="searchBox" placeholder="Search content…" oninput="renderChunks()">
+      </div>
+      <div class="chunk-list" id="chunkList"></div>
+    </div>
+  </div>
+
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     CSV PAGE
+══════════════════════════════════════════════════════════ -->
+<div class="csv-page" id="page-csv">
+
+  <aside class="csv-sidebar">
+
+    <div>
+      <div class="sec-label">Import CSV</div>
+      <div class="csv-dropzone" id="csvDz">
+        <input type="file" id="csvFile" accept=".csv">
+        <span class="dz-icon">📊</span>
+        <div class="dz-text" style="font-size:12px;color:var(--text3)">Drop a CSV here<br>or click to browse</div>
+        <div class="csv-file-name" id="csvFileName"></div>
+      </div>
+      <div class="import-toast" id="importToast"></div>
+      <button class="import-btn" id="importBtn" style="margin-top:10px" disabled onclick="importCSV()">Import to PostgreSQL</button>
+    </div>
+
+    <div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div class="sec-label" style="margin-bottom:0">Tables</div>
+        <button class="refresh-btn" style="width:auto;padding:4px 12px;font-size:11px" onclick="loadTables()">↻ Refresh</button>
+      </div>
+      <div class="table-list" id="tableList">
+        <div style="font-size:12px;color:var(--text3);text-align:center;padding:12px">Loading…</div>
+      </div>
+    </div>
+
+  </aside>
+
+  <div class="csv-main">
+    <div class="csv-content" id="csvContent">
+      <div class="csv-empty">
+        <span class="ico">🗂️</span>
+        <p>Select a table from the sidebar<br>to preview it and ask questions.</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     FULLSCREEN CHUNK MODAL
+══════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="chunkModal" onclick="closeModalOnBg(event)">
+  <div class="modal-box">
+    <div class="modal-hd">
+      <span class="type-badge tb-text" id="modalBadge">text</span>
+      <span class="modal-title" id="modalTitle">Chunk</span>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-meta" id="modalMeta"></div>
+    <div class="modal-tabs">
+      <button class="modal-tab active" id="mtab-content" onclick="switchModalTab('content')">content</button>
+      <button class="modal-tab" id="mtab-meta" onclick="switchModalTab('meta')">metadata</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-ft">
+      <div>
+        <div class="modal-ft-info" id="modalTok"></div>
+        <div class="modal-hint" style="margin-top:4px">← → arrow keys to navigate · Esc to close</div>
+      </div>
+      <div class="modal-nav">
+        <button class="modal-nav-btn" id="modalPrev" onclick="modalNav(-1)">← Prev</button>
+        <span class="modal-nav-pos" id="modalPos"></span>
+        <button class="modal-nav-btn" id="modalNext" onclick="modalNav(+1)">Next →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script>
+// ══════════════════════════════════════════════════════════
+// PAGE SWITCHING
+// ══════════════════════════════════════════════════════════
+function switchPage(page, btn) {
+  document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('page-chunker').classList.toggle('active', page === 'chunker');
+  const csvPage = document.getElementById('page-csv');
+  csvPage.classList.toggle('active', page === 'csv');
+  if (page === 'csv') loadTables();
+}
+
+// ══════════════════════════════════════════════════════════
+// CHUNKER
+// ══════════════════════════════════════════════════════════
+let allChunks = [], activeFilter = 'all', selFile = null, selChunker = 'pdf_digital';
+
+document.querySelectorAll('.cpill').forEach(p => {
+  p.addEventListener('click', () => {
+    document.querySelectorAll('.cpill').forEach(x => x.classList.remove('active'));
+    p.classList.add('active');
+    selChunker = p.dataset.chunker;
+    document.getElementById('chunkFile').accept = p.dataset.ext;
+  });
+});
+
+const chunkDz = document.getElementById('chunkDz');
+const chunkFi = document.getElementById('chunkFile');
+chunkDz.addEventListener('dragover', e => { e.preventDefault(); chunkDz.classList.add('over'); });
+chunkDz.addEventListener('dragleave', () => chunkDz.classList.remove('over'));
+chunkDz.addEventListener('drop', e => { e.preventDefault(); chunkDz.classList.remove('over'); if (e.dataTransfer.files[0]) setChunkFile(e.dataTransfer.files[0]); });
+chunkFi.addEventListener('change', () => { if (chunkFi.files[0]) setChunkFile(chunkFi.files[0]); });
+
+function setChunkFile(f) {
+  selFile = f;
+  document.getElementById('chunkFileName').textContent = f.name;
+  document.getElementById('runBtn').disabled = false;
+}
+
+async function runChunker() {
+  if (!selFile) return;
+  showCState('loading');
+  const fd = new FormData();
+  fd.append('file', selFile);
+  fd.append('chunker', selChunker);
+  try {
+    const res  = await fetch('/chunk', { method: 'POST', body: fd });
+    const data = await res.json();
+    if (data.error) { document.getElementById('cErrorText').textContent = data.error; showCState('error'); return; }
+    allChunks = data.chunks || [];
+    activeFilter = 'all';
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.toggle('active', b.dataset.filter === 'all'));
+    document.getElementById('searchBox').value = '';
+    updateStats(allChunks);
+    renderChunks();
+    showCState('results');
+  } catch(e) { document.getElementById('cErrorText').textContent = String(e); showCState('error'); }
+}
+
+function showCState(s) {
+  document.getElementById('cState-empty').style.display   = s==='empty'   ? 'flex':'none';
+  document.getElementById('cState-loading').style.display = s==='loading' ? 'flex':'none';
+  document.getElementById('cState-error').style.display   = s==='error'   ? 'block':'none';
+  const r = document.getElementById('cResults');
+  r.style.display = s==='results' ? 'flex':'none';
+}
+
+function updateStats(chunks) {
+  const toks = chunks.map(c => c.metadata?.token_count || 0);
+  const avg  = toks.length ? Math.round(toks.reduce((a,b)=>a+b,0)/toks.length) : 0;
+  document.getElementById('sTotal').textContent = chunks.length;
+  document.getElementById('sAvg').textContent   = avg;
+  document.getElementById('sMax').textContent   = toks.length ? Math.max(...toks) : '—';
+  document.getElementById('sMin').textContent   = toks.length ? Math.min(...toks) : '—';
+  [0,1,2,3].forEach(i => setTimeout(() => document.getElementById('sb'+i).classList.add('vis'), i*60));
+}
+
+function setFilter(btn) {
+  activeFilter = btn.dataset.filter;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.toggle('active', b===btn));
+  renderChunks();
+}
+
+function getFilteredChunks() {
+  const q = document.getElementById('searchBox').value.toLowerCase();
+  return allChunks.filter(c => {
+    if (activeFilter !== 'all' && (c.type||'other') !== activeFilter) return false;
+    if (q && !(c.content||'').toLowerCase().includes(q)) return false;
+    return true;
+  });
+}
+
+function renderChunks() {
+  const list = document.getElementById('chunkList');
+  const chunks = getFilteredChunks();
+  if (!chunks.length) {
+    list.innerHTML = '<div style="text-align:center;padding:32px;color:var(--text3);font-size:13px">No chunks match.</div>';
+    return;
+  }
+  list.innerHTML = chunks.map((c, i) => buildCard(c, i)).join('');
+}
+
+function buildCard(c, i) {
+  const type = c.type||'other', meta = c.metadata||{};
+  const tok = meta.token_count||0, idx = meta.chunk_index||(i+1), total = meta.chunk_total||allChunks.length;
+  const content = c.content||'';
+  const preview = content.replace(/\n/g,' ').slice(0,90) + (content.length>90?'…':'');
+  const sec = meta.section ? `${meta.section}` : (meta.slide ? `slide ${meta.slide}` : '');
+  const pg  = meta.page_start!=null ? `p.${meta.page_start}${meta.page_end&&meta.page_end!==meta.page_start?'–'+meta.page_end:''}` : (meta.page?`p.${meta.page}`:'');
+  const src = meta.source||'';
+  const sid = (c.chunk_id||'').slice(0,8);
+  const tags = [src,sec,pg,sid].filter(Boolean).map(t=>`<span class="meta-tag">${esc(t)}</span>`).join('');
+  return `<div class="chunk-card" id="cc${i}">
+    <div class="card-hd" onclick="toggleCard(${i})">
+      <span class="type-badge tb-${type}">${type}</span>
+      <span class="card-idx">${idx}/${total}</span>
+      <span class="card-preview">${esc(preview)}</span>
+      <span class="card-tok">${tok} tok</span>
+      <button class="card-expand-btn" onclick="event.stopPropagation(); openModal(${i})">⛶ full view</button>
+      <span class="card-chev">▼</span>
+    </div>
+    <div class="card-body">
+      <div class="card-meta">${tags}</div>
+      <div class="btabs">
+        <button class="btab active" onclick="switchBTab(${i},'content',this)">content</button>
+        <button class="btab" onclick="switchBTab(${i},'meta',this)">metadata</button>
+      </div>
+      <div class="tab-pane active" id="tp${i}-content"><div class="code-block">${esc(content)}</div></div>
+      <div class="tab-pane" id="tp${i}-meta"><div class="code-block">${esc(JSON.stringify(meta,null,2))}</div></div>
+    </div>
+  </div>`;
+}
+
+function toggleCard(i) { document.getElementById('cc'+i).classList.toggle('open'); }
+
+function switchBTab(i, tab, btn) {
+  const card = document.getElementById('cc'+i);
+  card.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  card.querySelectorAll('.btab').forEach(b => b.classList.remove('active'));
+  document.getElementById(`tp${i}-${tab}`).classList.add('active');
+  btn.classList.add('active');
+}
+
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+
+// ══════════════════════════════════════════════════════════
+// FULLSCREEN CHUNK MODAL
+// ══════════════════════════════════════════════════════════
+let modalIdx = -1;
+let modalChunks = [];
+let modalActiveTab = 'content';
+
+function openModal(i) {
+  modalChunks = getFilteredChunks();
+  modalIdx = i;
+  modalActiveTab = 'content';
+  renderModal();
+  document.getElementById('chunkModal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+  document.getElementById('chunkModal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function closeModalOnBg(e) {
+  if (e.target === document.getElementById('chunkModal')) closeModal();
+}
+
+function modalNav(dir) {
+  const next = modalIdx + dir;
+  if (next < 0 || next >= modalChunks.length) return;
+  modalIdx = next;
+  renderModal();
+}
+
+function switchModalTab(tab) {
+  modalActiveTab = tab;
+  document.querySelectorAll('.modal-tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('mtab-' + tab).classList.add('active');
+  renderModalBody();
+}
+
+function renderModal() {
+  const c = modalChunks[modalIdx];
+  if (!c) return;
+
+  const meta = c.metadata || {};
+  const type = c.type || 'other';
+
+  // Badge
+  const badge = document.getElementById('modalBadge');
+  badge.textContent = type;
+  badge.className = `type-badge tb-${type}`;
+
+  // Title
+  const idx   = meta.chunk_index || (modalIdx + 1);
+  const total = meta.chunk_total || modalChunks.length;
+  document.getElementById('modalTitle').textContent = `Chunk ${idx} of ${total}`;
+
+  // Meta tags
+  const src = meta.source || '';
+  const sec = meta.section || (meta.slide ? `slide ${meta.slide}` : '');
+  const pg  = meta.page_start != null
+    ? `p.${meta.page_start}${meta.page_end && meta.page_end !== meta.page_start ? '–' + meta.page_end : ''}`
+    : (meta.page ? `p.${meta.page}` : '');
+  const sid = (c.chunk_id || '').slice(0, 8);
+  document.getElementById('modalMeta').innerHTML =
+    [src, sec, pg, sid].filter(Boolean).map(t => `<span class="meta-tag">${esc(t)}</span>`).join('');
+
+  // Footer info
+  document.getElementById('modalTok').textContent = `${meta.token_count || 0} tokens`;
+  document.getElementById('modalPos').textContent = `${modalIdx + 1} / ${modalChunks.length}`;
+
+  // Nav buttons
+  document.getElementById('modalPrev').disabled = modalIdx === 0;
+  document.getElementById('modalNext').disabled = modalIdx === modalChunks.length - 1;
+
+  // Reset tabs
+  modalActiveTab = 'content';
+  document.querySelectorAll('.modal-tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('mtab-content').classList.add('active');
+
+  renderModalBody();
+
+  // Scroll body to top
+  document.getElementById('modalBody').scrollTop = 0;
+}
+
+function renderModalBody() {
+  const c = modalChunks[modalIdx];
+  if (!c) return;
+  const meta = c.metadata || {};
+  if (modalActiveTab === 'content') {
+    document.getElementById('modalBody').textContent = c.content || '(empty)';
+  } else {
+    document.getElementById('modalBody').textContent = JSON.stringify(meta, null, 2);
+  }
+}
+
+// Keyboard navigation
+document.addEventListener('keydown', e => {
+  const modal = document.getElementById('chunkModal');
+  if (!modal.classList.contains('open')) return;
+  if (e.key === 'Escape')      closeModal();
+  if (e.key === 'ArrowLeft')   modalNav(-1);
+  if (e.key === 'ArrowRight')  modalNav(+1);
+});
+
+
+// ══════════════════════════════════════════════════════════
+// CSV ANALYST
+// ══════════════════════════════════════════════════════════
+let csvFile = null, selectedTable = null, tablesData = [];
+
+const csvDz = document.getElementById('csvDz');
+const csvFi = document.getElementById('csvFile');
+csvDz.addEventListener('dragover', e => { e.preventDefault(); csvDz.classList.add('over'); });
+csvDz.addEventListener('dragleave', () => csvDz.classList.remove('over'));
+csvDz.addEventListener('drop', e => { e.preventDefault(); csvDz.classList.remove('over'); if (e.dataTransfer.files[0]) setCsvFile(e.dataTransfer.files[0]); });
+csvFi.addEventListener('change', () => { if (csvFi.files[0]) setCsvFile(csvFi.files[0]); });
+
+function setCsvFile(f) {
+  csvFile = f;
+  document.getElementById('csvFileName').textContent = f.name;
+  document.getElementById('importBtn').disabled = false;
+}
+
+async function importCSV() {
+  if (!csvFile) return;
+  document.getElementById('importBtn').disabled = true;
+  const toast = document.getElementById('importToast');
+  toast.style.display = 'none';
+  const fd = new FormData();
+  fd.append('file', csvFile);
+  try {
+    const res  = await fetch('/csv/import', { method: 'POST', body: fd });
+    const data = await res.json();
+    if (data.error) {
+      toast.style.background = 'var(--rose-light)';
+      toast.style.color = 'var(--rose-dark)';
+      toast.textContent = 'Error: ' + data.error.slice(0, 120);
+    } else {
+      toast.style.background = 'var(--sage-light)';
+      toast.style.color = 'var(--sage-dark)';
+      toast.textContent = '✓ ' + data.message;
+      loadTables();
+    }
+    toast.style.display = 'block';
+  } catch(e) {
+    toast.textContent = 'Network error';
+    toast.style.display = 'block';
+  }
+  document.getElementById('importBtn').disabled = false;
+}
+
+async function loadTables() {
+  const list = document.getElementById('tableList');
+  list.innerHTML = '<div style="font-size:12px;color:var(--text3);text-align:center;padding:12px">Loading…</div>';
+  try {
+    const res  = await fetch('/csv/tables');
+    const data = await res.json();
+    if (data.error) {
+      list.innerHTML = `<div style="color:var(--rose-dark);font-size:11px;padding:8px">${esc(data.error.slice(0,200))}</div>`;
+      return;
+    }
+    tablesData = data.tables || [];
+    if (!tablesData.length) {
+      list.innerHTML = '<div style="font-size:12px;color:var(--text3);text-align:center;padding:12px">No tables yet.</div>';
+      return;
+    }
+    list.innerHTML = tablesData.map(t => `
+      <div class="table-item${t.name===selectedTable?' selected':''}" onclick="selectTable('${t.name}')">
+        <div class="table-item-name">${esc(t.name)}</div>
+        <div class="table-item-meta">${t.rows} rows · ${t.cols} cols</div>
+      </div>`).join('');
+  } catch(e) {
+    list.innerHTML = '<div style="color:var(--rose-dark);font-size:11px;padding:8px">Network error</div>';
+  }
+}
+
+function selectTable(name) {
+  selectedTable = name;
+  document.querySelectorAll('.table-item').forEach(el =>
+    el.classList.toggle('selected', el.querySelector('.table-item-name').textContent === name)
+  );
+  const t = tablesData.find(x => x.name === name);
+  if (!t) return;
+  renderTableView(t);
+}
+
+function renderTableView(t) {
+  const cols = t.columns || [];
+  const sample = t.sample || [];
+  const colPills = cols.map(c => `<span class="col-pill">${esc(c)}</span>`).join('');
+  let sampleHtml = '';
+  if (sample.length) {
+    const heads = cols.map(c => `<th>${esc(c)}</th>`).join('');
+    const rows  = sample.map(row => '<tr>' + cols.map(c => `<td>${esc(String(row[c]??''))}</td>`).join('') + '</tr>').join('');
+    sampleHtml = `<div class="sample-wrap"><table class="sample-table"><thead><tr>${heads}</tr></thead><tbody>${rows}</tbody></table></div>`;
+  }
+
+  document.getElementById('csvContent').innerHTML = `
+    <div class="preview-card">
+      <div class="preview-hd">
+        <div class="preview-title">${esc(t.name)}</div>
+        <div class="preview-meta">${t.rows} rows · ${t.cols} columns</div>
+      </div>
+      <div class="cols-list">${colPills}</div>
+      ${sample.length ? sampleHtml : '<div style="padding:12px 18px;font-size:12px;color:var(--text3)">No sample data</div>'}
+    </div>
+
+    <div class="query-card">
+      <div class="query-label">Ask a question about this table</div>
+      <div class="query-row">
+        <input class="query-input" id="queryInput" placeholder="e.g. What is the average salary?" onkeydown="if(event.key==='Enter') askQuestion()">
+        <button class="ask-btn" id="askBtn" onclick="askQuestion()">Ask →</button>
+      </div>
+    </div>
+
+    <div id="answers"></div>
+  `;
+}
+
+async function askQuestion() {
+  const input = document.getElementById('queryInput');
+  const question = input.value.trim();
+  if (!question || !selectedTable) return;
+  const btn = document.getElementById('askBtn');
+  btn.disabled = true; btn.textContent = '…';
+
+  try {
+    const res  = await fetch('/csv/query', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ table: selectedTable, question })
+    });
+    const data = await res.json();
+    const answers = document.getElementById('answers');
+    if (data.error) {
+      answers.insertAdjacentHTML('afterbegin', `<div class="error-box">${esc(data.error.slice(0,400))}</div>`);
+    } else {
+      const codeHtml = data.code
+        ? `<div style="margin-top:10px"><div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);margin-bottom:4px">generated code</div><div class="answer-code">${esc(data.code)}</div></div>`
+        : '';
+      answers.insertAdjacentHTML('afterbegin', `
+        <div class="answer-card">
+          <div class="answer-q">Q: ${esc(question)}</div>
+          <div class="answer-a">${esc(data.answer||'No answer returned.')}</div>
+          ${codeHtml}
+        </div>`);
+    }
+    input.value = '';
+  } catch(e) {
+    document.getElementById('answers').insertAdjacentHTML('afterbegin',
+      `<div class="error-box">Network error: ${esc(String(e))}</div>`);
+  }
+  btn.disabled = false; btn.textContent = 'Ask →';
+}
+
+window.addEventListener('load', () => {});
+</script>
+</body>
+</html>

@@ -7,25 +7,26 @@ from File_processing.pptx_handler import parse_pptx, clean_content
 from File_processing.cleaner import clean
 from pathlib import Path
 import json
+import uuid
+
 
 MAX_CAPTION_CHARS = 150
 
 
-# ── CHUNKER ───────────────────────────────────────────
-def chunk_parsed_pptx(parsed: dict) -> dict:
+
+def chunk_parsed_pptx(parsed: dict) -> list[dict]:
     """
     Takes the output of parse_pptx() and returns a list of chunks
     ready for embedding and storage in a vector DB.
     """
     filename  = parsed["filename"]
     chunks    = []
-    chunk_id  = 0
     img_counter = 0
     tbl_counter = 0
 
     for slide in parsed["slides"]:
 
-        # Section slides have no content to chunk
+
         if slide["is_section"]:
             continue
 
@@ -45,13 +46,12 @@ def chunk_parsed_pptx(parsed: dict) -> dict:
         has_meaningful = text_len > 0
         is_short_text  = has_meaningful and text_len < MAX_CAPTION_CHARS
 
-        # ── TABLE CHUNKS ─────────────────────────────
+        # TABLE CHUNKS 
         is_table_caption   = bool(tables) and is_short_text
         table_caption_used = False
 
         for md_table in tables:
             tbl_counter += 1
-            chunk_id    += 1
 
             if is_table_caption and not table_caption_used:
                 content            = clean_content(f"{text}\n\n{md_table}")
@@ -60,18 +60,18 @@ def chunk_parsed_pptx(parsed: dict) -> dict:
                 content = clean_content(md_table)
 
             chunks.append({
+                "chunk_id": str(uuid.uuid4()),
                 "type":    "table",
                 "content": content,
-                "metadata": {**base_meta, "chunk_id": chunk_id, "table_index": tbl_counter},
+                "metadata": {**base_meta, "table_index": tbl_counter},
             })
 
-        # ── IMAGE CHUNKS ─────────────────────────────
+        # IMAGE CHUNKS 
         is_image_caption   = bool(images) and is_short_text
         image_caption_used = False
 
         for description in images:
             img_counter += 1
-            chunk_id    += 1
 
             if is_image_caption and not image_caption_used:
                 content            = clean_content(f"{text}\n\n{description}")
@@ -80,25 +80,25 @@ def chunk_parsed_pptx(parsed: dict) -> dict:
                 content = clean_content(description)
 
             chunks.append({
+                "chunk_id": str(uuid.uuid4()),
                 "type":    "image",
                 "content": content,
-                "metadata": {**base_meta, "chunk_id": chunk_id, "image_index": img_counter},
+                "metadata": {**base_meta, "image_index": img_counter},
             })
 
-        # ── TEXT CHUNK (only if not merged) ──────────
+        # TEXT CHUNK (only if not merged) 
         caption_was_used = table_caption_used or image_caption_used
 
         if has_meaningful and not caption_was_used:
-            chunk_id += 1
             chunks.append({
+                "chunk_id": str(uuid.uuid4()),
                 "type":    "text",
                 "content": text,
-                "metadata": {**base_meta, "chunk_id": chunk_id},
+                "metadata": {**base_meta},
             })
 
     return {
-        "filename": filename,
-        "chunks":   chunks,
+        "chunks": chunks,
         "metadata": {
             "source":      filename,
             "slide_count": parsed["total_slides"],
@@ -109,7 +109,7 @@ def chunk_parsed_pptx(parsed: dict) -> dict:
     }
 
 
-# ── SECTION GROUPING ──────────────────────────────────
+# SECTION GROUPING 
 def group_chunks_by_section(chunks: list) -> dict:
     """
     Merges all chunks of the same section into a single entry.
@@ -137,14 +137,14 @@ def group_chunks_by_section(chunks: list) -> dict:
     return sections
 
 
-# ── MAIN PIPELINE ─────────────────────────────────────
+#  MAIN PIPELINE 
 def extract_pptx(file_path: str) -> dict:
     """Full pipeline: parse → chunk → save JSON."""
 
     parsed = parse_pptx(file_path)
     result = chunk_parsed_pptx(parsed)
     result = clean(result)
-    
+
     output_path = Path(file_path).stem + "_chunked.json"
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(result, f, ensure_ascii=False, indent=2)
@@ -158,13 +158,14 @@ def extract_pptx(file_path: str) -> dict:
     return result
 
 
-# ── TEST ──────────────────────────────────────────────
+# TEST 
 if __name__ == "__main__":
-    result = extract_pptx("test9.pptx")
+    result = extract_pptx("test4.pptx")
 
     print("\n===== CHUNKS PREVIEW =====")
     for i, chunk in enumerate(result["chunks"][:5]):
         print(f"\nChunk {i+1}:")
+        print(f"  chunk_id: {chunk['chunk_id']}")
         print(f"  Type   : {chunk['type']}")
         print(f"  Slide  : {chunk['metadata']['slide']}")
         print(f"  Section: {chunk['metadata']['section']}")

@@ -1,0 +1,61 @@
+{
+  "content": [
+    {
+      "type": "table",
+      "headers": [
+        "Name",
+        "Department",
+        "Score",
+        "Grade"
+      ],
+      "rows": [
+        [
+          "Alice",
+          "Engineering",
+          "95",
+          "A"
+        ],
+        [
+          "Bob",
+          "Marketing",
+          "82",
+          "B"
+        ],
+        [
+          "Carol",
+          "Design",
+          "88",
+          "B+"
+        ]
+      ]
+    }
+  ],
+  "metadata": {
+    "source": "teee.eml",
+    "subject": "Fwd: teee",
+    "from": "roukaya ayach <roukaya.ayach@gmail.com>",
+    "to": "oumayma.jellali@enis.tn",
+    "date": "Mon, 20 Apr 2026 11:12:55 +0100",
+    "has_attachments": true,
+    "attachments": [
+      {
+        "name": "ChatGPT Image 5 mars 2026, 13_01_03.png",
+        "content_type": "image/png"
+      }
+    ]
+  },
+  "attachments": [
+    {
+      "name": "ChatGPT Image 5 mars 2026, 13_01_03.png",
+      "result": {
+        "chunk_id": "0734f227-a4a5-4201-9812-a169c917132d",
+        "type": "image",
+        "content": "The image illustrates the process of obtaining an access token to interact with the Microsoft Graph API, which provides a unified API endpoint for accessing data across various Microsoft 365 services. The process involves authentication with Azure Active Directory (AAD) and obtaining an access token.\n\n*   **AI Application**\n    *   Requests an access token every hour\n*   **Azure Active Directory (AAD)**\n    *   App-Only Authentication:\n        *   Client ID: <CLIENT_ID>\n        *   Client Secret: <CLIENT_ID>\n    *   Returns Access Token (valid ~1 hour)\n*   **Microsoft Graph API**\n    *   Send Access Token in Requests\n    *   Automatic Token Renewal\n    *   JWT Access Token: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...\n    *   New Access Token\n*   **Your Microsoft 365 Data**\n    *   Teams\n    *   SharePoint\n    *   Exchange\n    *   OneDrive\n\nThe image provides a clear overview of the steps involved in obtaining an access token to interact with the Microsoft Graph API, including requesting an access token, authenticating with AAD, and renewing the token automatically.",
+        "metadata": {
+          "source": "C:\\Users\\hp\\OneDrive\\Bureau\\Secure-AI-Assistant\\temp\\attachment_1.png",
+          "image_index": 1
+        }
+      }
+    }
+  ]
+}

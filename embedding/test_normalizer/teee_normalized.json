@@ -1,0 +1,38 @@
+[
+  {
+    "chunk_id": "8990c4e4-0b6b-4e2f-9c72-30d44e5a21a0",
+    "type": "table",
+    "content": "Name | Department | Score | Grade\n--- | --- | --- | ---\nAlice | Engineering | 95 | A\nBob | Marketing | 82 | B\nCarol | Design | 88 | B+",
+    "embed_text": "Table: Name | Department | Score | Grade\n--- | --- | --- | ---\nAlice | Engineering | 95 | A\nBob | Marketing | 82 | B\nCarol | Design | 88 | B+",
+    "metadata": {
+      "source": "teee.eml",
+      "source_type": "eml_body_table",
+      "section": null,
+      "page": null,
+      "chunk_index": null,
+      "chunk_total": null,
+      "token_count": 38,
+      "subject": "Fwd: teee",
+      "from": "roukaya ayach <roukaya.ayach@gmail.com>",
+      "date": "Mon, 20 Apr 2026 11:12:55 +0100"
+    }
+  },
+  {
+    "chunk_id": "b6ac7e69-5045-480c-81d2-58f4400b403a",
+    "type": "image",
+    "content": "the process of obtaining an access token to interact with the Microsoft Graph API, which provides a unified API endpoint for accessing data across various Microsoft 365 services. The process involves authentication with Azure Active Directory (AAD) and obtaining an access token.\nAI Application\nRequests an access token every hour\nAzure Active Directory (AAD)\nApp-Only Authentication:\nClient ID:\nClient Secret:\nReturns Access Token (valid ~1 hour)\nMicrosoft Graph API\nSend Access Token in Requests\nAutomatic Token Renewal\nJWT Access Token: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...\nNew Access Token\nYour Microsoft 365 Data\nTeams\nSharePoint\nExchange\nOneDrive\nThe image provides a clear overview of the steps involved in obtaining an access token to interact with the Microsoft Graph API, including requesting an access token, authenticating with AAD, and renewing the token automatically.",
+    "embed_text": "Image description: the process of obtaining an access token to interact with the Microsoft Graph API, which provides a unified API endpoint for accessing data across various Microsoft 365 services. The process involves authentication with Azure Active Directory (AAD) and obtaining an access token.\nAI Application\nRequests an access token every hour\nAzure Active Directory (AAD)\nApp-Only Authentication:\nClient ID:\nClient Secret:\nReturns Access Token (valid ~1 hour)\nMicrosoft Graph API\nSend Access Token in Requests\nAutomatic Token Renewal\nJWT Access Token: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...\nNew Access Token\nYour Microsoft 365 Data\nTeams\nSharePoint\nExchange\nOneDrive\nThe image provides a clear overview of the steps involved in obtaining an access token to interact with the Microsoft Graph API, including requesting an access token, authenticating with AAD, and renewing the token automatically.",
+    "metadata": {
+      "source": "ChatGPT Image 5 mars 2026, 13_01_03.png",
+      "source_type": "png",
+      "section": null,
+      "page": null,
+      "chunk_index": null,
+      "chunk_total": null,
+      "token_count": 252,
+      "subject": "Fwd: teee",
+      "from": "roukaya ayach <roukaya.ayach@gmail.com>",
+      "date": "Mon, 20 Apr 2026 11:12:55 +0100"
+    }
+  }
+]

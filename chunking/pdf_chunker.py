@@ -3,7 +3,7 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
 os.environ["HUGGINGFACE_HUB_VERBOSITY"] = "error"
-
+from File_processing.cleaner import clean
 import re
 import uuid
 import numpy as np
@@ -12,7 +12,6 @@ from FlagEmbedding import BGEM3FlagModel
 from config import DEBUG
 
 
-# ── MODEL ─────────────────────────────────────────────
 _model = None
 
 def _get_model() -> BGEM3FlagModel:
@@ -26,12 +25,12 @@ def _get_model() -> BGEM3FlagModel:
     return _model
 
 
-# ── SETTINGS ──────────────────────────────────────────
-MAX_TOKENS        = 520
-TABLE_MAX_TOKENS  = 600
+# SETTINGS
+MAX_TOKENS        = 450
+TABLE_MAX_TOKENS  = 450
 OVERLAP_TOKENS    = 0
 SIMILARITY_CUTOFF = 0.65
-MIN_TOKENS        = 100
+MIN_TOKENS        = 80
 
 SKIP_SECTIONS = {
     "references",
@@ -40,22 +39,19 @@ SKIP_SECTIONS = {
     "acknowledgements",
 }
 
-# ── CAPTION PATTERNS ──────────────────────────────────
+# CAPTION PATTERNS 
 CAPTION_RE = re.compile(
     r'^(Fig\.|Figure|Table)\s+\d+[.:]\s+\S',
     re.IGNORECASE
 )
 LABEL_RE = re.compile(
-    r'^(Fig\.|Figure|Table)\s+\d+[.?\s*$',
+    r'^(Fig\.|Figure|Table)\s+\d+\.?\s*$',
     re.IGNORECASE
 )
 ANY_CAPTION_RE = re.compile(
     r'^(Fig\.|Figure|Table|Tableau|FIGURE|TABLE)\s*[\dIVXLC]+[.:\s]',
     re.IGNORECASE
 )
-
-
-#  MAIN ENTRY POINT
 
 def chunk_pdf(handler_output: dict) -> list[dict]:
     """
@@ -67,7 +63,7 @@ def chunk_pdf(handler_output: dict) -> list[dict]:
     Strategy:
       - Process in ORIGINAL ORDER to keep captions adjacent to images/tables
       - text   → separate caption lines from body → merge body per section
-                 → semantic split if too large
+                 → semantic split if too large OR section is unknown
       - table  → split by rows, repeat header in every chunk
       - image  → always atomic
       - after  → attach captions (checks BOTH before and after)
@@ -90,8 +86,12 @@ def chunk_pdf(handler_output: dict) -> list[dict]:
         """
         Process accumulated text chunks:
         - Separate caption lines from body text
-        - Merge body text per section
-        - Semantic split if too large
+        - Merge body text per CONSECUTIVE section group
+        - Known section + fits in MAX_TOKENS  → keep as one chunk
+        - Known section + too large           → semantic split
+        - Unknown section                     → ALWAYS semantic split
+          Consecutive unknown paragraphs may or may not be related —
+          let cosine similarity decide the boundaries, not page/section.
         - Keep caption lines standalone for _attach_captions()
         """
         if not buf:
@@ -101,7 +101,7 @@ def chunk_pdf(handler_output: dict) -> list[dict]:
 
         for section_key, group in groupby(
             buf,
-            key=lambda c: c.get("metadata", {}).get("section", "")
+            key=lambda c: c.get("metadata", {}).get("section", "").strip().lower()
         ):
             group         = list(group)
             body_chunks   = []
@@ -109,15 +109,14 @@ def chunk_pdf(handler_output: dict) -> list[dict]:
 
             for c in group:
                 content = c["content"].strip()
-                # separate short caption-like lines from body text
                 if ANY_CAPTION_RE.match(content) and len(content) < 200:
                     caption_lines.append(c)
                 else:
                     body_chunks.append(c)
 
-            meta = group[0].get("metadata", {})
+            meta       = group[0].get("metadata", {})
+            is_unknown = not section_key or section_key == "unknown"
 
-            # process body text
             if body_chunks:
                 merged = " ".join(
                     c["content"].strip()
@@ -126,8 +125,18 @@ def chunk_pdf(handler_output: dict) -> list[dict]:
                 )
                 if merged:
                     tokens = _count_tokens(merged)
-                    if tokens <= MAX_TOKENS:
+
+                    if is_unknown:
+                        if DEBUG:
+                            print(f"[PDF CHUNKER] Unknown section → "
+                                  f"semantic split ({tokens} tokens)")
+                        for piece in _semantic_split(merged):
+                            if piece.strip():
+                                result.append(_make_chunk(piece, "text", meta))
+
+                    elif tokens <= MAX_TOKENS:
                         result.append(_make_chunk(merged, "text", meta))
+
                     else:
                         if DEBUG:
                             print(f"[PDF CHUNKER] Splitting section "
@@ -136,13 +145,11 @@ def chunk_pdf(handler_output: dict) -> list[dict]:
                             if piece.strip():
                                 result.append(_make_chunk(piece, "text", meta))
 
-            # keep caption lines separate so _attach_captions() finds them
             for c in caption_lines:
                 result.append(_make_chunk(c["content"].strip(), "text", meta))
 
         return result
 
-    # ── process in original order ──────────────────────
     for raw in raw_chunks:
         chunk_type = raw.get("type",    "text")
         content    = raw.get("content", "").strip()
@@ -171,16 +178,12 @@ def chunk_pdf(handler_output: dict) -> list[dict]:
 
     processed.extend(flush_text_buffer(text_buffer))
 
-    # ── attach captions to images and tables ──────────
     normalized = _attach_captions(processed)
 
-    # ── propagate caption to ALL chunks of same table ─
     normalized = _propagate_table_captions(normalized)
 
-    # ── merge tiny text chunks ─────────────────────────
     normalized = _merge_tiny_chunks(normalized)
 
-    # ── fill chunk_index / chunk_total ────────────────
     total = len(normalized)
     for i, chunk in enumerate(normalized):
         chunk["metadata"]["chunk_index"] = i + 1
@@ -192,12 +195,12 @@ def chunk_pdf(handler_output: dict) -> list[dict]:
     return normalized
 
 
-#  TABLE SPLIT BY ROWS
+# TABLE SPLIT BY ROWS
 
 def _split_table(content: str, metadata: dict) -> list[dict]:
     """
     Split a large markdown table into smaller chunks by rows.
-    Header is repeated in every chunk — meaning always preserved.
+    Header is repeated in every chunk — always preserved.
 
     Every chunk:
       | Col1 | Col2 | Col3 |   ← header always present
@@ -263,7 +266,7 @@ def _split_table(content: str, metadata: dict) -> list[dict]:
     return chunks
 
 
-#  CAPTION ATTACHMENT
+# CAPTION ATTACHMENT
 
 def _attach_captions(chunks: list[dict]) -> list[dict]:
     """
@@ -308,7 +311,7 @@ def _attach_captions(chunks: list[dict]) -> list[dict]:
         skip         = 0
         found_before = False
 
-        # ── check AFTER (caption below) ───────────────
+        # check AFTER (caption below)
         if next1 and next1["type"] == "text":
             n1 = next1["content"].strip()
 
@@ -325,14 +328,14 @@ def _attach_captions(chunks: list[dict]) -> list[dict]:
                 caption_text, remainder = _extract_caption_and_remainder(n1)
                 skip = 1
 
-        # ── check BEFORE (caption above) ──────────────
+        #check BEFORE (caption above)
         if not caption_text and result and result[-1]["type"] == "text":
             prev_content = result[-1]["content"].strip()
             if ANY_CAPTION_RE.match(prev_content):
                 caption_text = result.pop()["content"].strip()
                 found_before = True
 
-        # ── attach caption ─────────────────────────────
+        # attach caption 
         if caption_text:
             chunk = dict(chunk)
             if found_before:
@@ -408,24 +411,15 @@ def _propagate_table_captions(chunks: list[dict]) -> list[dict]:
       - Each row chunk is retrieved independently by similarity search
       - Without the caption, the LLM doesn't know what table it came from
       - With caption on every chunk, any retrieved row is self-contained
-
-    Result:
-      chunk 24: "| Method | Source |...\n\nCaption: TABLE I SUMMARY..." ✅
-      chunk 25: "| Method | Source |...\n\nCaption: TABLE I SUMMARY..." ✅
-      ...
-      chunk 34: "| Method | Source |...\n\nCaption: TABLE I SUMMARY..." ✅
     """
     result = list(chunks)
 
-    # pass 1 — find all table chunks that have a caption
-    # collect: caption text + index range of sibling chunks
     i = 0
     while i < len(result):
         chunk = result[i]
 
         if chunk["type"] == "table" and "Caption:" in chunk.get("content", ""):
 
-            # extract caption part
             content    = chunk["content"]
             cap_marker = content.find("\n\nCaption:")
             if cap_marker == -1:
@@ -434,15 +428,11 @@ def _propagate_table_captions(chunks: list[dict]) -> list[dict]:
                     i += 1
                     continue
 
-            # "\n\nCaption: TABLE I SUMMARY..." or "Caption: TABLE I..."
-            if content[cap_marker:cap_marker+2] == "\n\n":
-                caption_part = content[cap_marker:]       # includes \n\n
+            if content[cap_marker:cap_marker + 2] == "\n\n":
+                caption_part = content[cap_marker:]
             else:
                 caption_part = "\n\n" + content[cap_marker:]
 
-            table_only = content[:cap_marker].strip()
-
-            # find ALL sibling chunks (consecutive tables, same section)
             section = chunk["metadata"]["section"]
 
             # walk backward
@@ -480,7 +470,7 @@ def _propagate_table_captions(chunks: list[dict]) -> list[dict]:
             if DEBUG:
                 print(f"[PDF CHUNKER] Caption propagated to "
                       f"{end - start + 1} table chunks "
-                      f"(chunks {start+1}–{end+1})")
+                      f"(chunks {start + 1}–{end + 1})")
 
         i += 1
 
@@ -536,8 +526,6 @@ def _merge_tiny_chunks(chunks: list[dict]) -> list[dict]:
         i += 1
 
     return result
-
-
 #  SEMANTIC SPLIT
 
 def _semantic_split(text: str) -> list[str]:
@@ -569,10 +557,10 @@ def _semantic_split(text: str) -> list[str]:
     similarities = _adjacent_cosine(embeddings)
 
     if DEBUG:
-        print(f"[PDF CHUNKER]   Sentences  : {len(sentences)}")
+        print(f"[PDF CHUNKER]   Sentences        : {len(sentences)}")
         print(f"[PDF CHUNKER]   Sim (min/avg/max): "
               f"{min(similarities):.2f} / "
-              f"{sum(similarities)/len(similarities):.2f} / "
+              f"{sum(similarities) / len(similarities):.2f} / "
               f"{max(similarities):.2f}")
 
     cut_indices = [
@@ -582,7 +570,7 @@ def _semantic_split(text: str) -> list[str]:
     ]
 
     if DEBUG:
-        print(f"[PDF CHUNKER]   Cut points : {cut_indices}")
+        print(f"[PDF CHUNKER]   Cut points       : {cut_indices}")
 
     segments = _build_segments(sentences, cut_indices)
     segments = _merge_small_segments(segments, min_tokens=MIN_TOKENS)
@@ -590,7 +578,6 @@ def _semantic_split(text: str) -> list[str]:
     return segments
 
 
-#  HELPERS
 
 def _split_sentences(text: str) -> list[str]:
     paragraphs = [p.strip() for p in text.split("\n\n") if p.strip()]
@@ -702,8 +689,7 @@ def _print_summary(chunks: list[dict]):
     table_tokens = [c["metadata"]["token_count"] for c in table_chunks]
     image_tokens = [c["metadata"]["token_count"] for c in image_chunks]
     captions     = [c for c in chunks if "Caption:" in c.get("content", "")]
-
-    tbl_with_cap = [c for c in table_chunks if "Caption:" in c.get("content","")]
+    tbl_with_cap = [c for c in table_chunks if "Caption:" in c.get("content", "")]
 
     print(f"\n[PDF CHUNKER] ── Summary ─────────────────────")
     print(f"[PDF CHUNKER] Total chunks      : {len(chunks)}")
@@ -718,7 +704,7 @@ def _print_summary(chunks: list[dict]):
         small = [t for t in text_tokens if t < MIN_TOKENS]
         print(f"[PDF CHUNKER] Text tokens       : "
               f"min={min(text_tokens)}  "
-              f"avg={int(sum(text_tokens)/len(text_tokens))}  "
+              f"avg={int(sum(text_tokens) / len(text_tokens))}  "
               f"max={max(text_tokens)}")
         print(f"[PDF CHUNKER] Text over  {MAX_TOKENS}  : {len(over)}")
         print(f"[PDF CHUNKER] Text under {MIN_TOKENS}  : {len(small)}")
@@ -727,38 +713,42 @@ def _print_summary(chunks: list[dict]):
         over_t = [t for t in table_tokens if t > TABLE_MAX_TOKENS]
         print(f"[PDF CHUNKER] Table tokens      : "
               f"min={min(table_tokens)}  "
-              f"avg={int(sum(table_tokens)/len(table_tokens))}  "
+              f"avg={int(sum(table_tokens) / len(table_tokens))}  "
               f"max={max(table_tokens)}")
         print(f"[PDF CHUNKER] Table over {TABLE_MAX_TOKENS} : {len(over_t)}")
 
     if image_tokens:
         print(f"[PDF CHUNKER] Image tokens      : "
               f"min={min(image_tokens)}  "
-              f"avg={int(sum(image_tokens)/len(image_tokens))}  "
+              f"avg={int(sum(image_tokens) / len(image_tokens))}  "
               f"max={max(image_tokens)}")
 
     print(f"[PDF CHUNKER] ─────────────────────────────────")
+
 
 
 #  TEST
 
 if __name__ == "__main__":
     import json
-    from processing.digital_pdf import extract_digital_pdf
+    from File_processing.digital_pdf import extract_digital_pdf
 
     if len(sys.argv) < 2:
-        print("Usage: python chunking/pdf_chunker.py <file.pdf>")
+        print("Usage: python chunking/pdf_chunking.py <file.pdf>")
         sys.exit(1)
 
     pdf_path = sys.argv[1]
 
-    print(f"\n── Step 1: ingestion ─────────────────────────")
+    print(f"\n Step 1: ingestion ")
     handler_output = extract_digital_pdf(pdf_path)
 
-    print(f"\n── Step 2: chunking ──────────────────────────")
+    print(f"\n Step 2: cleaning ")
+    handler_output = clean(handler_output)
+
+    print(f"\n── Step 3: chunking ")
     chunks = chunk_pdf(handler_output)
 
-    print(f"\n── Step 3: preview (first 5 chunks) ─────────")
+    print(f"\n── Step 4: preview (first 5 chunks) ")
     for chunk in chunks[:5]:
         print(f"\n  chunk_id   : {chunk['chunk_id']}")
         print(f"  type       : {chunk['type']}")
@@ -773,4 +763,4 @@ if __name__ == "__main__":
     output_path = pdf_path.replace(".pdf", "_chunks.json")
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(chunks, f, ensure_ascii=False, indent=2)
-    print(f"\n Saved to: {output_path}")
+    print(f"\nSaved to: {output_path}")

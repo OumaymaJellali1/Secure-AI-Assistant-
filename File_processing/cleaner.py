@@ -24,24 +24,44 @@ def _walk(obj):
     """
     Recursively walk dict/list and clean any content field found.
     Rules:
-      - dict with "type" + "content"  → clean content by type
-      - dict with "content" only      → clean as plain text
-      - dict with "text"              → clean as plain text
+      - dict with "type" == "table"             → clean headers/rows strings
+      - dict with "type" + "content"            → clean content by type
+      - dict with "content" (list or dict)      → walk into it
+      - dict with "content" (string) only       → clean as plain text
+      - dict with "text"                        → clean as plain text
     Metadata is never touched.
     """
     if isinstance(obj, list):
         result = []
         for item in obj:
             walked = _walk(item)
-            # if item had type+content and content is now empty → drop it
-            if isinstance(walked, dict) and "type" in walked and walked.get("content", "x") == "":
-                if DEBUG:
-                    print(f"[CLEANER] Dropped empty chunk after cleaning (type={walked.get('type')})")
-                continue
+            # drop empty text/image/email chunks
+            if isinstance(walked, dict) and "type" in walked:
+                if walked.get("type") in ("text", "image", "email") \
+                        and walked.get("content", "x") == "":
+                    if DEBUG:
+                        print(f"[CLEANER] Dropped empty chunk after cleaning "
+                              f"(type={walked.get('type')})")
+                    continue
+                # drop empty tables
+                if walked.get("type") == "table" \
+                        and not walked.get("rows") and not walked.get("headers"):
+                    if DEBUG:
+                        print(f"[CLEANER] Dropped empty table chunk")
+                    continue
             result.append(walked)
         return result
 
     if isinstance(obj, dict):
+        # ── TABLE CHUNK: clean headers + each row cell ─
+        if obj.get("type") == "table":
+            obj["headers"] = [clean_text(str(h)) for h in obj.get("headers", [])]
+            obj["rows"]    = [
+                [clean_text(str(cell)) for cell in row]
+                for row in obj.get("rows", [])
+            ]
+            return obj
+
         # ── has "type" + "content" → clean by type ────
         if "type" in obj and "content" in obj:
             chunk_type = obj["type"]
@@ -53,24 +73,33 @@ def _walk(obj):
             else:
                 obj["content"] = cleaned
 
-        # ── has "content" but no "type" → clean as text ──
+        # ── has "content" (no type): walk if container, clean if string ─
         elif "content" in obj and "type" not in obj:
-            obj["content"] = clean_text(obj["content"])
+            content = obj["content"]
+            if isinstance(content, (list, dict)):
+                obj["content"] = _walk(content)
+            elif isinstance(content, str):
+                obj["content"] = clean_text(content)
 
         # ── has "text" key → clean as text ────────────
-        if "text" in obj:
+        if "text" in obj and isinstance(obj.get("text"), str):
             obj["text"] = clean_text(obj["text"])
 
         # ── recurse into all values except protected keys ──
         for key in list(obj.keys()):
-            if key not in ("content", "text", "metadata", "type"):
+            if key not in ("content", "text", "metadata", "type",
+                           "headers", "rows"):
                 obj[key] = _walk(obj[key])
 
     return obj
 
 
 #  ROUTE CLEANING BY TYPE
-def _clean_by_type(chunk_type: str, content: str) -> str:
+def _clean_by_type(chunk_type: str, content) -> str:
+    # defensive: non-string content (table with legacy format, etc.)
+    if not isinstance(content, str):
+        return ""
+
     if chunk_type == "text":
         return clean_text(content)
     elif chunk_type == "table":
@@ -126,7 +155,7 @@ def clean_text(text: str) -> str:
     return text.strip()
 
 
-#  CLEAN TABLE
+#  CLEAN TABLE (string form — kept for backward compat)
 def clean_table(text: str) -> str:
     if not text:
         return ""
@@ -178,8 +207,8 @@ def clean_image_description(text: str) -> str:
         text = re.sub(pattern, "", text, flags=re.IGNORECASE)
 
     # remove markdown bold/italic (* and **)
-    text = re.sub(r"\*{1,2}([^*]+)\*{1,2}", r"\1", text)  
-    text = re.sub(r"\*+", "", text)                        
+    text = re.sub(r"\*{1,2}([^*]+)\*{1,2}", r"\1", text)
+    text = re.sub(r"\*+", "", text)
     text = text.replace("\\", "")
     text = text.replace('\"', '"')
     text = text.replace('"', '')
@@ -206,26 +235,25 @@ def clean_email(text: str) -> str:
 
     # remove email tracking footers
     tracking_patterns = [
-    r"email tracked with \w+.*",
-    r"\·\s*opt out.*",
-    r"opt out\s*·?.*",
-    r"unsubscribe.*",
-    r"this email was sent to.*",
-    r"you (are|were) receiving this (email|message) because.*",
-    r"©\s*\d{4}.*",
-    r"all rights reserved.*",
-    r"\d{2}/\d{2}/\d{2,4}\s+\d{2}:\d{2}:\d{2}",
-]
+        r"email tracked with \w+.*",
+        r"\·\s*opt out.*",
+        r"opt out\s*·?.*",
+        r"unsubscribe.*",
+        r"this email was sent to.*",
+        r"you (are|were) receiving this (email|message) because.*",
+        r"©\s*\d{4}.*",
+        r"all rights reserved.*",
+        r"\d{2}/\d{2}/\d{2,4}\s+\d{2}:\d{2}:\d{2}",
+    ]
     for pattern in tracking_patterns:
         text = re.sub(pattern, "", text, flags=re.IGNORECASE | re.DOTALL)
 
     # remove forwarded/original message headers
     text = re.sub(
-        
-    r"-{3,}\s*(forwarded message|original message)\s*-{3,}[^\n]*",
-    "", text, flags=re.IGNORECASE
-)
-    
+        r"-{3,}\s*(forwarded message|original message)\s*-{3,}[^\n]*",
+        "", text, flags=re.IGNORECASE
+    )
+
     # remove quoted reply lines (lines starting with >)
     lines = [line for line in text.splitlines() if not line.strip().startswith(">")]
     text  = "\n".join(lines)
@@ -249,7 +277,6 @@ if __name__ == "__main__":
     print(f"[TEST] Exists: {os.path.exists(file_path)}")
     print(f"[TEST] Type  : {ext}")
 
-    # ── route to correct handler ──────────────────────
     if ext == ".eml":
         from File_processing.eml_handler import extract_eml
         result = extract_eml(file_path)
@@ -290,16 +317,13 @@ if __name__ == "__main__":
         print(f"[TEST] Unsupported extension: {ext}")
         sys.exit(1)
 
-    # ── clean ─────────────────────────────────────────
     cleaned = clean(result)
 
-    # ── save cleaned JSON ─────────────────────────────
     output_path = os.path.splitext(file_path)[0] + "_cleaned.json"
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(cleaned, f, indent=2, ensure_ascii=False)
     print(f"\n Saved to: {output_path}")
 
-    # ── print summary ─────────────────────────────────
     print(f"\n Cleaned output keys: {list(cleaned.keys())}")
     print("\n── Preview (first 1500 chars) ──")
     print(json.dumps(cleaned, indent=2, ensure_ascii=False)[:1500])

@@ -9,9 +9,9 @@ import numpy as np
 
 #  CONFIG
 MIN_CHUNK_TOKENS    = 80
-MAX_CHUNK_TOKENS    = 512
-VALLEY_STD_FACTOR   = 0.5    
-LATE_CHUNK_MAX_TOK  = 8000   
+MAX_CHUNK_TOKENS    = 450
+VALLEY_STD_FACTOR   = 0.5
+LATE_CHUNK_MAX_TOK  = 8000
 
 
 #  LAZY MODEL SINGLETON
@@ -32,7 +32,7 @@ def _estimate_tokens(text: str) -> int:
     return len(tokenizer.encode(text, add_special_tokens=False))
 
 
-
+#  MAIN ENTRY POINT
 def chunk_txt(cleaner_output: dict) -> dict:
     filename = cleaner_output.get("filename", "unknown.txt")
     chunks   = cleaner_output.get("chunks", [])
@@ -74,62 +74,21 @@ def chunk_txt(cleaner_output: dict) -> dict:
 
 #  STRATEGY A — LATE CHUNKING
 def _late_chunk_pipeline(content: str, metadata: dict) -> list[dict]:
-    model     = _get_model()
-    tokenizer = model.tokenizer
-
     sentences = _split_into_sentences(content)
 
     if len(sentences) <= 1:
         return [_make_chunk(content, metadata)]
 
-    encoding = tokenizer(
-        content,
-        return_offsets_mapping=True,
-        add_special_tokens=False
-    )
-    offset_mapping = encoding["offset_mapping"]
+    # Group sentences into token-budget groups first
+    groups      = _group_sentences_by_token_budget(sentences)
+    group_texts = [" ".join(g) for g in groups]
 
-    import torch
-    with torch.no_grad():
-        inputs = tokenizer(
-            content,
-            return_tensors="pt",
-            add_special_tokens=True,
-            truncation=True,
-            max_length=8192
-        )
-        device = next(model.model.parameters()).device
-        inputs = {k: v.to(device) for k, v in inputs.items()}
-        outputs = model.model(**inputs)
-        token_embeddings = outputs.last_hidden_state[0].cpu().numpy()
+    # ── Safe embed via .encode() — never call model.model() directly
+    # .encode() is stable across all FlagEmbedding versions
+    model = _get_model()
+    model.encode(group_texts, batch_size=16, return_dense=True)
 
-    chunk_sentence_groups = _group_sentences_by_token_budget(sentences)
-
-    result      = []
-    char_cursor = 0
-
-    for group in chunk_sentence_groups:
-        chunk_text = " ".join(group)
-        char_start = content.find(group[0], char_cursor)
-        last_sent  = group[-1]
-        char_end   = content.find(last_sent, char_start) + len(last_sent)
-        char_cursor = char_end
-
-        token_indices = [
-            i for i, (ts, te) in enumerate(offset_mapping)
-            if ts >= char_start and te <= char_end and ts < te
-        ]
-
-        if token_indices and len(token_embeddings) > max(token_indices):
-            chunk_vecs = token_embeddings[token_indices]
-            chunk_emb  = chunk_vecs.mean(axis=0)
-            norm       = np.linalg.norm(chunk_emb)
-            if norm > 0:
-                chunk_emb = chunk_emb / norm
-
-        result.append(_make_chunk(chunk_text, metadata))
-
-    return result
+    return [_make_chunk(text, metadata) for text in group_texts]
 
 
 def _group_sentences_by_token_budget(sentences: list[str]) -> list[list[str]]:
@@ -228,9 +187,10 @@ def _split_by_structure(text: str, doc_type: str) -> list[str]:
 
     if doc_type == "structured":
         sections = re.split(r"_{3,}|={3,}|^#{1,3}\s", text, flags=re.MULTILINE)
-
     elif doc_type == "mixed":
         sections = re.split(r"\n{2,}(?=[A-Z\d#])", text)
+    else:
+        sections = [text]
 
     return [s.strip() for s in sections if s.strip()]
 
@@ -267,7 +227,7 @@ def _split_into_sentences(text: str) -> list[str]:
     return sentences
 
 
-#  EMBEDDING (for sliding window)
+#  EMBEDDING (for sliding window strategy)
 def _embed_sentences(sentences: list[str]) -> np.ndarray:
     model  = _get_model()
     result = model.encode(sentences, batch_size=16, return_dense=True)
@@ -338,15 +298,15 @@ def _build_chunks(sentences: list[str], boundaries: set[int]) -> list[str]:
     return chunks
 
 
-
 #  OUTPUT HELPER
-def _make_chunk(text: str, metadata: dict) -> dict:
+def _make_chunk(text: str, metadata: dict) -> list[dict]:
     return {
         "type"    : "text",
         "content" : text,
+        "chunk_id" : str(uuid.uuid4()),
         "metadata": {
             "file_name": metadata.get("file_name"),
-            "chunk_id" : str(uuid.uuid4()),
+            
         }
     }
 

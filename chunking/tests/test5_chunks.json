@@ -1,0 +1,332 @@
+[
+  {
+    "chunk_id": "b26f492c-5a62-4ee5-ae65-d52cc8521231",
+    "type": "text",
+    "content": "Davit Abrahamyan Department of Computer Science University of British Columbia Kelowna, Canada 0009-0004-4397-1699 Abstract -Developers spend much time finding information that is relevant to their questions. Stack Overflow has been the leading resource, and with the advent of Large Language Models (LLMs), generative models such as ChatGPT are used frequently. However, there is a catch in using each one separately. Searching for answers is time-consuming and tedious, as shown by the many tools developed by researchers to address this issue. On the other, using LLMs is not reliable, as they might produce irrelevant or unreliable answers (i.e., hallucination). In this work, we present StackRAG, a retrieval-augmented Multiagent generation tool based on LLMs that combines the two worlds: aggregating the knowledge from SO to enhance the reliability of the generated answers. Initial evaluations show that the generated answers are correct, accurate, relevant, and useful. A description video can be found here 1 . Index Terms -Multiagent tool, RAG-based tool, LLM, Stack Overflow",
+    "metadata": {
+      "source": "test5.pdf",
+      "source_type": "pdf_digital",
+      "section": "StackRAG Agent: Improving Developer Answers with Retrieval-Augmented Generation",
+      "page_start": 1,
+      "page_end": 1,
+      "token_count": 310,
+      "chunk_index": 1,
+      "chunk_total": 22
+    }
+  },
+  {
+    "chunk_id": "128bc792-df37-4e87-8eb9-d2d89fa45362",
+    "type": "text",
+    "content": "In the recent year of technological innovations, the groundbreaking improvements in Natural Language Processing, epitomized by Large Language Models (LLM) such as GPT and Llama have revolutionized the way people interact with technology. Developers increasingly rely on such tools to address various challenges faced during the software development process, including but not limited to code generation and bug detection [1]. However, such models are limited by their static training data. As a result, they cannot keep up with the recent innovations and, thus, cannot provide up-todate responses to the latest challenges [2]. This is specifically more challenging for the field of software engineering, which has many changes as new APIs, libraries, or frameworks are introduced. Moreover, the possibility of hallucinations poses a significant problem of their reliability in the software development process [3], where bugs can result in fatal consequences [4]. On the other hand, using software engineering techniques is recommended to develop reliable LLM-based models/tools [3]. Thus, even though the emergence of LLMs has ultimately improved the software development process, the usage of widely known platforms such as Stack Overflow (SO) is still prevalent and indispensable. SO provides a medium for 1 Please note that as the tool requires API keys, we are not able to set up a live demo of StackRAG. Fatemeh H. Fard Department of Computer Science University of British Columbia Kelowna, Canada fatemeh.fard@ubc.ca developers to access solutions to challenges faced by other developers, engage in meaningful discussions, and facilitate the exchange of expertise between developers [5].",
+    "metadata": {
+      "source": "test5.pdf",
+      "source_type": "pdf_digital",
+      "section": "I. INTRODUCTION",
+      "page_start": 1,
+      "page_end": 1,
+      "token_count": 484,
+      "chunk_index": 2,
+      "chunk_total": 22
+    }
+  },
+  {
+    "chunk_id": "10112160-4564-4266-88f6-17b6553d041d",
+    "type": "text",
+    "content": "By utilizing the collective knowledge available in SO, developers can stay upto-date with the challenges that the latest advancements pose, relying on the expertise and knowledge of other developers. However, searching for related posts to explore solutions is tedious and time-consuming [6] and only relying on LLMs is not reliable [3]. Thus, in this paper, we propose a Retrieval Augmented Generation (RAG)-based Multiagent LLM tool called StackRAG . StackRAG utilizes the public knowledge of the developers' community from SO and combines it with the linguistic abilities of GPT to provide a tool that answers developers' queries reliablity and with up to date information; addressing the current challenges of LLM usage. Our agent-LLM tool aims to provide developers with more grounded and accurate answers, which will result in increased efficiency of the software development process. Though agent-based models have been developed for various other tasks (see Section II), there is no study or tool that is similar to our work in the context of providing accurate and useful knowledge from SO, with LLM-based models. Our initial evaluations show that compared to the base LLM, GPT 4, StackRAG provides more correct, accurate, relevant, and useful responses. We open-source the tool 2 .",
+    "metadata": {
+      "source": "test5.pdf",
+      "source_type": "pdf_digital",
+      "section": "I. INTRODUCTION",
+      "page_start": 1,
+      "page_end": 1,
+      "token_count": 368,
+      "chunk_index": 3,
+      "chunk_total": 22
+    }
+  },
+  {
+    "chunk_id": "e3b509c2-b3c6-448f-8041-d83f3376f9d0",
+    "type": "text",
+    "content": "Mining Stack Overflow has a long history in software engineering research. SO has been studied for the information highlights where the authors developed a recommender system for content highlighting with formatting styles [7], API recommendation [8], representation learning for various tasks [6], tag recommendation [9], recommending code snippets [10], and finding question relatedness [11]. Our work aims to find related SO posts for a given query. In this sense, our study is more similar to the 'relatedness' studies. However, StackRAG differs from all the relatedness and recommendation systems that are developed for SO in several aspects. We use the Multiagent LLM-based paradigm, which makes the user's process 2 https://github.com/DavidAbrahamyan/StackRAG from searching to response generation seamless. Our approach combines the knowledge source from Stack Overflow with the generation capability of language models. This innovative direction of incorporating agents in software engineering is a significant step forward in the field. The other related category of studies is the one that uses multiagent or agent-based paradigms. Codeagnet [12], RepoAgent [13], and RepairAgent [14] are examples of such research in the software engineering domain. PaperQA [15] is a similar work, a RAG-based agent capable of answering questions related to scientific papers. These studies differ from our work not only in the application area and context used but also in the processes used to extract relevant posts.",
+    "metadata": {
+      "source": "test5.pdf",
+      "source_type": "pdf_digital",
+      "section": "II. RELATED WORKS",
+      "page_start": 1,
+      "page_end": 2,
+      "token_count": 432,
+      "chunk_index": 4,
+      "chunk_total": 22
+    }
+  },
+  {
+    "chunk_id": "14c91ac4-ae11-4fdb-a9ff-e2839b8c139d",
+    "type": "text",
+    "content": "StackRAG is a Multiagent LLM-based tool developed using the LangChain Agent framework 3 . StackRAG is designed to help developers find solutions to the problems they face by utilizing the capabilities of GPT and the knowledge available on Stack Overflow. The overall architecture of StackRAG is provided in Figure 1. StackRAG is equipped with four components, each specialized in providing a specific type of functionality. The components are the Keyword Extractor, Search and Storage component, Evidence Gatherer, and Answer Generator. Except for the Search and Storage component, the other ones include agents handling their objectives and other processing. A user can ask a question Q from StackRAG and the central orchestrator agent is responsible for deciding which component to use. StackRAG's evidence-gathering process is comprehensive and meticulous. It uses keywords extracted from the question to locate relevant question-answer pairs from Stack Overflow. After a series of filtering and processing steps, the most pertinent question-answer pairs are gathered as evidence. If the collected evidence is deemed sufficient, the agent proceeds to answer the question. If not, the process restarts until the necessary amount of evidence is gathered, ensuring a thorough and accurate response. GPT is the base language model used as an agent in all components. We explain the details of each component below. Keyword Extractor . This component is responsible to extract keywords based on user's query. The extracted keywords identify the main concepts of the query and will be used in later stages to find related questions and answers from Stack Overflow. The query is processed initially by question complexity checker agent to assess if it should be broken down into sub-questions.",
+    "metadata": {
+      "source": "test5.pdf",
+      "source_type": "pdf_digital",
+      "section": "III. ARCHITECTURE",
+      "page_start": 2,
+      "page_end": 2,
+      "token_count": 511,
+      "chunk_index": 5,
+      "chunk_total": 22
+    }
+  },
+  {
+    "chunk_id": "279019b6-4bdb-470b-a995-e435e17d0b1e",
+    "type": "text",
+    "content": "The reason is that if the query is long or complicated, we might miss some important concepts if we extract keywords directly. Therefore, we assess the query first by asking the agent, and based on the boolean value of its complexity evaluator, the output is a list of sub-questions or is sent to the keyword extractor agent. In the case of sub-questions, they are passed into keyword extractor asynchronously to speed up the process. The question complexity checker and keyword extractor agents are using the following prompts to accomplish their tasks. The list of keywords K = k 1 , k 2 , ..., k n from this component is sent to the central agent for further processing. PROMPT (question_complexity_checker): You are a part of RAG architecture that specializes in generating answers to user's given query using Stack Overflow. You are going to be provided the user question. Your task is to determine whether the question is complex enough to be divided into sub-questions.",
+    "metadata": {
+      "source": "test5.pdf",
+      "source_type": "pdf_digital",
+      "section": "III. ARCHITECTURE",
+      "page_start": 2,
+      "page_end": 2,
+      "token_count": 278,
+      "chunk_index": 6,
+      "chunk_total": 22
+    }
+  },
+  {
+    "chunk_id": "e4160371-acf5-4bca-ba63-53d8a0ef61f5",
+    "type": "text",
+    "content": "If, in order to answer the question, different topics have to be covered, return TRUE, all in capital letters. If there are multiple simple questions, in the given question, again, return TRUE. Otherwise, if you think that the question is not complex and there is no need to divide it into sub-questions, return FALSE. Do not provide explanations for your choice, t=output a single word, either TRUE or FALSE. Question: question PROMPT (keyword_extractor): You are a question-to-query parser. You are given a technical question. You have to use the question to create a Python list of search queries that will be useful in conducting a search in Stack Overflow. Make every query in the list as short as possible. Having less words will produce better results. But make sure you do not omit important search terms and make the search query too general. It does not have to be a complete sentence. Every single query in the list MUST be less than 4 words. Output MUST be a Python list with every element enclosed with double quotes. Question: question Search and Storage . This component is responsible for searching and retrieving questions and answers from Stack Overflow related to the user's query. We search for relevant questions and their answers separately, as this approach could diversify the related SO posts, and more relevant information could be extracted. For this purpose, the list of extracted keywords K are provided and a search is conducted in Stack Overflow, using the StackExchange API. Initially, we designed our system to search for questions and corresponding answers asynchronously, which would have reduced the time spent gathering the answers. However, because StackExchange API heavily penalizes users who make more than 30 API calls per second, we decided to retrieve the results sequentially.",
+    "metadata": {
+      "source": "test5.pdf",
+      "source_type": "pdf_digital",
+      "section": "III. ARCHITECTURE",
+      "page_start": 2,
+      "page_end": 2,
+      "token_count": 520,
+      "chunk_index": 7,
+      "chunk_total": 22
+    }
+  },
+  {
+    "chunk_id": "94449ced-d656-4d3f-ab81-de32b2490a98",
+    "type": "text",
+    "content": "Given a list of keywords K , we store the information of the retrieved questions, including the question's ID , LINK , TITLE , BODY , CREATION DATE , and ACCEPTED-ANSWER-ID or NONE if there is no accepted answer. In order to find the relevant questions to the user's query and eliminate irrelevant questions, we use BM-25 reranking algorithm [16]. The Stack Overflow questions' TITLE and BODY are fed to BM-25 as a single string, and the user's question is given as the query. We use the top 50 questions from the output of BM-25. The top 50 are chosen based on our empirical experiments. This step leaves us with the top 50 most relevant questions, which are divided into two lists: the ones that contain an accepted answer and the ones that do not. The questions with accepted answers are used in the next other components to provide evidence for answer generation. The questions with no accepted answer are stored for the",
+    "metadata": {
+      "source": "test5.pdf",
+      "source_type": "pdf_digital",
+      "section": "III. ARCHITECTURE",
+      "page_start": 2,
+      "page_end": 2,
+      "token_count": 264,
+      "chunk_index": 8,
+      "chunk_total": 22
+    }
+  },
+  {
+    "chunk_id": "48889303-906a-4566-bf78-85376c7e82c9",
+    "type": "image",
+    "content": "a flowchart illustrating the process of generating answers to user questions using various tools and technologies. The flowchart is divided into several sections, each representing a distinct tool or component.\nKeyword Extractor Tool\nThis tool is responsible for extracting keywords from the user's question.\nIt checks the complexity of the question and divides it into sub-questions if necessary.\nThe tool then extracts keywords from the question or sub-questions.\nLLM Agent\nThe LLM Agent receives the user question and keywords as input.\nIt uses the keywords to search for questions in SO (Stack Overflow) and selects the top-50 questions using BM-25.\nThe agent then searches for answers in SO and filters them.\nSearch and Storage Tool\nThis tool stores the filtered question-answers in a Vector DB.\nIt also generates a JSON file containing the stored question IDs.\nGather Evidence Tool\nThis tool embeds the user question and searches in Vector DB with MMR.\nIt then uses an LLM scorer to select the top-n answers.\nThe tool checks the evidence status of the answers and provides evidence.\nAnswer Generator Tool\nThis tool receives the question, evidence status, and evidence as input.\nIf there is enough evidence, it generates an answer.\nOtherwise, it marks the question as unanswered.\nThe flowchart illustrates the following steps:\n1. The user inputs a question.\n2. The Keyword Extractor Tool extracts keywords from the question.\n3. The LLM Agent uses the keywords to search for questions and answers in SO.\n4. The Search and Storage Tool stores the filtered question-answers in a Vector DB and generates a JSON file.\n5. The Gather Evidence Tool embeds the user question, searches in Vector DB, and selects top-n answers.\n6. The Answer Generator Tool generates an answer if there is enough evidence; otherwise, it marks the question as unanswered.\nIn summary, the flowchart describes a system that uses various tools and technologies to generate answers to user questions. The system extracts keywords, searches for questions and answers, stores them in a database, gathers evidence, and generates an answer if sufficient evidence is found.\n\nCaption: Fig. 1: Architecture Diagram of StackRAG and LLM-based agent designed to foster the software development process.",
+    "metadata": {
+      "source": "test5.pdf",
+      "source_type": "pdf_digital",
+      "section": "III. ARCHITECTURE",
+      "page_start": 3,
+      "page_end": 3,
+      "token_count": 611,
+      "chunk_index": 9,
+      "chunk_total": 22
+    }
+  },
+  {
+    "chunk_id": "e498019c-79a8-4c45-9762-26fb85ec74dc",
+    "type": "text",
+    "content": "final answer generation, which are provided as links in the generated answer. The rationale is that these questions or some of their replies could potentially be useful for users, or they might be interested in investigating those SO posts. The question ID 's of the ones having an accepted answer are then used to search for their corresponding answers on SO. A question can have an accepted answer as well as many unaccepted answers, which are still relevant to the question and could provide some insight or useful information for the user's query. Therefore, we collect the accepted answers and the top 2 unaccepted answers to store in our vector database. For collecting the unaccepted answers, we use two criteria: the score that each answer has in SO, and the creationdate of the answer. We choose answers with higher score s and the ones that are more recent. We store the extracted questions and answers as vector embeddings using text-embedding-ada-3-small model developed by OpenAI 4 The questions' TILE and BODY are combined with their retrieved answers (i.e., accepted and top-2 unaccepted answers) to generate its embedding for storage in Pinecone Vector Database. Vector embeddings are the vector representations of data in n-dimensional space. In order to avoid the necessity of constantly calculating the embedding vectors of the same answers that we retrieve from SO, we are using Pinecone Vector Database 5 . In vector databases, each piece of data is stored as a vector rather than as is. Such databases often offer searching functionalities to users, such as cosine similarity when searching for input.",
+    "metadata": {
+      "source": "test5.pdf",
+      "source_type": "pdf_digital",
+      "section": "III. ARCHITECTURE",
+      "page_start": 3,
+      "page_end": 4,
+      "token_count": 496,
+      "chunk_index": 10,
+      "chunk_total": 22
+    }
+  },
+  {
+    "chunk_id": "16df90ba-ad1b-4a63-8c33-770a535db79c",
+    "type": "text",
+    "content": "Additionally, we store the ID 's of the questions in Pinecone in a JSON file locally. This local JSON file is intended to 4 https://platform.openai.com/docs/models/embeddings 5 https://www.pinecone.io/ eliminate potential redundant calls to StackExchange API if a similar question is asked by the user. Therefore, with each new query, before searching in SO, we check in the JSON file to see if we have already retrieved the answer previously. This process reduces the number of calls and, therefore, the tool's overall query-response time. After all, a message is returned to our agent indicating if the data has been successfully stored in the database. If successfully stored, the agent proceeds to the next step. Otherwise, it repeats the searching and storing process. If searching fails after multiple trials, the tool generates an output noting that no results are found. Evidence Gatherer . The Evidence Gatherer component uses the data stored in the Pinecone database to gather the most relevant pieces of information, which is used to answer the user's query. For this purpose, first we compute the similar question-answer pairs that also include diverse set of information. Then, we calculate their relevancy to the user's query. The results of these two steps gives us n questionanswer pairs that is given to the agent as evidence. The agent should identify whether such evidence is sufficient to answer the query or the whole process (including keyword extraction) should be repeated. We use n = 3 in our work, which is set empirically. The details of these steps are explained below.",
+    "metadata": {
+      "source": "test5.pdf",
+      "source_type": "pdf_digital",
+      "section": "III. ARCHITECTURE",
+      "page_start": 3,
+      "page_end": 4,
+      "token_count": 456,
+      "chunk_index": 11,
+      "chunk_total": 22
+    }
+  },
+  {
+    "chunk_id": "277f2b92-de58-459b-82f0-0eb411ea7cbc",
+    "type": "text",
+    "content": "To find similar question-answer pairs, first, the embedding of the user's query is generated using the text-embedding-ada002 model. This embedding is compared with the embedding of question-answer pairs stored in the Pinecone database using the cosine similarity metric. We do not use a threshold for the similarity score as we are interested to find the top results not necessarily the most similar one above a specific percentage. Based on the cosine similarity score, we save the top 30 results and re-rank them using Maximum Marginal Relevance (MMR) [17]. As there can be multiple questions on SO containing similar questions and answers, we use MMR to select SO posts that are most similar and optimize for diversity in the retrieved answers. This diversity in the extracted question-answer pairs will help the model generate more well-grounded answers. After applying MMR, we keep the top 15 results that will be used as evidence.",
+    "metadata": {
+      "source": "test5.pdf",
+      "source_type": "pdf_digital",
+      "section": "III. ARCHITECTURE",
+      "page_start": 3,
+      "page_end": 4,
+      "token_count": 267,
+      "chunk_index": 12,
+      "chunk_total": 22
+    }
+  },
+  {
+    "chunk_id": "5e09f3d3-2fcc-44fb-a984-5d4df1381493",
+    "type": "text",
+    "content": "After gathering the evidence, we use evidence scorer agent to score each piece of evidence (i.e., each question-answer pair) based on their relevance to the user's query. The evidence scorer agent provides a score ranging from 1 to 5 , assessing how relevant the evidence is in order to answer the question. A score of 5 indicates high relevance, and 1 indicates low relevance. If the retrieved evidence is not relevant at all, the agent returns 'not useful' for that piece of evidence. To speed the process, the scoring of each piece of evidence is done in parallel, in asynchronously with other tasks.",
+    "metadata": {
+      "source": "test5.pdf",
+      "source_type": "pdf_digital",
+      "section": "III. ARCHITECTURE",
+      "page_start": 3,
+      "page_end": 4,
+      "token_count": 172,
+      "chunk_index": 13,
+      "chunk_total": 22
+    }
+  },
+  {
+    "chunk_id": "7a223a77-a68a-4476-bc90-3d4d153d84d9",
+    "type": "text",
+    "content": "Finally, we choose the top 3 pieces of evidence and we provide it as a single full evidence, E , which is provided to the evidence checker agent. The evidence checker agent returns a boolean value indicating if the gathered evidence E is sufficient in order to answer query Q . If the gathered Evidence E is enough, we proceed to generating the answer using Answer Generator agent. Otherwise, the tool should repeat the process from the beginning and proceeds to generate a new set of keywords. The prompts used for evidence scorer and evidence checker agents are as follows.",
+    "metadata": {
+      "source": "test5.pdf",
+      "source_type": "pdf_digital",
+      "section": "III. ARCHITECTURE",
+      "page_start": 3,
+      "page_end": 4,
+      "token_count": 164,
+      "chunk_index": 14,
+      "chunk_total": 22
+    }
+  },
+  {
+    "chunk_id": "fd54313f-3c44-4e18-948d-748fcdea1a4f",
+    "type": "text",
+    "content": "You are a part of RAG architecture that specializes in generating answers to user's given query using Stack Overflow. Provided the gathered evidence from Stack Overflow as well as the user's given question, your task is to determine how useful the evidence is in order to answer the user question. The evidence includes a question and its corresponding answer from Stack Overflow. Rate the given evidence on the scale from 1 to 5, with 1 indicating not useful and 5 indicating really useful. If the evidence is not useful at all, return 'not useful' all in lowercase. Only output either a number from 1-5 or 'not useful' with no explanation. Gathered Evidence: { evidence } User Question: { question }",
+    "metadata": {
+      "source": "test5.pdf",
+      "source_type": "pdf_digital",
+      "section": "PROMPT (evidence_scorer):",
+      "page_start": 4,
+      "page_end": 4,
+      "token_count": 200,
+      "chunk_index": 15,
+      "chunk_total": 22
+    }
+  },
+  {
+    "chunk_id": "3b4a4ebc-fd2b-44fe-a1f7-bde696de7d58",
+    "type": "text",
+    "content": "You are a part of RAG architecture that specializes in generating answers to user's given query using Stack Overflow. Provided the gathered evidence from Stack Overflow as well as the user's given question, your task is to determine whether you have enough evidence to answer the question or not. Do not generate answer even if you have enough evidence. The evidence does not have to directly answer the question, but it has to provide the basis upon which you can form the answer. If no such evidence is provided, return 'FALSE', do not use your own knowledge to answer the question. Your output must be a single word, either 'TRUE' or 'FALSE'. All letters must be capital, do not explain why you chose a specific answer, only output either 'TRUE' or 'FALSE' Gathered Evidence: { evidence } User Question: { question } Answer Generator . The main responsibility of this component, which is composed of a single agent, is to generate an answer given the evidence E and user's query Q . The agent is instructed to always provide the links to the questions that were used in the response, so that the user can access and use all the responses available on SO. Additionally, we provided it with the links to the questions that did not have an accepted answer but were relevant to the question (Stored in the Search and Storage Tool after applying BM-25). Empirically, we found that providing links to such questions is a helpful feature for the user, as they can track those links and find useful answers in the future. The prompt for the answer generator agent is:",
+    "metadata": {
+      "source": "test5.pdf",
+      "source_type": "pdf_digital",
+      "section": "PROMPT (evidence_checker):",
+      "page_start": 4,
+      "page_end": 4,
+      "token_count": 446,
+      "chunk_index": 16,
+      "chunk_total": 22
+    }
+  },
+  {
+    "chunk_id": "547fbffe-d275-4257-8087-0f36e68edb14",
+    "type": "text",
+    "content": "You are a part of RAG architecture that specializes in generating answers to user's given query using Stack Overflow. You are the final piece of this architecture, your task is to construct the final answer based on the given question and the provided evidence. Be as thorough as possible, if you write code, do not omit anything, write every single detail. Indicate whether the answer that you used in generating the response was an accepted answer in Stack Overflow or not. At the end of your answer, mention all the links of the answers that you used in the following format:",
+    "metadata": {
+      "source": "test5.pdf",
+      "source_type": "pdf_digital",
+      "section": "PROMPT (answer_generator):",
+      "page_start": 4,
+      "page_end": 4,
+      "token_count": 165,
+      "chunk_index": 17,
+      "chunk_total": 22
+    }
+  },
+  {
+    "chunk_id": "5265ede6-a249-4143-8a08-6d812d844797",
+    "type": "text",
+    "content": "[Question Title] Link1 [Question Title] Link2 [Question Title] Link3 ... You will also be provided a list of questions which are unanswered but are relevant to the user query, include their links at the end in the following format: Unanswered questions that you may find useful in the future: [Question Title] Link1 [Question Title] Link2 [Question Title] Link3 ... User Question: { question } Gathered Evidence: { evidence } Unanswered Question List: { unanswered question list }",
+    "metadata": {
+      "source": "test5.pdf",
+      "source_type": "pdf_digital",
+      "section": "Links used:",
+      "page_start": 4,
+      "page_end": 4,
+      "token_count": 137,
+      "chunk_index": 18,
+      "chunk_total": 22
+    }
+  },
+  {
+    "chunk_id": "76528a57-8beb-4f05-834c-f723157a841d",
+    "type": "text",
+    "content": "To evaluate StackRAG's performance, we conducted a manual evaluation by three software developers with different titles: Machine Learning Engineers, NLP engineers, and fullstack developers. These developers have more than five years of experience and often use ChatGPT to find answers to their development-related questions. We selected three questions that developers have struggled with in their careers and generated answers using GPT-3.5, GPT-4, and StackRAG. We asked developers to evaluate the generated answers based on the metrics discussed below. The three challenged questions are 'How to do horizontal scaling of web sockets?' , 'How to import from a parent directory in Python?' , and 'How to use function calling in openAI API?' . Evaluation Metrics. We used four different evaluation metrics to assess the performance of our model. Each metric has a score between 1 to 5 , one being the worst and 5 indicating the best. Correctness (C) : Is the response provided to the question correct? Accuracy (A) : Does the response accurately explain the question's solution? Relevance (R) : Is the generated text related to the asked question in terms of the topic? Usefulness (U) : Does the response provide useful information to solve the question? Results. Table I shows the evaluation of StackRAG, GPT3.5, GPT-4 models, reporting the average scores the developers gave to the generated answers of the models. Even though StackRAG uses GPT-4 as the base model, it performs better than GPT-4 in all four metrics. This indicates that the developers find the answers generated by StackRAG more relevant to the topic. In addition to correct and accurate answers, they found more useful information in the StackRAG's responses. When we discussed this with the developers, they valued the links in the generated response.",
+    "metadata": {
+      "source": "test5.pdf",
+      "source_type": "pdf_digital",
+      "section": "IV. EVALUATION",
+      "page_start": 4,
+      "page_end": 5,
+      "token_count": 520,
+      "chunk_index": 19,
+      "chunk_total": 22
+    }
+  },
+  {
+    "chunk_id": "0af30e56-eeb3-4e5b-af12-3d9f51c94f82",
+    "type": "table",
+    "content": "| Metric/Model | C | A | R | U |\n|:---------------|-----:|-----:|-----:|-----:|\n| StackRAG | 4.66 | 4.55 | 4.55 | 4.55 |\n| GPT-3.5 | 4.22 | 4.11 | 4 | 3.77 |\n| GPT-4 | 4.22 | 4.11 | 4.22 | 4.11 |\n\nCaption: TABLE I: Evaluation of StackRAG and GPT models.",
+    "metadata": {
+      "source": "test5.pdf",
+      "source_type": "pdf_digital",
+      "section": "IV. EVALUATION",
+      "page_start": 5,
+      "page_end": 5,
+      "token_count": 72,
+      "chunk_index": 20,
+      "chunk_total": 22
+    }
+  },
+  {
+    "chunk_id": "8e9ca353-4d4e-43d1-968c-bb96abd1a157",
+    "type": "text",
+    "content": "One of StackRAGl's main limitations is that it takes more time than directly prompting GPT models, as it uses multiple agents and a few calls to the base LLM. Another reason for the increased response time is the calls to SO API, which has a daily limit of 10000 API calls. We have tried to mitigate the time issue by adding more asynchronous processes to search for answers. However, SO heavily penalizes us for making multiple API calls in a short period, which has reduced our total number of calls per day even more. We are working on techniques to replace some agents or reduce the LLM calls to decrease the response time. However, note that we should 'get used to delegating tasks to AI agents and potentially wait for a response' 6 . So we should be prepared to wait for longer times, as the overall workflow is made easier and reduces significant efforts from the developers. When StackRAG is used, instead of searching on a search engine and investigating through several links and answers, or instead of several iterations of the prompts with an LLM and validating the responses, StackRAG provides a comprehensive, reliable response with links at once.",
+    "metadata": {
+      "source": "test5.pdf",
+      "source_type": "pdf_digital",
+      "section": "V. LIMITATIONS AND IMPROVEMENTS",
+      "page_start": 5,
+      "page_end": 5,
+      "token_count": 332,
+      "chunk_index": 21,
+      "chunk_total": 22
+    }
+  },
+  {
+    "chunk_id": "1f49b37f-3c62-4a38-8876-6e22b93afd3e",
+    "type": "text",
+    "content": "The new paradigm in software engineering is considered the usage of LLM-based agents. In this work, we present StackRAG, a Multiagent RAG-based tool that enhances the developers' experience when searching for a query from Stack Overflow. StackRAG aims to generate reliable answers based on SO, instead of directly asking an LLM. The initial evaluations show the potential benefit of StackRAG when searching 6 https://www.youtube.com/watch?v=sal78ACtGTc&t=591s&ab channel= SequoiaCapital for related queries from SO, compared to GPT-family models. A future direction is to enhance the tool by adding search engines and other repositories to provide the answers.",
+    "metadata": {
+      "source": "test5.pdf",
+      "source_type": "pdf_digital",
+      "section": "VI. CONCLUSION",
+      "page_start": 5,
+      "page_end": 5,
+      "token_count": 188,
+      "chunk_index": 22,
+      "chunk_total": 22
+    }
+  }
+]
