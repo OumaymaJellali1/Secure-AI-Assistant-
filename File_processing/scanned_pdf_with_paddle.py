@@ -1,10 +1,14 @@
 import sys
 import os
+import os
+os.environ["PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK"] = "True"
+os.environ["PPOCR_LOG_LEVEL"]                        = "ERROR"
+os.environ["FLAGS_use_mkldnn"]                       = "0"   # ← disables oneDNN
+os.environ["FLAGS_mkldnn_cache_capacity"]            = "0"   # ← disables oneDNN cache
 
 # ── SUPPRESS PADDLEOCR VERBOSE OUTPUT ────────────────
 # must be set BEFORE any paddleocr import
-os.environ["PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK"] = "True"
-os.environ["PPOCR_LOG_LEVEL"]                        = "ERROR"
+
 
 import json
 import re
@@ -17,15 +21,27 @@ import base64
 
 # ── CONFIGURE GROQ ────────────────────────────────────
 groq_client  = Groq(api_key=GROQ_API_KEY)
-POPPLER_PATH = r"C:\poppler-25.12.0\Library\bin"
+POPPLER_PATH = r"C:\Users\hp\Downloads\Release-25.12.0-0\poppler-25.12.0\Library\bin"
 
-# ── LOAD PADDLEOCR ONCE (module level) ────────────────
-# PaddleOCR v3 — OCR only, no PPStructure, runs fine on CPU
 from paddleocr import PaddleOCR
-_ocr_engine = PaddleOCR(
-    use_doc_orientation_classify=False,
-    use_doc_unwarping=False,
-    use_textline_orientation=False
+
+# ── DEUX MOTEURS OCR : latin (fr+en) et arabe ────────
+# Le modèle "fr" couvre français ET anglais (alphabet latin partagé).
+# Le modèle "ar" est nécessaire pour l'arabe (script complètement différent).
+# Les deux sont chargés une seule fois au démarrage pour éviter la latence.
+
+_ocr_engine_latin = PaddleOCR(
+    lang="fr",
+    use_angle_cls=True,
+    use_gpu=False,
+    show_log=False
+)
+
+_ocr_engine_arabic = PaddleOCR(
+    lang="ar",
+    use_angle_cls=True,
+    use_gpu=False,
+    show_log=False
 )
 
 
@@ -58,12 +74,13 @@ def _clean_model_output(text: str) -> str:
 
 def extract_scanned_pdf(file_path: str) -> dict:
     """
-    Extract content from a scanned PDF.
-    - Text         → PaddleOCR v3 only (no visual descriptions mixed in)
-    - Page type    → Groq vision (classify: text / chart / table / mixed)
-    - Charts       → Groq vision → stored in images[] with metadata
-    - Tables       → Groq vision → stored in tables[] with metadata
-    - Output       → JSON file
+    Extract content from a scanned PDF (Arabic, French, English).
+    - Language detection → Groq vision (per page)
+    - Text             → PaddleOCR v3 (arabic engine OR latin engine)
+    - Page type        → Groq vision (classify: text / chart / table / mixed)
+    - Charts           → Groq vision → stored in images[] with metadata
+    - Tables           → Groq vision → stored in tables[] with metadata
+    - Output           → JSON file
     """
 
     if DEBUG:
@@ -99,31 +116,35 @@ def extract_scanned_pdf(file_path: str) -> dict:
         temp_page_path = TEMP_DIR / f"page_{page_counter}.png"
         page_img.save(str(temp_page_path))
 
-        # ── STEP 1: OCR → TEXT ONLY ───────────────────
-        text = _ocr_page(str(temp_page_path))
+        # ── STEP 1: DÉTECTER LA LANGUE ────────────────
+        page_language = _detect_language(str(temp_page_path))
+
+        # ── STEP 2: OCR → TEXT ONLY ───────────────────
+        text = _ocr_page(str(temp_page_path), language=page_language)
         if text:
             full_text += f"\n---\nPage {page_counter}\n\n{text}\n\n"
             if DEBUG:
-                print(f"[SCANNED PDF] Page {page_counter} OCR ✅")
+                print(f"[SCANNED PDF] Page {page_counter} OCR ✓ "
+                      f"(lang={page_language})")
 
-        # ── STEP 2: CLASSIFY PAGE WITH GROQ ──────────
+        # ── STEP 3: CLASSIFY PAGE WITH GROQ ──────────
         visual_type = _detect_visual_type(str(temp_page_path))
 
         if DEBUG:
             print(f"[SCANNED PDF] Page {page_counter} "
                   f"→ type: {visual_type}")
 
-        # ── STEP 3: ROUTE BASED ON CLASSIFICATION ────
+        # ── STEP 4: ROUTE BASED ON CLASSIFICATION ────
         if visual_type == "text_only":
             if DEBUG:
-                print(f"[SCANNED PDF] Text only → no extra call ✅")
+                print(f"[SCANNED PDF] Text only → no extra call ✓")
 
         elif visual_type in ("has_chart", "mixed"):
             if DEBUG:
                 print(f"[SCANNED PDF] Chart/mixed detected "
                       f"→ calling Groq to describe...")
 
-            raw_description = _describe_visual(str(temp_page_path))
+            raw_description = _describe_visual(str(temp_page_path), page_language)
             description     = _clean_model_output(raw_description)
 
             if description:
@@ -132,18 +153,19 @@ def extract_scanned_pdf(file_path: str) -> dict:
                     "image_index": image_index,
                     "page"       : page_counter,
                     "source"     : source_name,
+                    "language"   : page_language,
                     "content"    : description
                 })
                 if DEBUG:
                     print(f"[SCANNED PDF] Page {page_counter} "
-                          f"described ✅")
+                          f"described ✓")
 
         elif visual_type == "has_table":
             if DEBUG:
                 print(f"[SCANNED PDF] Table detected "
                       f"→ calling Groq to extract...")
 
-            raw_table  = _extract_table(str(temp_page_path))
+            raw_table  = _extract_table(str(temp_page_path), page_language)
             table_data = _clean_model_output(raw_table)
 
             if table_data:
@@ -152,11 +174,12 @@ def extract_scanned_pdf(file_path: str) -> dict:
                     "table_index": table_index,
                     "page"       : page_counter,
                     "source"     : source_name,
+                    "language"   : page_language,
                     "content"    : table_data
                 })
                 if DEBUG:
                     print(f"[SCANNED PDF] Page {page_counter} "
-                          f"table extracted ✅")
+                          f"table extracted ✓")
 
         # ── CLEANUP ───────────────────────────────────
         os.remove(str(temp_page_path))
@@ -183,19 +206,69 @@ def extract_scanned_pdf(file_path: str) -> dict:
     return output_data
 
 
-# ── OCR PAGE (PaddleOCR v3) ───────────────────────────
-def _ocr_page(image_path: str) -> str:
+# ── DÉTECTER LA LANGUE DE LA PAGE ────────────────────
+def _detect_language(image_path: str) -> str:
     """
-    Extract text using PaddleOCR v3 — local, no API call.
-    Uses module-level _ocr_engine so models load only once.
+    Utilise Groq vision pour détecter la langue dominante de la page.
+
+    Retourne :
+        "arabic" → texte majoritairement en arabe
+        "latin"  → texte majoritairement en français ou anglais
     """
     try:
-        result = _ocr_engine.predict(image_path)
+        with open(image_path, "rb") as f:
+            img_b64 = base64.b64encode(f.read()).decode("utf-8")
+
+        response = groq_client.chat.completions.create(
+            model=GROQ_VISION_MODEL,
+            messages=[{
+                "role": "user",
+                "content": [
+                    {
+                        "type": "image_url",
+                        "image_url": {
+                            "url": f"data:image/png;base64,{img_b64}"
+                        }
+                    },
+                    {
+                        "type": "text",
+                        "text": (
+                            "Look at the text on this page. "
+                            "Reply with ONE word only:\n"
+                            "'arabic' → if the dominant text is Arabic\n"
+                            "'latin'  → if the dominant text is English or French\n"
+                            "ONE word only. No explanation. No punctuation."
+                        )
+                    }
+                ]
+            }],
+            max_tokens=5
+        )
+
+        label  = response.choices[0].message.content.strip().lower()
+        result = label if label in ("arabic", "latin") else "latin"
+
+        if DEBUG:
+            print(f"[SCANNED PDF] Language detected → '{result}'")
+
+        return result
+
+    except Exception as e:
+        if DEBUG:
+            print(f"[SCANNED PDF] Language detection error: {e}")
+        return "latin"   # fallback sûr
+
+
+# ── OCR PAGE (PaddleOCR v3) ───────────────────────────
+def _ocr_page(image_path: str, language: str = "latin") -> str:
+    try:
+        engine = _ocr_engine_arabic if language == "arabic" else _ocr_engine_latin
+        result = engine.ocr(image_path, cls=True)
 
         lines = []
-        for res in result:
-            for line in res.get("rec_texts", []):
-                text = str(line).strip()
+        if result and result[0]:
+            for line in result[0]:
+                text = line[1][0].strip()
                 if text:
                     lines.append(text)
 
@@ -268,11 +341,18 @@ def _detect_visual_type(image_path: str) -> str:
 
 
 # ── DESCRIBE VISUAL ───────────────────────────────────
-def _describe_visual(image_path: str) -> str:
+def _describe_visual(image_path: str, language: str = "latin") -> str:
     """
     Send page to Groq when chart or mixed content detected.
     Describes charts, figures, diagrams and their data.
+    Adapts the prompt language hint based on detected page language.
     """
+    lang_hint = (
+        "The document is in Arabic — preserve any Arabic text exactly as written."
+        if language == "arabic"
+        else "The document is in English or French — preserve text as-is."
+    )
+
     try:
         with open(image_path, "rb") as img_file:
             img_base64 = base64.b64encode(
@@ -294,7 +374,7 @@ def _describe_visual(image_path: str) -> str:
                         {
                             "type": "text",
                             "text": (
-                                "This is a scanned page. "
+                                f"This is a scanned page. {lang_hint} "
                                 "Describe ONLY the charts, figures, "
                                 "diagrams or images you see. "
                                 "Mention any data values or trends. "
@@ -318,11 +398,18 @@ def _describe_visual(image_path: str) -> str:
 
 
 # ── EXTRACT TABLE ─────────────────────────────────────
-def _extract_table(image_path: str) -> str:
+def _extract_table(image_path: str, language: str = "latin") -> str:
     """
     Send page to Groq when a table is detected.
     Returns the table as clean markdown.
+    Adapts the prompt language hint based on detected page language.
     """
+    lang_hint = (
+        "The table may contain Arabic text — preserve it exactly as written, right-to-left."
+        if language == "arabic"
+        else "The table is in English or French — preserve all text as-is."
+    )
+
     try:
         with open(image_path, "rb") as img_file:
             img_base64 = base64.b64encode(
@@ -344,7 +431,7 @@ def _extract_table(image_path: str) -> str:
                         {
                             "type": "text",
                             "text": (
-                                "Extract the table from this scanned page. "
+                                f"Extract the table from this scanned page. {lang_hint} "
                                 "Return it as a clean markdown table. "
                                 "Preserve all rows, columns and values exactly. "
                                 "Use | separators for columns. "

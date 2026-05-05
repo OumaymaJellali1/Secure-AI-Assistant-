@@ -32,8 +32,6 @@ import random
 from datetime import datetime
 from typing import Optional
 
-# ── PATH SETUP ────────────────────────────────────────────────────────────────
-# llm_as_a_judge/ is a subfolder — go one level up to reach the project root.
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, PROJECT_ROOT)
 
@@ -42,32 +40,27 @@ load_dotenv(os.path.join(PROJECT_ROOT, ".env"))
 
 from groq import Groq
 
-# ── YOUR PIPELINE IMPORTS ─────────────────────────────────────────────────────
 from retrieve.retriever import Retriever
 from reranking.reranker import Reranker
 from answer_generation.generator import Generator  # Ollama/local generator
 
 
-# ── CONFIG ────────────────────────────────────────────────────────────────────
 
-# ✅ UPGRADED: 70B judge for reliable scoring (8B was too weak)
 JUDGE_MODEL = "qwen/qwen3-32b"
-  # different arch, reasoning-first ✅
 RESULTS_FILE   = "eval_results.csv"
 
-RETRIEVAL_POOL = 20      # candidates fetched from Qdrant before reranking
-TOP_N          = 5       # top chunks passed to the LLM after reranking
-SEARCH_MODE    = "hybrid" # hybrid | dense | sparse
+RETRIEVAL_POOL = 20      
+TOP_N          = 5       
+SEARCH_MODE    = "hybrid" 
 
-# Retry config for Groq rate limits
 MAX_RETRIES    = 5
-RETRY_BASE_S   = 1.5     # exponential backoff base (seconds)
-RETRY_JITTER   = 0.5     # random jitter added to each wait
+RETRY_BASE_S   = 1.5     
+RETRY_JITTER   = 0.5     
 
 groq_client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 
 
-# ── JUDGE PROMPTS ─────────────────────────────────────────────────────────────
+# ── JUDGE PROMPTS 
 
 FAITHFULNESS_PROMPT = """You are an expert evaluator for RAG (Retrieval Augmented Generation) systems.
 
@@ -141,7 +134,6 @@ Respond in this exact JSON format:
 {{"reasoning": "your reasoning here", "score": <1-5>}}"""
 
 
-# ✅ NEW: Correctness judge (only used when a reference answer is provided)
 CORRECTNESS_PROMPT = """You are an expert evaluator for RAG (Retrieval Augmented Generation) systems.
 
 Your task is to evaluate if the ANSWER is factually correct compared to the REFERENCE ANSWER.
@@ -168,7 +160,6 @@ Respond in this exact JSON format:
 {{"reasoning": "your reasoning here", "score": <1-5>}}"""
 
 
-# ✅ NEW: Per-chunk relevance judge
 CHUNK_RELEVANCE_PROMPT = """You are an expert evaluator for RAG systems.
 
 Rate how relevant the following CHUNK is for answering the QUESTION.
@@ -190,7 +181,6 @@ Respond in this exact JSON format only:
 {{"score": <1-5>, "reasoning": "one sentence"}}"""
 
 
-# ── ROBUST JUDGE CALL WITH RETRY/BACKOFF ──────────────────────────────────────
 
 def call_judge(prompt: str) -> dict:
     """
@@ -205,7 +195,6 @@ def call_judge(prompt: str) -> dict:
             )
             raw = response.choices[0].message.content.strip()
 
-            # Strip markdown code fences if present
             if raw.startswith("```"):
                 raw = raw.split("```")[1]
                 if raw.startswith("json"):
@@ -215,7 +204,6 @@ def call_judge(prompt: str) -> dict:
             try:
                 return json.loads(raw)
             except json.JSONDecodeError:
-                # ✅ FIXED: Reliable regex fallback instead of digit-scan
                 match = re.search(r'"score"\s*:\s*(\d)', raw)
                 score = int(match.group(1)) if match else 0
                 return {"reasoning": raw, "score": score}
@@ -236,11 +224,11 @@ def call_judge(prompt: str) -> dict:
     return {"reasoning": "Unreachable", "score": 0}
 
 
-# ── PER-CHUNK RELEVANCE SCORING ───────────────────────────────────────────────
+# ── PER-CHUNK RELEVANCE SCORING 
 
 def score_chunks(query: str, chunks: list[dict]) -> list[dict]:
     """
-    ✅ NEW: Score each chunk individually for relevance.
+      Score each chunk individually for relevance.
     Returns a list of dicts with chunk index, score, and reasoning.
     """
     results = []
@@ -261,7 +249,6 @@ def score_chunks(query: str, chunks: list[dict]) -> list[dict]:
     return results
 
 
-# ── EVALUATE ONE RESULT ───────────────────────────────────────────────────────
 
 def evaluate(
     query     : str,
@@ -304,7 +291,6 @@ def evaluate(
     )
     print(f"score: {answer_relevance['score']}/5")
 
-    # ✅ NEW: Correctness (only when reference is given)
     correctness = None
     if reference:
         print("  → Correctness ...", end=" ", flush=True)
@@ -313,7 +299,6 @@ def evaluate(
         )
         print(f"score: {correctness['score']}/5")
 
-    # ✅ NEW: Per-chunk scoring
     print("  → Per-chunk relevance ...")
     chunk_scores = score_chunks(query, chunks)
 
@@ -341,12 +326,10 @@ def evaluate(
         "correctness_reasoning"      : correctness["reasoning"] if correctness else "",
         "avg_score"                  : avg,
         "num_chunks_retrieved"       : len(chunks),
-        # ✅ NEW: Latency and token usage saved to CSV
         "latency_s"                  : latency_s if latency_s is not None else "",
         "total_tokens"               : tokens.get("total", "") if tokens else "",
         "prompt_tokens"              : tokens.get("prompt", "") if tokens else "",
         "completion_tokens"          : tokens.get("completion", "") if tokens else "",
-        # ✅ NEW: Per-chunk scores serialised as JSON string
         "chunk_scores_json"          : json.dumps(chunk_scores),
         "timestamp"                  : datetime.now().isoformat(),
     }
@@ -354,7 +337,7 @@ def evaluate(
     return result, chunk_scores
 
 
-# ── PRINT RESULT ──────────────────────────────────────────────────────────────
+# ── PRINT RESULT 
 
 def print_eval_result(result: dict, chunk_scores: list[dict]) -> None:
     """Pretty-print scores + reasoning for one evaluated question."""
@@ -374,41 +357,38 @@ def print_eval_result(result: dict, chunk_scores: list[dict]) -> None:
 
     print(f"\n  Average Score     : {result['avg_score']}/5")
 
-    # ✅ NEW: Per-chunk breakdown
     print(f"\n  Per-Chunk Relevance:")
     for c in chunk_scores:
         bar = "█" * c["score"] + "░" * (5 - c["score"])
         print(f"    Chunk {c['chunk_idx']} [{bar}] {c['score']}/5 — {c['reasoning']}")
         print(f"           \"{c['preview']}\"")
 
-    # ✅ NEW: Performance stats
     if result["latency_s"] != "":
         print(f"\n  Performance       : {result['latency_s']}s | "
               f"{result['total_tokens']} tokens total")
 
-    # Diagnostic flags
     print()
     if result["faithfulness_score"] < 3:
-        print("  ⚠️  LOW FAITHFULNESS — model may be hallucinating outside the context")
+        print("    LOW FAITHFULNESS — model may be hallucinating outside the context")
     if result["context_relevance_score"] < 3:
-        print("  ⚠️  LOW CONTEXT RELEVANCE — retriever/reranker returning wrong chunks")
+        print("    LOW CONTEXT RELEVANCE — retriever/reranker returning wrong chunks")
     if result["answer_relevance_score"] < 3:
-        print("  ⚠️  LOW ANSWER RELEVANCE — answer doesn't address the question")
+        print("   LOW ANSWER RELEVANCE — answer doesn't address the question")
     if result.get("correctness_score") and result["correctness_score"] < 3:
-        print("  ⚠️  LOW CORRECTNESS — answer deviates from ground truth")
+        print("    LOW CORRECTNESS — answer deviates from ground truth")
 
     low_chunks = [c for c in chunk_scores if c["score"] < 3]
     if low_chunks:
         idxs = ", ".join(str(c["chunk_idx"]) for c in low_chunks)
-        print(f"  ⚠️  WEAK CHUNKS [{idxs}] — reranker kept low-quality chunks")
+        print(f"    WEAK CHUNKS [{idxs}] — reranker kept low-quality chunks")
 
     if result["avg_score"] >= 4.0:
-        print("  ✅  Looks good overall")
+        print("   Looks good overall")
 
     print(f"{'='*60}\n")
 
 
-# ── SAVE TO CSV ───────────────────────────────────────────────────────────────
+# ── SAVE TO CSV 
 
 def append_to_csv(result: dict, filepath: str = RESULTS_FILE) -> None:
     """Append one evaluation result to the CSV log."""
@@ -424,7 +404,6 @@ def append_to_csv(result: dict, filepath: str = RESULTS_FILE) -> None:
     print(f"  Saved → {filepath}")
 
 
-# ── PRINT SESSION SUMMARY ─────────────────────────────────────────────────────
 
 def print_session_summary(session_results: list[dict]) -> None:
     """Print averages across all questions asked in this session."""
@@ -437,7 +416,6 @@ def print_session_summary(session_results: list[dict]) -> None:
     avg_ans     = round(sum(r["answer_relevance_score"]  for r in session_results) / n, 2)
     avg_overall = round(sum(r["avg_score"]               for r in session_results) / n, 2)
 
-    # Correctness avg (only questions that had a reference)
     correct_results = [r for r in session_results if r.get("correctness_score") != ""]
     avg_correct = (
         round(sum(r["correctness_score"] for r in correct_results) / len(correct_results), 2)
@@ -456,24 +434,23 @@ def print_session_summary(session_results: list[dict]) -> None:
     print(f"{'='*60}")
 
     if avg_faith < 3.0:
-        print("  ⚠️  LOW FAITHFULNESS — check generation prompt or chunk quality")
+        print("    LOW FAITHFULNESS — check generation prompt or chunk quality")
     if avg_ctx < 3.0:
-        print("  ⚠️  LOW CONTEXT RELEVANCE — tune retrieval_pool / reranker top_n")
+        print("    LOW CONTEXT RELEVANCE — tune retrieval_pool / reranker top_n")
     if avg_ans < 3.0:
-        print("  ⚠️  LOW ANSWER RELEVANCE — check generation prompt instructions")
+        print("    LOW ANSWER RELEVANCE — check generation prompt instructions")
     if avg_correct is not None and avg_correct < 3.0:
-        print("  ⚠️  LOW CORRECTNESS — answers diverge from ground truth frequently")
+        print("    LOW CORRECTNESS — answers diverge from ground truth frequently")
     if avg_overall >= 4.0:
-        print("  ✅  Pipeline looks healthy overall")
+        print("    Pipeline looks healthy overall")
 
     print(f"\n  Full log saved to: {RESULTS_FILE}\n")
 
 
-# ── BATCH LOADER ──────────────────────────────────────────────────────────────
 
 def load_batch(filepath: str) -> list[tuple[str, Optional[str]]]:
     """
-    ✅ NEW: Load questions (and optional references) from a file.
+    Load questions (and optional references) from a file.
 
     Supported formats:
       - .txt  → one question per line
@@ -502,7 +479,6 @@ def load_batch(filepath: str) -> list[tuple[str, Optional[str]]]:
     return items
 
 
-# ── RUN ONE QUESTION THROUGH THE PIPELINE ────────────────────────────────────
 
 def run_question(
     question     : str,
@@ -516,7 +492,7 @@ def run_question(
 ) -> Optional[dict]:
     """Retrieve → Rerank → Generate → Judge one question. Returns result dict or None."""
     try:
-        # ── STEP 1: RETRIEVE ─────────────────────────────────────────────────
+        # ── STEP 1: RETRIEVE 
         print(f"\n[1/3] Retrieving (pool={retrieval_pool}, mode={search_mode})...")
         candidates = retriever.search(question, mode=search_mode, top_n=retrieval_pool)
 
@@ -524,11 +500,11 @@ def run_question(
             print("  [No chunks retrieved — try a different question]\n")
             return None
 
-        # ── STEP 2: RERANK ───────────────────────────────────────────────────
+        # ── STEP 2: RERANK 
         print(f"[2/3] Reranking → top {top_n}...")
         chunks = reranker.rerank(question, candidates, top_n=top_n)
 
-        # ── STEP 3: GENERATE ─────────────────────────────────────────────────
+        # ── STEP 3: GENERATE 
         print(f"[3/3] Generating answer...\n")
         gen_result = generator.generate(question, chunks)
         answer     = gen_result["answer"]
@@ -550,7 +526,7 @@ def run_question(
               f"tokens={gen_result['tokens']['total']} | "
               f"no_answer={gen_result['no_answer']}]")
 
-        # ── STEP 4: JUDGE ────────────────────────────────────────────────────
+        # ── STEP 4: JUDGE 
         eval_result, chunk_scores = evaluate(
             query     = question,
             chunks    = chunks,
@@ -574,10 +550,8 @@ def run_question(
         return None
 
 
-# ── MAIN ──────────────────────────────────────────────────────────────────────
 
 def main():
-    # ── CLI ARGS ──────────────────────────────────────────────────────────────
     args           = sys.argv[1:]
     retrieval_pool = RETRIEVAL_POOL
     top_n          = TOP_N
@@ -613,7 +587,6 @@ def main():
 
     session_results: list[dict] = []
 
-    # ── BATCH MODE ────────────────────────────────────────────────────────────
     if batch_file:
         questions = load_batch(batch_file)
         print(f"  Loaded {len(questions)} question(s) from {batch_file}\n")
@@ -634,7 +607,6 @@ def main():
         print("[Batch complete]\n")
         return
 
-    # ── INTERACTIVE MODE ──────────────────────────────────────────────────────
     print(f"\n{'='*60}")
     print(f"  READY. Type your question and press Enter.")
     print(f"  Commands:")
@@ -661,7 +633,6 @@ def main():
                 print_session_summary(session_results)
                 continue
 
-            # ✅ NEW: Optional inline reference via  "question | r: reference answer"
             reference = None
             if " | r: " in raw_input:
                 parts     = raw_input.split(" | r: ", 1)

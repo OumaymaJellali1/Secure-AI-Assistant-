@@ -22,8 +22,7 @@ from File_processing.txt_handler         import extract_txt
 from chunking.pptx_chunker import extract_pptx
 from chunking.scanned_pdf_chunker import chunk_scanned_pdf
 from csv_processing.csv_executor_postgres import import_csv
-
-# ── CLEANUP SIDE-EFFECT JSON ──────────────────────────
+from File_processing.docx_handler import extract_docx
 def _cleanup_json(file_path: str):
     json_path = Path(Path(file_path).stem + "_parsed.json")
     try:
@@ -68,6 +67,7 @@ HANDLER_MAP = {
     ".tif" : extract_image,
     ".txt" : extract_txt,
     ".pptx": extract_pptx,
+    ".docx": extract_docx,
 }
 
 _CONTAINER_TYPES = {

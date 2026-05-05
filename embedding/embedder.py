@@ -1,74 +1,114 @@
 """
 embedder.py
 ───────────
-Embeds normalized chunks using BGE-M3.
+Embeds normalized chunks using Voyage AI (voyage-multilingual-2).
+Dense vectors via Voyage API + sparse vectors via BM25 (local, lightweight).
 Produces dense + sparse vectors for hybrid retrieval in Qdrant.
-
-Input  : list of normalized chunks from ingest.py (already have embed_text)
-Output : list of EmbeddedChunk dicts — same chunk + both vectors attached
 
 Usage:
     from embedder import embed_chunks, embed_query, embedding_health_check
-
-    embedded = embed_chunks(chunks)          # document embedding
-    dense, sparse = embed_query("your question")  # query embedding
 """
 
 from __future__ import annotations
+import os
 import numpy as np
+from typing import Any
 
 
 # ── CONFIG ────────────────────────────────────────────────────────────────────
 
-EMBED_BATCH_SIZE = 32     
-EMBED_MAX_LENGTH = 512   
-USE_FP16         = True   # matches pdf_chunker / txt_chunker
+EMBED_BATCH_SIZE  = 128          # Voyage supports up to 128 per batch
+EMBED_MAX_LENGTH  = 512          # tokens (used by BM25 truncation hint)
+VOYAGE_MODEL      = "voyage-multilingual-2"
+VOYAGE_API_KEY    = os.environ.get("VOYAGE_API_KEY", "")
 
 
-# ── MODEL SINGLETON ( If BGE-M3 was already loaded by a chunker in the same process → no reload.)
+# ── CLIENTS (lazy-loaded singletons) ─────────────────────────────────────────
 
-_model = None
-
-def _get_model():
-    global _model
-    if _model is None:
-        print("[EMBEDDER] Loading BGE-M3 model...")
-        from FlagEmbedding import BGEM3FlagModel
-        _model = BGEM3FlagModel("BAAI/bge-m3", use_fp16=USE_FP16)
-        print("[EMBEDDER] BGE-M3 ready.")
-    return _model
+_voyage_client = None
+_bm25_model    = None   # for sparse vectors
 
 
-# ── SPARSE CONVERSION 
+def _get_voyage():
+    global _voyage_client
+    if _voyage_client is None:
+        if not VOYAGE_API_KEY:
+            raise EnvironmentError(
+                "[EMBEDDER] VOYAGE_API_KEY is not set. "
+                "Export it or add it to your .env file."
+            )
+        import voyageai
+        print("[EMBEDDER] Initializing Voyage AI client...")
+        _voyage_client = voyageai.Client(api_key=VOYAGE_API_KEY)
+        print("[EMBEDDER] Voyage AI client ready.")
+    return _voyage_client
 
-def _to_sparse_vector(sparse_weights: dict) -> dict:
+
+def _get_bm25():
     """
-    Convert BGE-M3 sparse output → Qdrant-ready format.
-
-    BGE-M3 returns : {token_id (int): weight (float), ...}
-    Qdrant expects : {"indices": [...], "values": [...]}
-
-    Zero-weight entries are dropped — they waste memory and
-    corrupt dot-product scoring in Qdrant sparse search.
+    Lazy-load a simple BM25 tokenizer for sparse vectors.
+    Uses rank_bm25 — lightweight, no GPU needed.
+    pip install rank-bm25
     """
+    global _bm25_model
+    # BM25 is corpus-dependent, so we only use the tokenizer here
+    # and build per-batch sparse vectors from raw token weights
+    return None   # see _to_sparse_bm25() below — stateless approach
+
+
+# ── SPARSE via TF-IDF-style token weights ────────────────────────────────────
+
+def _to_sparse_bm25(text: str) -> dict:
+    """
+    Produce a lightweight sparse vector from raw token frequencies.
+    This is a stateless BM25-lite: term frequency with basic normalization.
+    Compatible with Qdrant sparse vector format.
+
+    For production, replace with a fitted BM25 or SPLADE model.
+    """
+    import re
+    from collections import Counter
+    from math import log
+
+    # Basic tokenization — lowercase, split on non-alphanumeric
+    tokens = re.findall(r"[a-zA-Z0-9]+", text.lower())
+
+    if not tokens:
+        return {"indices": [], "values": []}
+
+    # Simple stopword filter
+    STOPWORDS = {
+        "the", "a", "an", "is", "it", "in", "on", "at", "to",
+        "of", "and", "or", "for", "with", "this", "that", "be",
+        "are", "was", "were", "have", "has", "had", "not", "by",
+    }
+    tokens = [t for t in tokens if t not in STOPWORDS and len(t) > 1]
+
+    if not tokens:
+        return {"indices": [], "values": []}
+
+    tf      = Counter(tokens)
+    total   = len(tokens)
+    vocab   = sorted(set(tokens))
+
+    # Assign stable integer IDs via hash (keeps it stateless)
     indices, values = [], []
-    for token_id, weight in sparse_weights.items():
-        w = float(weight)
-        if w > 0.0:
-            indices.append(int(token_id))
-            values.append(w)
+    for term in vocab:
+        idx  = abs(hash(term)) % (2 ** 20)   # 1M token space
+        freq = tf[term] / total
+        weight = freq * (1 + log(1 + tf[term]))  # TF-lite
+        indices.append(idx)
+        values.append(round(weight, 6))
+
     return {"indices": indices, "values": values}
 
 
-# ── CORE EMBED FUNCTION 
+# ── CORE EMBED FUNCTION ───────────────────────────────────────────────────────
 
 def embed_chunks(chunks: list[dict]) -> list[dict]:
     """
-    Embed a list of normalized chunks (output of ingest.py).
-
-    Each chunk must have an "embed_text" field — set by the normalizer.
-    Returns the same chunks with "dense_vector" and "sparse_vector" added.
-    Input order is always preserved.
+    Embed a list of normalized chunks.
+    Dense vectors from Voyage AI, sparse from local BM25-lite.
 
     Args:
         chunks : normalized chunks from ingest_file()
@@ -76,65 +116,49 @@ def embed_chunks(chunks: list[dict]) -> list[dict]:
     Returns:
         Same chunks + dense_vector (list[float], dim=1024)
                      + sparse_vector ({"indices": [...], "values": [...]})
-
-    Raises:
-        ValueError : if any chunk is missing "embed_text"
-                     (means normalizer was skipped)
     """
     if not chunks:
         print("[EMBEDDER] No chunks to embed.")
         return []
 
-    # ── PRE-FLIGHT CHECK 
-    missing_embed_text = [
-        i for i, c in enumerate(chunks)
-        if not c.get("embed_text", "").strip()
-    ]
-    if missing_embed_text:
+    # ── PRE-FLIGHT CHECK
+    missing = [i for i, c in enumerate(chunks) if not c.get("embed_text", "").strip()]
+    if missing:
         raise ValueError(
-            f"[EMBEDDER] {len(missing_embed_text)} chunk(s) missing 'embed_text' "
-            f"at indices {missing_embed_text[:10]}{'...' if len(missing_embed_text) > 10 else ''}.\n"
-            f"Make sure you ran ingest_file() before embed_chunks()."
+            f"[EMBEDDER] {len(missing)} chunk(s) missing 'embed_text' "
+            f"at indices {missing[:10]}."
         )
 
-    texts = [c["embed_text"] for c in chunks]
-    model = _get_model()
+    texts  = [c["embed_text"] for c in chunks]
+    client = _get_voyage()
 
-    print(f"[EMBEDDER] Embedding {len(texts)} chunks "
-          f"(batch_size={EMBED_BATCH_SIZE}, max_length={EMBED_MAX_LENGTH}, fp16={USE_FP16})")
+    print(f"[EMBEDDER] Embedding {len(texts)} chunks via Voyage AI "
+          f"(model={VOYAGE_MODEL}, batch_size={EMBED_BATCH_SIZE})")
 
     all_dense  = []
     all_sparse = []
-    skipped    = []   
+    skipped    = []
 
-    # ── BATCH LOOP 
     total_batches = (len(texts) + EMBED_BATCH_SIZE - 1) // EMBED_BATCH_SIZE
 
     for batch_idx in range(total_batches):
         start = batch_idx * EMBED_BATCH_SIZE
         end   = min(start + EMBED_BATCH_SIZE, len(texts))
-        batch = texts[start:end]
+        batch_texts  = texts[start:end]
+        batch_chunks = chunks[start:end]
 
         try:
-            result = model.encode(
-                batch,
-                batch_size          = EMBED_BATCH_SIZE,
-                max_length          = EMBED_MAX_LENGTH,
-                return_dense        = True,
-                return_sparse       = True,
-                return_colbert_vecs = False,
-            )
+            # ── DENSE via Voyage API
+            result      = client.embed(batch_texts, model=VOYAGE_MODEL, input_type="document")
+            dense_vecs  = result.embeddings   # list[list[float]]
 
-            batch_dense  = result["dense_vecs"]       
-            batch_sparse = result["lexical_weights"]  
+            # ── SPARSE via local BM25-lite
+            sparse_vecs = [_to_sparse_bm25(t) for t in batch_texts]
 
-            # ── SANITY CHECK: dense vectors must be non-zero 
-            for local_i, (dvec, chunk) in enumerate(
-                zip(batch_dense, chunks[start:end])
-            ):
+            # ── SANITY CHECK
+            for local_i, (dvec, chunk) in enumerate(zip(dense_vecs, batch_chunks)):
                 global_i = start + local_i
                 norm     = float(np.linalg.norm(dvec))
-
                 if norm == 0.0:
                     skipped.append({
                         "index"    : global_i,
@@ -142,18 +166,16 @@ def embed_chunks(chunks: list[dict]) -> list[dict]:
                         "reason"   : "zero-norm dense vector",
                         "content"  : chunk.get("content", "")[:80],
                     })
-                    print(f"[EMBEDDER] WARNING: Zero-norm vector at index {global_i} "
-                          f"(chunk_id={chunk.get('chunk_id','?')[:12]})")
 
-            all_dense.extend(batch_dense)
-            all_sparse.extend(batch_sparse)
+            all_dense.extend(dense_vecs)
+            all_sparse.extend(sparse_vecs)
 
             print(f"[EMBEDDER]   Batch {batch_idx + 1}/{total_batches} done "
                   f"(chunks {start + 1}-{end})")
 
         except Exception as e:
             print(f"[EMBEDDER] FAILED Batch {batch_idx + 1}: {e}")
-            for local_i in range(len(batch)):
+            for local_i in range(len(batch_texts)):
                 global_i = start + local_i
                 skipped.append({
                     "index"    : global_i,
@@ -161,40 +183,33 @@ def embed_chunks(chunks: list[dict]) -> list[dict]:
                     "reason"   : f"batch exception: {e}",
                     "content"  : chunks[global_i].get("content", "")[:80],
                 })
-            all_dense.extend([None] * len(batch))
-            all_sparse.extend([None] * len(batch))
+            all_dense.extend([None] * len(batch_texts))
+            all_sparse.extend([None] * len(batch_texts))
 
-    # ── ATTACH VECTORS 
+    # ── ATTACH VECTORS
     embedded      = []
     truly_skipped = []
 
-    for chunk, dense_vec, sparse_dict in zip(chunks, all_dense, all_sparse):
-        if dense_vec is None or sparse_dict is None:
+    for chunk, dense_vec, sparse_vec in zip(chunks, all_dense, all_sparse):
+        if dense_vec is None or sparse_vec is None:
             truly_skipped.append(chunk.get("chunk_id", "?"))
-            continue   # drop failed chunks — don't insert broken points to Qdrant
+            continue
 
         ec = dict(chunk)
-        ec["dense_vector"]  = dense_vec.tolist()
-        ec["sparse_vector"] = _to_sparse_vector(sparse_dict)
+        ec["dense_vector"]  = dense_vec
+        ec["sparse_vector"] = sparse_vec
         embedded.append(ec)
 
-    # ── FINAL REPORT 
     _embedding_report(chunks, embedded, skipped, truly_skipped)
-
     return embedded
 
 
-# ── QUERY EMBEDDER 
+# ── QUERY EMBEDDER ────────────────────────────────────────────────────────────
 
 def embed_query(query: str) -> tuple[list[float], dict]:
     """
-    Embed a search query for retrieval.
-
-    IMPORTANT — uses "query: " prefix.
-    BGE-M3 is asymmetric: documents and queries live in different spaces.
-    Documents are embedded via embed_text (with type prefix from normalizer).
-    Queries MUST use "query: " prefix to align with the document space.
-    If you skip this prefix, retrieval scores will be wrong.
+    Embed a search query for hybrid retrieval.
+    Dense via Voyage (input_type='query'), sparse via BM25-lite.
 
     Args:
         query : raw user question string
@@ -205,150 +220,96 @@ def embed_query(query: str) -> tuple[list[float], dict]:
     if not query or not query.strip():
         raise ValueError("[EMBEDDER] Query string is empty.")
 
-    query_text = f"query: {query.strip()}"
-    model      = _get_model()
+    client = _get_voyage()
 
-    result = model.encode(
-        [query_text],
-        batch_size          = 1,
-        max_length          = 512,
-        return_dense        = True,
-        return_sparse       = True,
-        return_colbert_vecs = False,
-    )
-
-    dense_vector  = result["dense_vecs"][0].tolist()
-    sparse_vector = _to_sparse_vector(result["lexical_weights"][0])
+    result       = client.embed([query.strip()], model=VOYAGE_MODEL, input_type="query")
+    dense_vector = result.embeddings[0]
+    sparse_vector = _to_sparse_bm25(query.strip())
 
     return dense_vector, sparse_vector
 
 
-# ── HEALTH CHECK 
+# ── HEALTH CHECK ──────────────────────────────────────────────────────────────
 
 def embedding_health_check() -> bool:
-    """
-    Run a quick sanity check on the BGE-M3 model before embedding a real file.
-
-    Checks:
-      1. Model loads without error
-      2. Dense vector has correct dimension (1024)
-      3. Dense vectors are non-zero (model is not broken)
-      4. Sparse vectors have at least 1 token
-      5. Similar sentences score higher than dissimilar ones
-         (semantic ordering is correct)
-      6. Query prefix produces a different vector than document prefix
-         (asymmetric encoding is working)
-      7. embed_query() wrapper works end-to-end
-
-    Prints PASS / FAIL for each check.
-    Returns True if all checks pass, False otherwise.
-    """
+    """Sanity check the Voyage client and BM25 sparse pipeline."""
     print("\n[EMBEDDER] ── Health Check ──────────────────────────────────")
-
-    try:
-        model = _get_model()
-    except Exception as e:
-        print(f"[EMBEDDER] FAIL  Model load: {e}")
-        return False
 
     all_passed = True
 
-    # ── TEST SENTENCES 
-    sent_similar_a = "Retrieval-Augmented Generation improves LLM accuracy."
-    sent_similar_b = "RAG combines a retriever with a language model."
-    sent_different = "The Eiffel Tower is located in Paris, France."
-    query_text     = "query: What is RAG?"
-    doc_text       = sent_similar_a  
-
-    try:
-        result = model.encode(
-            [sent_similar_a, sent_similar_b, sent_different,
-             query_text, doc_text],
-            batch_size          = 8,
-            max_length          = 512,
-            return_dense        = True,
-            return_sparse       = True,
-            return_colbert_vecs = False,
-        )
-        dense  = result["dense_vecs"]      
-        sparse = result["lexical_weights"] 
-
-    except Exception as e:
-        print(f"[EMBEDDER] FAIL  Encode call: {e}")
+    # CHECK 1: API key set
+    ok = bool(VOYAGE_API_KEY)
+    print(f"[EMBEDDER] {'PASS' if ok else 'FAIL'}  VOYAGE_API_KEY set  : {ok}")
+    all_passed = all_passed and ok
+    if not ok:
+        print("[EMBEDDER] Set VOYAGE_API_KEY env var and retry.\n")
         return False
 
+    # CHECK 2: Client init
+    try:
+        client = _get_voyage()
+        print(f"[EMBEDDER] PASS  Client init")
+    except Exception as e:
+        print(f"[EMBEDDER] FAIL  Client init         : {e}")
+        return False
+
+    # CHECK 3: Dense embedding shape
+    try:
+        test_sentences = [
+            "Retrieval-Augmented Generation improves LLM accuracy.",
+            "RAG combines a retriever with a language model.",
+            "The Eiffel Tower is located in Paris, France.",
+        ]
+        result = client.embed(test_sentences, model=VOYAGE_MODEL, input_type="document")
+        dense  = result.embeddings
+        dim    = len(dense[0])
+        ok     = dim == 1024
+        print(f"[EMBEDDER] {'PASS' if ok else 'FAIL'}  Dense dimension     : {dim}")
+        all_passed = all_passed and ok
+    except Exception as e:
+        print(f"[EMBEDDER] FAIL  Dense embedding     : {e}")
+        return False
+
+    # CHECK 4: Non-zero vectors
+    norms = [float(np.linalg.norm(d)) for d in dense]
+    ok    = all(n > 0 for n in norms)
+    print(f"[EMBEDDER] {'PASS' if ok else 'FAIL'}  Dense non-zero      : norms={[round(n,3) for n in norms]}")
+    all_passed = all_passed and ok
+
+    # CHECK 5: Semantic ordering
     def _cosine(a, b):
         na, nb = np.linalg.norm(a), np.linalg.norm(b)
         return float(np.dot(a, b) / (na * nb)) if na > 0 and nb > 0 else 0.0
 
-    # CHECK 1: Dense dimension
-    dim = dense.shape[1] if hasattr(dense, "shape") else len(dense[0])
-    ok  = dim == 1024
-    print(f"[EMBEDDER] {'PASS' if ok else 'FAIL'}  Dense dimension     : {dim} "
-          f"{'(expected 1024)' if not ok else ''}")
-    all_passed = all_passed and ok
-
-    # CHECK 2: Dense non-zero
-    norms = [float(np.linalg.norm(dense[i])) for i in range(3)]
-    ok    = all(n > 0 for n in norms)
-    print(f"[EMBEDDER] {'PASS' if ok else 'FAIL'}  Dense non-zero      : "
-          f"norms={[round(n, 3) for n in norms]}")
-    all_passed = all_passed and ok
-
-    # CHECK 3: Sparse has tokens
-    sparse_lens = [len(sparse[i]) for i in range(3)]
-    ok          = all(l > 0 for l in sparse_lens)
-    print(f"[EMBEDDER] {'PASS' if ok else 'FAIL'}  Sparse tokens       : "
-          f"counts={sparse_lens}")
-    all_passed = all_passed and ok
-
-    # CHECK 4: Semantic ordering
-    sim_related   = _cosine(dense[0], dense[1])  # similar_a vs similar_b
-    sim_unrelated = _cosine(dense[0], dense[2])  # similar_a vs different
+    sim_related   = _cosine(dense[0], dense[1])
+    sim_unrelated = _cosine(dense[0], dense[2])
     ok            = sim_related > sim_unrelated
-    print(f"[EMBEDDER] {'PASS' if ok else 'FAIL'}  Semantic ordering   : "
-          f"related={sim_related:.3f}  unrelated={sim_unrelated:.3f}")
+    print(f"[EMBEDDER] {'PASS' if ok else 'FAIL'}  Semantic ordering   : related={sim_related:.3f}  unrelated={sim_unrelated:.3f}")
     all_passed = all_passed and ok
 
-    # CHECK 5: Query vs document asymmetry
-    diff = float(np.linalg.norm(np.array(dense[3]) - np.array(dense[4])))
-    ok   = diff > 0.01
-    print(f"[EMBEDDER] {'PASS' if ok else 'FAIL'}  Query/doc asymmetry : "
-          f"vector distance={diff:.4f} "
-          f"{'(prefix working)' if ok else '(prefix has no effect!)'}")
+    # CHECK 6: Sparse output
+    sv = _to_sparse_bm25("What is retrieval augmented generation?")
+    ok = len(sv["indices"]) > 0
+    print(f"[EMBEDDER] {'PASS' if ok else 'FAIL'}  Sparse (BM25-lite)  : tokens={len(sv['indices'])}")
     all_passed = all_passed and ok
 
-    # CHECK 6: embed_query() end-to-end
+    # CHECK 7: embed_query end-to-end
     try:
         dv, sv = embed_query("What is RAG?")
         ok     = len(dv) == 1024 and len(sv["indices"]) > 0
-        print(f"[EMBEDDER] {'PASS' if ok else 'FAIL'}  embed_query()       : "
-              f"dense_dim={len(dv)}  sparse_tokens={len(sv['indices'])}")
+        print(f"[EMBEDDER] {'PASS' if ok else 'FAIL'}  embed_query()       : dense_dim={len(dv)}  sparse_tokens={len(sv['indices'])}")
     except Exception as e:
         print(f"[EMBEDDER] FAIL  embed_query()       : {e}")
         ok = False
     all_passed = all_passed and ok
 
-    # SUMMARY
-    print(f"[EMBEDDER] ")
-    if all_passed:
-        print(f"[EMBEDDER] All checks passed — embedder is ready.\n")
-    else:
-        print(f"[EMBEDDER] Some checks FAILED — review output above.\n")
-
+    print(f"\n[EMBEDDER] {'All checks passed — embedder is ready.' if all_passed else 'Some checks FAILED.'}\n")
     return all_passed
 
 
-# ── EMBEDDING REPORT (internal) 
+# ── EMBEDDING REPORT (internal) ───────────────────────────────────────────────
 
-def _embedding_report(
-    input_chunks : list[dict],
-    embedded     : list[dict],
-    zero_norm    : list[dict],
-    batch_failed : list[str],
-) -> None:
-    """Print a full summary after embed_chunks() completes."""
-
+def _embedding_report(input_chunks, embedded, zero_norm, batch_failed):
     total_in  = len(input_chunks)
     total_out = len(embedded)
     dropped   = total_in - total_out
@@ -362,9 +323,9 @@ def _embedding_report(
     dense_sample = embedded[0]["dense_vector"][:3] if embedded else []
 
     print(f"\n[EMBEDDER] ── Embedding Report ──────────────────────────────────")
+    print(f"[EMBEDDER] Model              : {VOYAGE_MODEL} (Voyage AI)")
     print(f"[EMBEDDER] Input chunks       : {total_in}")
-    print(f"[EMBEDDER] Embedded OK        : {total_out}"
-          + (" (all good)" if dropped == 0 else f" ({dropped} dropped)"))
+    print(f"[EMBEDDER] Embedded OK        : {total_out}" + (" (all good)" if dropped == 0 else f" ({dropped} dropped)"))
 
     for t, count in sorted(by_type.items()):
         print(f"[EMBEDDER]   {t:<10}          : {count}")
@@ -372,45 +333,30 @@ def _embedding_report(
     if embedded:
         print(f"[EMBEDDER] Dense dim          : {len(embedded[0]['dense_vector'])}")
         print(f"[EMBEDDER] Dense sample [0:3] : {[round(x, 4) for x in dense_sample]}")
-        print(f"[EMBEDDER] Sparse tok/chunk   : "
-              f"min={min(sparse_lens)}  "
-              f"avg={int(sum(sparse_lens) / len(sparse_lens))}  "
-              f"max={max(sparse_lens)}")
+        print(f"[EMBEDDER] Sparse tok/chunk   : min={min(sparse_lens)}  avg={int(sum(sparse_lens)/len(sparse_lens))}  max={max(sparse_lens)}")
 
     if zero_norm:
-        print(f"\n[EMBEDDER] WARNING: Zero-norm vectors ({len(zero_norm)}) — "
-              f"these were embedded but may hurt retrieval:")
+        print(f"\n[EMBEDDER] WARNING: Zero-norm vectors ({len(zero_norm)})")
         for item in zero_norm[:5]:
-            print(f"           index={item['index']}  "
-                  f"chunk_id={item['chunk_id'][:12]}  "
-                  f"content='{item['content'][:60]}'")
-        if len(zero_norm) > 5:
-            print(f"           ... and {len(zero_norm) - 5} more")
+            print(f"           index={item['index']}  chunk_id={item['chunk_id'][:12]}  content='{item['content'][:60]}'")
 
     if batch_failed:
-        print(f"\n[EMBEDDER] ERROR: Chunks NOT embedded — will NOT be in Qdrant "
-              f"({len(batch_failed)}):")
+        print(f"\n[EMBEDDER] ERROR: Chunks NOT embedded ({len(batch_failed)})")
         for cid in batch_failed[:5]:
             print(f"           chunk_id={cid[:20]}")
-        if len(batch_failed) > 5:
-            print(f"           ... and {len(batch_failed) - 5} more")
 
     print(f"[EMBEDDER] ─────────────────────────────────────────────────────\n")
 
 
-# ── CLI 
+# ── CLI ───────────────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
     import sys
 
-    # MODE 1: health check only
-    #   python embedder.py --check
     if len(sys.argv) == 1 or sys.argv[1] == "--check":
         embedding_health_check()
         sys.exit(0)
 
-    # MODE 2: embed a real file end-to-end
-    #   python embedder.py <file_path> [source_type]
     file_path   = sys.argv[1]
     source_type = sys.argv[2] if len(sys.argv) > 2 else None
 
@@ -420,24 +366,18 @@ if __name__ == "__main__":
     chunks = ingest_file(file_path, source_type=source_type, validate=True)
 
     print(f"\n── Step 2: health check")
-    ok = embedding_health_check()
-    if not ok:
+    if not embedding_health_check():
         print("[EMBEDDER] Health check failed — aborting.")
         sys.exit(1)
 
     print(f"\n── Step 3: embed")
     embedded = embed_chunks(chunks)
 
-    print(f"\n── Step 4: spot check first embedded chunk")
     if embedded:
         c = embedded[0]
+        print(f"\n── Step 4: spot check")
         print(f"  chunk_id      : {c['chunk_id']}")
-        print(f"  type          : {c['type']}")
-        print(f"  source_type   : {c['metadata']['source_type']}")
-        print(f"  dense_vector  : dim={len(c['dense_vector'])}  "
-              f"first3={[round(x, 4) for x in c['dense_vector'][:3]]}")
-        print(f"  sparse_vector : {len(c['sparse_vector']['indices'])} tokens  "
-              f"top3_idx={c['sparse_vector']['indices'][:3]}  "
-              f"top3_val={[round(v, 4) for v in c['sparse_vector']['values'][:3]]}")
+        print(f"  dense_vector  : dim={len(c['dense_vector'])}  first3={[round(x,4) for x in c['dense_vector'][:3]]}")
+        print(f"  sparse_vector : {len(c['sparse_vector']['indices'])} tokens")
 
     print(f"\n── Done. {len(embedded)}/{len(chunks)} chunks embedded successfully.")

@@ -1,0 +1,450 @@
+{
+  "chunks": [
+    {
+      "chunk_id": "a7bb656e-6405-4a8e-9017-c5fa356fe03f",
+      "type": "image",
+      "content": "a striking triangular logo featuring a maze-like design on its left and a solid red triangular section on its right. The left side showcases a white-lined, black maze, with the bolded text 'ENIS' situated beneath it. The background surrounding the logo is a plain white. The design exudes a sense of modernity and sleekness.",
+      "metadata": {
+        "source": "1.pptx",
+        "slide": 1,
+        "section": null,
+        "image_index": 1
+      }
+    },
+    {
+      "chunk_id": "982a17f6-f9db-4bd0-b8a5-b09f0ff44ac8",
+      "type": "text",
+      "content": "Development of Prediction System of Compressive\n\nStrength in Building\n\nPresented by:\n\nAmine Hamdi\n\nMaroua Majdoub\n\nOumayma Jellali\n\nSupervised by:\n\nDr. Boudour AMMAR\n\nMr.Omar MEZGHANI\n\n‹›",
+      "metadata": {
+        "source": "1.pptx",
+        "slide": 1,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "0aed1e23-10e1-48c6-abd3-536d661b610f",
+      "type": "text",
+      "content": "Content\n\nData Understanding\n\n01\n\n02\n\nIntroduction\n\nModeling\n\nData Preparation\n\n03\n\n04\n\nDeployment\n\nEvaluation\n\n06\n\n05\n\nConclusion\n\n07\n\n‹›",
+      "metadata": {
+        "source": "1.pptx",
+        "slide": 2,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "299bfbc0-c052-47e7-9eb6-af58b4838325",
+      "type": "image",
+      "content": "an hourglass with a circular orange arrow around it, indicating a cyclical process or time loop. The hourglass is divided into two sections, with the top section filled with yellow sand and the bottom section partially filled. The hourglass features a blue body with purple caps on both ends and a horizontal yellow stripe in the middle. Three small orange dots are positioned to the right of the hourglass, suggesting movement or progression.\nThe circular orange arrow encircles the hourglass, pointing to the right and curving back around to the left, implying a continuous cycle. This visual representation likely symbolizes the passage of time, repetition, or a recurring process, which could be relevant to the introduction section of a presentation.",
+      "metadata": {
+        "source": "1.pptx",
+        "slide": 4,
+        "section": "01 - Introduction",
+        "image_index": 2
+      }
+    },
+    {
+      "chunk_id": "a9612985-e4ed-4b10-a197-565d50c835f8",
+      "type": "image",
+      "content": "The image features a magnifying glass. The magnifying glass, depicted in a grey and blue color scheme, is presented on a white background. Given its presence in the introductory section of a presentation, it likely symbolizes investigation, research, or detailed analysis.",
+      "metadata": {
+        "source": "1.pptx",
+        "slide": 4,
+        "section": "01 - Introduction",
+        "image_index": 3
+      }
+    },
+    {
+      "chunk_id": "93f16fff-737a-4dfd-a864-52c0aa6911b9",
+      "type": "image",
+      "content": "The image features a red stamp with the word OUTDATED in large, bold letters. The stamp is angled to the right and has a rectangular shape with rounded corners.\nThe stamp's design suggests that it may be used to indicate that information or a document is no longer current or relevant.",
+      "metadata": {
+        "source": "1.pptx",
+        "slide": 4,
+        "section": "01 - Introduction",
+        "image_index": 4
+      }
+    },
+    {
+      "chunk_id": "64970dfa-90dd-4242-b202-29104a7997b9",
+      "type": "text",
+      "content": "Problem Statement\n\n🧱 Traditional methods are slow and destructive. Breaking samples delays timelines and wastes materials.\n\n🧱 Hard to detect issues early You only find out there’s a problem after the concrete is poured.\n\n🧱 Decades-old lab methods can't handle modern construction.\n\n‹›",
+      "metadata": {
+        "source": "1.pptx",
+        "slide": 4,
+        "section": "01 - Introduction"
+      }
+    },
+    {
+      "chunk_id": "9fdc3ef8-98ed-4de2-b68d-d67f6c854ee9",
+      "type": "text",
+      "content": "Proposed solution\n\n💡 Enables proactive risk management and prevents strength failures before they happen.\n\n🤖 Use artificial intelligence tools for compressive strength prediction.\n\n⚡ Enhance real-time monitoring of compressive strength to enable faster and more accurate decision-making.\n\n‹›",
+      "metadata": {
+        "source": "1.pptx",
+        "slide": 5,
+        "section": "01 - Introduction"
+      }
+    },
+    {
+      "chunk_id": "88900458-60b7-4319-9611-89a51747dd65",
+      "type": "image",
+      "content": "Proposed methodology: CRISP-DM\nThe image presents a Data Science Life Cycle, which is a cyclical process consisting of six stages:\nThe stages are:\nBusiness Understanding (blue icon)\nData Understanding (purple icon)\nData Preparation (purple icon)\nModeling (purple icon)\nEvaluation (blue icon)\nDeployment (blue icon)\nThese stages are interconnected, with the process looping back from Deployment to Business Understanding. This cyclical nature of the Data Science Life Cycle emphasizes the importance of continuous iteration and refinement.",
+      "metadata": {
+        "source": "1.pptx",
+        "slide": 6,
+        "section": "01 - Introduction",
+        "image_index": 5
+      }
+    },
+    {
+      "chunk_id": "8b020014-13db-4c2c-86e4-dcf02827bfb3",
+      "type": "image",
+      "content": "Data exploration\nSource: UCI Machine Learning Repository\nSize: 1,030 concrete mix samples\nAll features are numerical (continuous or integer).\nThe image features a logo for the UCI Machine Learning Repository, which includes:\nThe acronym UCI in large yellow block letters\nA line drawing of an aardvark to the right of the acronym\nThe full name Machine Learning Repository in yellow below the acronym and aardvark\nThe logo is presented on a white background with a dark blue border at the top and bottom. This logo is likely used to indicate that the data being discussed originates from the University of California, Irvine's Machine Learning Repository, a widely used collection of public datasets.\nThe presence of this logo in a presentation slide focused on '02 - Data Understanding' suggests that the data being analyzed is sourced from this repository.",
+      "metadata": {
+        "source": "1.pptx",
+        "slide": 8,
+        "section": "02 - Data Understanding",
+        "image_index": 6
+      }
+    },
+    {
+      "chunk_id": "902635ba-47be-4a5b-85cf-8e7f289a00ee",
+      "type": "image",
+      "content": "a table comprising three columns and nine rows.\nThe columns are labeled:\nVariable Name\nRole\nType.\nThe table appears to describe data features related to concrete compressive strength, listing variables such as Cement, Blast Furnace Slag, Fly Ash, and others.\nThe Role column indicates that all variables, except for Concrete compressive strength, are classified as Features. Meanwhile, Concrete compressive strength is designated as the Target.\nThe Type column categorizes the variables as either Continuous or Integer. This table likely serves as part of an EDA (Exploratory Data Analysis) or Machine Learning project focused on predicting concrete compressive strength based on various concrete mixture components.",
+      "metadata": {
+        "source": "1.pptx",
+        "slide": 8,
+        "section": "02 - Data Understanding",
+        "image_index": 7
+      }
+    },
+    {
+      "chunk_id": "3101a43c-59ac-4068-bf92-472f96b626c4",
+      "type": "image",
+      "content": "a heatmap illustrating the Feature Correlation Matrix for a dataset related to concrete compressive strength. The matrix displays the correlation coefficients between various features, providing valuable insights into their relationships.\nFeatures and Correlations:\nThe features analyzed are:\ncement\nblast_furnace_slag\nfly_ash\nwater\nsuperplasticizer\ncoarse_aggregate\nfine_aggregate\nage\nconcrete_compressive_strength\nKey Observations:\nColor Scheme: The heatmap employs a color gradient to represent the correlation coefficients, ranging from -1.0 (dark blue) to 1.0 (dark red).\nCorrelation Interpretation:\nValues close to 1.0 or -1.0 indicate strong positive or negative correlations, respectively.\nValues around 0 suggest weak or no correlation.\nInsights:\nStrong Positive Correlation:\nA strong positive correlation (0",
+      "metadata": {
+        "source": "1.pptx",
+        "slide": 9,
+        "section": "02 - Data Understanding",
+        "image_index": 8
+      }
+    },
+    {
+      "chunk_id": "98d41fc1-1293-44b9-94e4-fc520c48ccb9",
+      "type": "text",
+      "content": "Data Cleaning\n\n25 duplicate rows were found and eliminated.\n\nDuplicate data may introduce bias and skew model performance\n\nFeature Scaling\n\nZ-score standardization normalized features to remove scale bias and improve convergence\n\n‹›",
+      "metadata": {
+        "source": "1.pptx",
+        "slide": 11,
+        "section": "03 - Data Preparation"
+      }
+    },
+    {
+      "chunk_id": "84c558df-7535-427b-8695-2ade2b4de7ca",
+      "type": "image",
+      "content": "Z-score\nThe image displays a box and whisker plot for nine different variables before standardization. The box and whisker plot, also known as a box plot, effectively illustrates the distribution of values for each variable.\nThe variables displayed are:\ncement\nblast_furnace_slag\nfly_ash\nwater\nsuperplasticizer\ncoarse_aggregate\nfine_aggregate\nage\nThe box and whisker plot consists of the following components:\nThe box represents the interquartile range (IQR), which contains the middle 50% of the data, with a line indicating the median.\nThe whiskers extend from the box to a maximum of 1.5IQR, with data points beyond this range displayed as individual points.\nThe box and whisker plot reveals significant differences in the distributions of these variables. For instance:\nThe coarse_aggregate variable exhibits a high median and a large range of values.\nThe",
+      "metadata": {
+        "source": "1.pptx",
+        "slide": 12,
+        "section": "03 - Data Preparation",
+        "image_index": 9
+      }
+    },
+    {
+      "chunk_id": "c8f1fc80-90b0-48a2-9151-0aafe75be04b",
+      "type": "image",
+      "content": "a box and whisker plot, a graphical representation used to display the distribution of data.\nThe plot features eight distinct categories on the horizontal axis:\ncement\nblast_furnace_slag\nfly_ash\nwater\nsuperplasticizer\ncoarse_aggregate\nfine_aggregate\nage\nFor each category, the plot provides a visual representation of the data distribution, including:\nA horizontal line indicating the median\nA box representing the interquartile range (IQR)\nWhiskers extending from the box to show the range of the data\nCircles denoting outliers\nThe vertical axis displays values ranging from -3 to 8. Notably, the plot is titled After Standardization, suggesting that the data has been standardized to ensure comparability across categories.\nOverall, this box and whisker plot effectively summarizes the distribution of each category, allowing for easy comparison and identification of trends, outliers, and variability in the data.",
+      "metadata": {
+        "source": "1.pptx",
+        "slide": 12,
+        "section": "03 - Data Preparation",
+        "image_index": 10
+      }
+    },
+    {
+      "chunk_id": "22ca30a1-2c78-4649-bacb-d2e31b3b088a",
+      "type": "image",
+      "content": "Data augmentation\nSMOGN applied to generate synthetic data points with Gaussian noise\nImproved data distribution and model performance\nSMOGN\nThe image features a black-and-white graphic of a seesaw (or teeter-totter) with a downward-pointing arrow on the right side and a square on the left side.\nThe seesaw appears to be tilting to the right due to the added weight of the downward-pointing arrow, suggesting balance and imbalance.\nThe likely intended use of this image in the '03 - Data Preparation' section of a presentation is to illustrate concepts such as data quality, data cleaning, or data transformation, where achieving balance or equilibrium is crucial, much like balancing weights on a seesaw. Alternatively, it could represent data weighting, importance of data points, or bias in data. This image effectively conveys the importance of balance in data preparation.",
+      "metadata": {
+        "source": "1.pptx",
+        "slide": 13,
+        "section": "03 - Data Preparation",
+        "image_index": 11
+      }
+    },
+    {
+      "chunk_id": "38ccc6e3-4cbb-448e-af52-ede4a81fe627",
+      "type": "image",
+      "content": "a density plot comparing the compressive strength distribution before and after applying SMOGN (Selective Maintenance of Generalised Normal).\nKey Observations:\nThe plot features two density curves:\n+ One for Before SMOGN (blue)\n+ One for After SMOGN (green)\nThe x-axis represents compressive strength\nThe y-axis represents density\nThe plot indicates that the distribution of compressive strength has shifted to the right and become more concentrated after applying SMOGN.\nInference:\nThe application of SMOGN appears to have increased the compressive strength, with a more pronounced peak and a narrower distribution. This suggests that SMOGN may have improved the compressive strength of the material or dataset being analyzed.",
+      "metadata": {
+        "source": "1.pptx",
+        "slide": 14,
+        "section": "03 - Data Preparation",
+        "image_index": 12
+      }
+    },
+    {
+      "chunk_id": "a4eeec7f-fc74-4e2a-abb9-2fb005b7a2db",
+      "type": "text",
+      "content": "Data Splitting\n\nMulti-Layer Perceptron model\n\nOther Models\n\nTransformer-based\n\nmodel\n\n80% Training\n\n60% Training\n\n70% Training\n\n20% Testing\n\n20% Validation\n\n15% Validation\n\n20% Testing\n\n15% Testing\n\n‹›",
+      "metadata": {
+        "source": "1.pptx",
+        "slide": 15,
+        "section": "03 - Data Preparation"
+      }
+    },
+    {
+      "chunk_id": "74f526a9-3836-46ee-9533-88eec173bd8a",
+      "type": "text",
+      "content": "Modeling\n\nMethodology:\n\nFor the regression problem, two types of models are considered:\n\nMachine Learning: XGBoost, LightGBM\n\nDeep Learning: MLP, Transformer\n\n‹›",
+      "metadata": {
+        "source": "1.pptx",
+        "slide": 17,
+        "section": "04 - Modeling"
+      }
+    },
+    {
+      "chunk_id": "7474860e-1c43-433d-9cb8-00096a179dfe",
+      "type": "image",
+      "content": "a level-wise tree growth process. It shows the sequential growth of a tree-like structure, likely representing a decision tree, which is a common concept in machine learning and data modeling.\nThe image presents two stages of the tree's evolution:\nInitially, a single node branches into two child nodes.\nIn the next stage, each of these nodes further branches into two child nodes, resulting in a total of four leaf nodes.\nThe illustration suggests a hierarchical expansion where each level of the tree is fully grown before moving on to the next level. This process allows the tree to progressively partition data into more refined categories, which is a key aspect of decision tree algorithms used in modeling. The visual representation effectively communicates how decision trees can systematically divide data spaces to make predictions or classifications.",
+      "metadata": {
+        "source": "1.pptx",
+        "slide": 18,
+        "section": "04 - Modeling",
+        "image_index": 13
+      }
+    },
+    {
+      "chunk_id": "b49c690c-d5ed-461a-8622-410d1b6d3d13",
+      "type": "image",
+      "content": "The image is a diagram illustrating the process of leaf-wise tree growth, which is a method used in gradient boosting algorithms. The diagram shows a series of trees, with each tree building upon the previous one.\nKey Features:\nThe diagram consists of four trees, each representing a stage in the leaf-wise tree growth process.\nThe trees are connected by blue arrows, indicating the progression from one tree to the next.\nThe trees are composed of nodes, represented by black and green circles, which are connected by lines to form branches.\nThe green nodes appear to represent the leaves of the trees.\nProcess:\nThe first tree on the left has two leaves (one green and one black).\nThe second tree has three leaves (two black and one green).\nThe third tree has four leaves (three black and one green).\nThe fourth tree has seven leaves (six black and one green).\nLeaf-wise Tree Growth:\nIn",
+      "metadata": {
+        "source": "1.pptx",
+        "slide": 18,
+        "section": "04 - Modeling",
+        "image_index": 14
+      }
+    },
+    {
+      "chunk_id": "8cf1e736-b042-4981-97a5-cdf293c0d904",
+      "type": "text",
+      "content": "LightGBM (Light Gradient Boosting Machine)\n\nLightGBM builds trees by focusing on the biggest errors first (leaf-wise), making it fast, accurate, and memory-efficient.\n\nXGBoost (Extreme Gradient Boosting)\n\nXGBoost builds many small trees step by step, each one fixing the errors of the previous, to make better and more accurate predictions.\n\n‹›",
+      "metadata": {
+        "source": "1.pptx",
+        "slide": 18,
+        "section": "04 - Modeling"
+      }
+    },
+    {
+      "chunk_id": "7f047199-2eb0-4388-9df1-7b073b01322f",
+      "type": "image",
+      "content": "The provided image illustrates the architecture of a Transformer model, a type of neural network introduced in the paper Attention Is All You Need by Vaswani et al. in 2017. The Transformer model consists of two primary components:\nEncoder\nComprises multiple Transformer layers\nTakes in input, which can be a sequence of tokens (e.g., words or characters)\nDecoder\nAlso consists of multiple Transformer layers\nReceives the state output from the Encoder\nProduces the output, which can be a translated sequence of tokens\nThe Transformer layers in both the Encoder and Decoder utilize self-attention mechanisms to process input sequences in parallel, eliminating the need for recurrent neural network (RNN) layers. This architecture enables efficient and effective processing of sequential data.",
+      "metadata": {
+        "source": "1.pptx",
+        "slide": 19,
+        "section": "04 - Modeling",
+        "image_index": 15
+      }
+    },
+    {
+      "chunk_id": "c9e0dbe2-4d2e-44b9-a4a5-03665a1bac5d",
+      "type": "image",
+      "content": "a neural network model, a fundamental concept in machine learning.\nThe neural network consists of the following components:\nInput Layer (Left): The input layer, represented by blue circles, accepts the input data.\nHidden Layers (Center): Two layers of orange circles process the information.\nOutput Layer (Right): The output layer, represented by green circles, generates the predicted output.\nThe connections between nodes (circles) are represented by lines, and arrows indicate the flow of information through the network. This visual representation provides a clear overview of a basic neural network architecture, which is likely being discussed in the context of modeling.",
+      "metadata": {
+        "source": "1.pptx",
+        "slide": 19,
+        "section": "04 - Modeling",
+        "image_index": 16
+      }
+    },
+    {
+      "chunk_id": "e1baccf4-a334-4fe4-bd3e-aec4c2695dd2",
+      "type": "text",
+      "content": "MLP (Multilayer Perceptron)\n\nMLP processes data through input, hidden, and output layers, learning patterns using weights, biases, and activation functions to make predictions.\n\nTransformer\n\nTransformer uses an encoder to understand the input and a decoder to generate the output, with self-attention to capture relationships between words.\n\n‹›",
+      "metadata": {
+        "source": "1.pptx",
+        "slide": 19,
+        "section": "04 - Modeling"
+      }
+    },
+    {
+      "chunk_id": "aa25b872-d0d1-4f44-a84f-eada52ec0e92",
+      "type": "text",
+      "content": "Hyperparameter Tuning with Optuna\n\nWhat is Optuna?\n\nAn open-source tool for automating hyperparameter tuning using efficient methods to quickly find the best parameters for models.\n\nWhy Optuna?\n\nAuto-tunes hyperparameters\n\nFaster than grid or random search\n\nStops bad trials early\n\nEasy to use and flexible\n\n‹›",
+      "metadata": {
+        "source": "1.pptx",
+        "slide": 20,
+        "section": "04 - Modeling"
+      }
+    },
+    {
+      "chunk_id": "64160623-829b-4d6f-b9a2-51571eb047d1",
+      "type": "image",
+      "content": "a flowchart illustrating the process of modeling, which involves the following steps:\nDefine Objective: The process begins with defining an objective, represented by a target icon.\nTry Different Values: The next step is to try different values, symbolized by interlocking gears.\nLearn: This is followed by a learning phase, depicted by a human head with a puzzle piece.\nPrune: The process then involves pruning, represented by a molecular structure with some nodes being removed.\nThe flowchart also indicates that the process is iterative, with an arrow looping back from Define Objective to itself. The ultimate goal of this process is to achieve the Best Result, represented by a diamond icon.\nThis flowchart provides a clear and concise overview of the modeling process, highlighting the key steps involved in achieving the best possible outcome.",
+      "metadata": {
+        "source": "1.pptx",
+        "slide": 21,
+        "section": "04 - Modeling",
+        "image_index": 17
+      }
+    },
+    {
+      "chunk_id": "44b3a865-ed14-484e-8cda-078e88b658f3",
+      "type": "text",
+      "content": "Optuna Process\n\nDefine the objective (what to optimize).\n\nSuggest hyperparameters.\n\nEvaluate model performance.\n\nLearn from past trials.\n\nPrune bad trials early.\n\nRepeat for many trials.\n\nReturn the best result.\n\n‹›",
+      "metadata": {
+        "source": "1.pptx",
+        "slide": 21,
+        "section": "04 - Modeling"
+      }
+    },
+    {
+      "chunk_id": "856a1a2d-88f0-4a73-9d83-9e3014729e08",
+      "type": "image",
+      "content": "Evaluation metrics\nThe image presents a scatterplot illustrating the correlation between two variables. A blue line runs through the data points with a positive slope, indicating a positive correlation between the variables. The dashed gray lines represent the upper and lower bounds of a confidence interval, likely at the 95% level. The graph does not include specific axis labels or a title, but it appears to demonstrate a strong positive linear relationship between the two variables being evaluated. The presence of this graph in the '05 - Evaluation and Results' section suggests that it is being used to display the results of an analysis or study.",
+      "metadata": {
+        "source": "1.pptx",
+        "slide": 23,
+        "section": "05 - Evaluation and Results",
+        "image_index": 18
+      }
+    },
+    {
+      "chunk_id": "9be7eabe-f1a8-4078-98bc-912a0fd65a50",
+      "type": "image",
+      "content": "The image appears to be a slide from a presentation on evaluation and results, specifically highlighting Mean Squared Error (MSE) as the first item.\nThe slide features a light blue rounded rectangle with a darker blue circle on the left side, containing a large black number 1. The text Mean Squared Error (MSE) is displayed in black font within the rectangle.\nThe design suggests that this slide is part of a numbered list, likely presenting various evaluation metrics, with MSE being the first one.\nThe background of the slide is white.",
+      "metadata": {
+        "source": "1.pptx",
+        "slide": 23,
+        "section": "05 - Evaluation and Results",
+        "image_index": 19
+      }
+    },
+    {
+      "chunk_id": "4699694d-f1a1-4c16-9e81-ce41323673ac",
+      "type": "image",
+      "content": "a slide from a presentation, likely within a section on evaluation and results. The slide features a green oval shape with rounded edges, positioned horizontally across the center of the image.\nNumber 2 in a Green Circle\nOn the left side of the oval, there is a smaller green circle containing the number 2 in black text.\nRoot Mean Squared Error (RMSE) Text\nTo the right of the circle, inside the oval, it reads Root Mean Squared Error (RMSE) in black text.\nIn summary, the image displays a simple yet informative slide that appears to be part of a larger presentation on evaluation metrics, specifically highlighting the Root Mean Squared Error (RMSE) as one of the evaluation criteria.",
+      "metadata": {
+        "source": "1.pptx",
+        "slide": 23,
+        "section": "05 - Evaluation and Results",
+        "image_index": 20
+      }
+    },
+    {
+      "chunk_id": "d7492f6b-3e83-4e99-8e62-95af0f036c6f",
+      "type": "image",
+      "content": "a slide from a presentation, likely in the section '05 - Evaluation and Results'.\nThe slide features a pale yellow rounded rectangle with a circular protrusion on the left side, containing the number 3 in black text. The rectangle contains the text Mean Absolute Error (MAE) in black. The background of the slide is white.\nThis appears to be a metric used to evaluate the performance of a model, specifically the third metric discussed in the presentation.",
+      "metadata": {
+        "source": "1.pptx",
+        "slide": 23,
+        "section": "05 - Evaluation and Results",
+        "image_index": 21
+      }
+    },
+    {
+      "chunk_id": "6bf60cb7-eb4b-40d6-a42c-30f8709d33c5",
+      "type": "image",
+      "content": "a slide element featuring the term R-squared (R2), a statistical measure used to assess the goodness of fit of a regression model.\nThe image consists of:\nA salmon-colored oval shape with rounded ends\nA smaller salmon-colored circle on the left side, containing the number 4 in black text\nThe text R-squared (R2) in black font, positioned to the right of the circle\nThe background of the image is white. The design suggests that this image is part of a larger presentation slide, likely used to discuss evaluation metrics and results in a statistical or data analysis context.",
+      "metadata": {
+        "source": "1.pptx",
+        "slide": 23,
+        "section": "05 - Evaluation and Results",
+        "image_index": 22
+      }
+    },
+    {
+      "chunk_id": "87844499-4ef7-4131-8b79-c53eaf71e4e7",
+      "type": "image",
+      "content": "The tuned MLP model outperforms others with the highest R² (0.96) and most significant improvements post-tuning\nThe image presents a table evaluating the performance of four machine learning models: MLP, LightGBM, Transformer, and XGboost. Each model is assessed before and after tuning, with metrics including:\n$R^2$\nMean Squared Error (MSE)\nMean Absolute Error (MAE)\nRoot Mean Squared Error (RMSE)\nKey Observations:\nMLP exhibits the most significant improvement in $R^2$ (from 0.90 to 0.96) and RMSE (from 5.91 to 3.50) after tuning.\nXGboost shows a relatively stable performance, with a slight decrease in MSE (from 18.48 to 17.66) and MAE (from 2.93 to 2.84), and a minor decrease in RMSE (from 4.30 to 4.20).\nGeneral Trend:\nTuning generally leads to",
+      "metadata": {
+        "source": "1.pptx",
+        "slide": 24,
+        "section": "05 - Evaluation and Results",
+        "image_index": 23
+      }
+    },
+    {
+      "chunk_id": "bcf69ce3-c613-4163-aa52-ee48bb2abd5b",
+      "type": "image",
+      "content": "The image features a blue line icon on a white background.\nThe icon consists of:\nA check mark encircled in blue\nThree vertical bars resembling a bar graph\nA line graph trending upwards with an arrow at the end, pointing upwards and to the right.\nThe symbols convey a positive growth or success message, likely representing statistics or results.\nThe simple design makes it suitable for a presentation slide.",
+      "metadata": {
+        "source": "1.pptx",
+        "slide": 24,
+        "section": "05 - Evaluation and Results",
+        "image_index": 24
+      }
+    },
+    {
+      "chunk_id": "c0518fce-1cd6-44af-bdec-3de12005df1b",
+      "type": "image",
+      "content": "two learning curves side by side, providing insights into the performance of a model during training and validation.\nLeft Graph: Learning Curve (Loss)\nThe left graph illustrates the Mean Squared Error (MSE) over epochs for both training (blue) and validation (orange) loss. Initially, both curves exhibit a similar downward trend, indicating a decrease in loss as the model learns from the data. However, around the 75th-100th epoch, the curves begin to flatten out, suggesting that the model's performance improvement begins to stabilize.\nRight Graph: Learning Curve (MAE)\nThe right graph displays the Mean Absolute Error (MAE) over epochs for both training (blue) and validation (orange). Similar to the left graph, both curves show a decreasing trend, with the validation MAE eventually becoming lower than the training MAE. This divergence may indicate that the model is generalizing well to unseen data.\nKey Observations\nBoth graphs exhibit a similar",
+      "metadata": {
+        "source": "1.pptx",
+        "slide": 25,
+        "section": "05 - Evaluation and Results",
+        "image_index": 25
+      }
+    },
+    {
+      "chunk_id": "f1f686d9-a32a-4c00-b2ad-3fc799fe753a",
+      "type": "image",
+      "content": "Goal Achieved: MLP Outperforms State-of-the-Art DeepForest\nThe image presents a table comparing the performance of two machine learning models, DeepForest (Zhang et al., 2024) and MLP, across four key metrics:\n$R^2$ (coefficient of determination)\nMAE (mean absolute error) in MPa\nRMSE (root mean squared error)\nMSE (mean squared error)\nThe table provides a concise summary of the evaluation results for these models.\nEvaluation Metrics and Model Performance\n| Model | $R^2$ | MAE (MPa) | RMSE | MSE |\n| | | | | |\n| DeepForest (Zhang et al., 2024) | 0.91 | 3.18 | 5.11 | 26.10 |\n| MLP | 0.96 | 2.74 | 3.50 | 12.27 |\nKey Observations\n$R^2$:",
+      "metadata": {
+        "source": "1.pptx",
+        "slide": 26,
+        "section": "05 - Evaluation and Results",
+        "image_index": 26
+      }
+    },
+    {
+      "chunk_id": "5913346c-fb33-455c-929f-5372898b5658",
+      "type": "image",
+      "content": "The image provides a screenshot of a dataset selection interface titled Compressive Strength Predictor for construction materials, likely concrete. A Dataset Selection menu offers two options for loading data:\nUpload Your Own Dataset (CSV): allows users to upload their dataset in CSV format, with a file size limit of 200 MB.\nThe background image depicts a construction site with cranes, aligning with the theme of compressive strength prediction in building materials.\nThe interface features a Browse files button and a Start Analysis button, indicating that the platform likely performs data analysis or machine learning tasks related to predicting compressive strength based on the provided dataset.",
+      "metadata": {
+        "source": "1.pptx",
+        "slide": 28,
+        "section": "06 - Implementation",
+        "image_index": 27
+      }
+    },
+    {
+      "chunk_id": "b99d7865-b7d0-4f18-b060-add74dffc562",
+      "type": "image",
+      "content": "a screenshot of a webpage titled Compressive Strength Predictor, featuring a construction site background with cranes.\nAt the top, a menu labeled Dataset Selection allows users to upload their own dataset or select from available options. A pop-up window displays a dataset named Concrete_Data - Sheet1.csv, which has been successfully uploaded. The dataset preview reveals a table with the following columns:\nCement\nBlast furnace Slag\nFly Ash\nWater\nSuperplasticizer\nCoarse Aggregate\nFine Aggregate\nAge\nConcrete compressive strength\nThe table contains five rows of data.\nAt the bottom of the page, a blue button reads Start Analysis. This screenshot likely illustrates the implementation of a machine learning model for predicting concrete compressive strength.",
+      "metadata": {
+        "source": "1.pptx",
+        "slide": 29,
+        "section": "06 - Implementation",
+        "image_index": 28
+      }
+    },
+    {
+      "chunk_id": "dca9dcb6-05c7-447c-aa6a-63e3b028950f",
+      "type": "image",
+      "content": "a screenshot of a web-based application for predicting concrete compressive strength, titled Concrete Compressive Strength Prediction.\nKey Features:\nData Input Section: A table with two columns and six rows allows users to input mix details, including:\n+ Cement\n+ Blast Furnace Slag\n+ Fly Ash\n+ Water\n+ Superplasticizer\n+ Coarse Aggregate\n+ Fine Aggregate\n+ Age (in days)\nPrediction Button: A blue button labeled Predict Strength is prominently displayed.\nPredicted Result: The predicted compressive strength is displayed at the bottom of the page, reading Predicted Compressive Strength: 35.56 MPa.\nOverall Impression: This image likely represents a tool used in civil engineering or construction to estimate the compressive strength of concrete based on its composition and age.",
+      "metadata": {
+        "source": "1.pptx",
+        "slide": 30,
+        "section": "06 - Implementation",
+        "image_index": 29
+      }
+    },
+    {
+      "chunk_id": "17fb8029-db11-47da-9ae9-ca182e53b919",
+      "type": "text",
+      "content": "Conclusion\n\n1-AI-Powered Efficiency: The project delivered an AI-based compressive strength prediction system, replacing slow, destructive lab tests with rapid, non-destructive, and precise estimates.\n\n3-Proactive Construction: Real-time monitoring and early fault detection minimize risks, waste, and delays, streamlining modern construction workflows.\n\n2-Top result: Optimized MLP model achieves top performance (R² = 0.96).\n\n‹›",
+      "metadata": {
+        "source": "1.pptx",
+        "slide": 32,
+        "section": "07 - Conclusion"
+      }
+    }
+  ],
+  "metadata": {
+    "source": "1.pptx",
+    "slide_count": 33,
+    "text_count": 12,
+    "table_count": 0,
+    "image_count": 29
+  }
+}

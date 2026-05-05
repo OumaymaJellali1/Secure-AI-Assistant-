@@ -13,19 +13,18 @@ import uuid
 MAX_CAPTION_CHARS = 150
 
 
-
 def chunk_parsed_pptx(parsed: dict) -> list[dict]:
     """
     Takes the output of parse_pptx() and returns a list of chunks
     ready for embedding and storage in a vector DB.
     """
-    filename  = parsed["filename"]
-    chunks    = []
+    filename    = parsed["filename"]
+    file_id     = str(uuid.uuid4())  # one GUID for the whole file
+    chunks      = []
     img_counter = 0
     tbl_counter = 0
 
     for slide in parsed["slides"]:
-
 
         if slide["is_section"]:
             continue
@@ -37,16 +36,17 @@ def chunk_parsed_pptx(parsed: dict) -> list[dict]:
         images          = slide["images"]
 
         base_meta = {
-            "source":  filename,
-            "slide":   slide_num,
-            "section": current_section,
+            "source":    filename,
+            "file_id":   file_id,
+            "slide":     slide_num,
+            "section":   current_section,
         }
 
-        text_len      = len(text)
+        text_len       = len(text)
         has_meaningful = text_len > 0
         is_short_text  = has_meaningful and text_len < MAX_CAPTION_CHARS
 
-        # TABLE CHUNKS 
+        # TABLE CHUNKS
         is_table_caption   = bool(tables) and is_short_text
         table_caption_used = False
 
@@ -61,12 +61,12 @@ def chunk_parsed_pptx(parsed: dict) -> list[dict]:
 
             chunks.append({
                 "chunk_id": str(uuid.uuid4()),
-                "type":    "table",
-                "content": content,
+                "type":     "table",
+                "content":  content,
                 "metadata": {**base_meta, "table_index": tbl_counter},
             })
 
-        # IMAGE CHUNKS 
+        # IMAGE CHUNKS
         is_image_caption   = bool(images) and is_short_text
         image_caption_used = False
 
@@ -81,19 +81,19 @@ def chunk_parsed_pptx(parsed: dict) -> list[dict]:
 
             chunks.append({
                 "chunk_id": str(uuid.uuid4()),
-                "type":    "image",
-                "content": content,
+                "type":     "image",
+                "content":  content,
                 "metadata": {**base_meta, "image_index": img_counter},
             })
 
-        # TEXT CHUNK (only if not merged) 
+        # TEXT CHUNK (only if not merged)
         caption_was_used = table_caption_used or image_caption_used
 
         if has_meaningful and not caption_was_used:
             chunks.append({
                 "chunk_id": str(uuid.uuid4()),
-                "type":    "text",
-                "content": text,
+                "type":     "text",
+                "content":  text,
                 "metadata": {**base_meta},
             })
 
@@ -101,6 +101,7 @@ def chunk_parsed_pptx(parsed: dict) -> list[dict]:
         "chunks": chunks,
         "metadata": {
             "source":      filename,
+            "file_id":     file_id,
             "slide_count": parsed["total_slides"],
             "text_count":  len([c for c in chunks if c["type"] == "text"]),
             "table_count": len([c for c in chunks if c["type"] == "table"]),
@@ -109,7 +110,7 @@ def chunk_parsed_pptx(parsed: dict) -> list[dict]:
     }
 
 
-# SECTION GROUPING 
+# SECTION GROUPING
 def group_chunks_by_section(chunks: list) -> dict:
     """
     Merges all chunks of the same section into a single entry.
@@ -137,7 +138,7 @@ def group_chunks_by_section(chunks: list) -> dict:
     return sections
 
 
-#  MAIN PIPELINE 
+# MAIN PIPELINE
 def extract_pptx(file_path: str) -> dict:
     """Full pipeline: parse → chunk → save JSON."""
 
@@ -150,7 +151,8 @@ def extract_pptx(file_path: str) -> dict:
         json.dump(result, f, ensure_ascii=False, indent=2)
 
     if DEBUG:
-        print(f"\n[PPTX] Slides : {result['metadata']['slide_count']}")
+        print(f"\n[PPTX] File ID: {result['metadata']['file_id']}")
+        print(f"[PPTX] Slides : {result['metadata']['slide_count']}")
         print(f"[PPTX] Text   : {result['metadata']['text_count']}")
         print(f"[PPTX] Tables : {result['metadata']['table_count']}")
         print(f"[PPTX] Images : {result['metadata']['image_count']}")
@@ -158,18 +160,19 @@ def extract_pptx(file_path: str) -> dict:
     return result
 
 
-# TEST 
+# TEST
 if __name__ == "__main__":
-    result = extract_pptx("test4.pptx")
+    result = extract_pptx("test3.pptx")
 
     print("\n===== CHUNKS PREVIEW =====")
     for i, chunk in enumerate(result["chunks"][:5]):
         print(f"\nChunk {i+1}:")
         print(f"  chunk_id: {chunk['chunk_id']}")
-        print(f"  Type   : {chunk['type']}")
-        print(f"  Slide  : {chunk['metadata']['slide']}")
-        print(f"  Section: {chunk['metadata']['section']}")
-        print(f"  Content: {chunk['content'][:100]}...")
+        print(f"  file_id : {chunk['metadata']['file_id']}")
+        print(f"  Type    : {chunk['type']}")
+        print(f"  Slide   : {chunk['metadata']['slide']}")
+        print(f"  Section : {chunk['metadata']['section']}")
+        print(f"  Content : {chunk['content'][:100]}...")
 
     print(f"\nTotal chunks : {len(result['chunks'])}")
 

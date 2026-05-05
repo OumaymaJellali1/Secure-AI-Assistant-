@@ -2,7 +2,7 @@ import uuid
 
 
 TYPE_PREFIX = {
-    "text"  : "",              
+    "text"  : "",
     "table" : "Table: ",
     "image" : "Image description: ",
 }
@@ -30,11 +30,11 @@ def _safe_int(value) -> int | None:
         return None
 
 
-
 def _meta_from_pdf(raw: dict, source_type: str = "pdf_digital") -> dict:
     m = raw.get("metadata", {})
     return {
         "source"      : _safe_str(m.get("source")),
+        "file_id"     : _safe_str(m.get("file_id")) or None,
         "source_type" : _safe_str(m.get("source_type", source_type)),
         "section"     : _safe_str(m.get("section")) or None,
         "page"        : _safe_int(m.get("page_start")),
@@ -44,102 +44,111 @@ def _meta_from_pdf(raw: dict, source_type: str = "pdf_digital") -> dict:
         "subject"     : None,
         "from"        : None,
         "date"        : None,
+        "attachment_guid" : None,
     }
 
 
 def _meta_from_eml(raw: dict) -> dict:
     m = raw.get("metadata", {})
     return {
-        "source"      : _safe_str(m.get("source") or m.get("eml_source")),
-        "source_type" : _safe_str(m.get("source_type", "eml")),
-        "section"     : None,
-        "page"        : None,
-        "chunk_index" : None,
-        "chunk_total" : None,
-        "token_count" : _count_tokens(raw.get("content", "")),
-        "subject"     : _safe_str(m.get("subject")) or None,
-        "from"        : _safe_str(m.get("from")) or None,
-        "date"        : _safe_str(m.get("date")) or None,
+        "source"          : _safe_str(m.get("source") or m.get("eml_source")),
+        "file_id"         : _safe_str(m.get("file_id")) or None,
+        "source_type"     : _safe_str(m.get("source_type", "eml")),
+        "section"         : None,
+        "page"            : None,
+        "chunk_index"     : None,
+        "chunk_total"     : None,
+        "token_count"     : _count_tokens(raw.get("content", "")),
+        "subject"         : _safe_str(m.get("subject")) or None,
+        "from"            : _safe_str(m.get("from")) or None,
+        "date"            : _safe_str(m.get("date")) or None,
+        "attachment_guid" : _safe_str(m.get("attachment_guid")) or None,
     }
 
 
 def _meta_from_pptx(raw: dict) -> dict:
     m = raw.get("metadata", {})
     return {
-        "source"      : _safe_str(m.get("source")),
-        "source_type" : "pptx",
-        "section"     : _safe_str(m.get("section")) or None,
-        "page"        : _safe_int(m.get("slide")),        # slide number → page
-        "chunk_index" : None,
-        "chunk_total" : None,
-        "token_count" : _count_tokens(raw.get("content", "")),
-        "subject"     : None,
-        "from"        : None,
-        "date"        : None,
+        "source"          : _safe_str(m.get("source")),
+        "file_id"         : _safe_str(m.get("file_id")) or None,
+        "source_type"     : "pptx",
+        "section"         : _safe_str(m.get("section")) or None,
+        "page"            : _safe_int(m.get("slide")),
+        "chunk_index"     : None,
+        "chunk_total"     : None,
+        "token_count"     : _count_tokens(raw.get("content", "")),
+        "subject"         : None,
+        "from"            : None,
+        "date"            : None,
+        "attachment_guid" : None,
     }
 
 
 def _meta_from_scanned_pdf(raw: dict) -> dict:
     m = raw.get("metadata", {})
     return {
-        "source"      : _safe_str(m.get("source")),
-        "source_type" : "pdf_scanned",
-        "section"     : None,
-        "page"        : _safe_int(m.get("page")),
-        "chunk_index" : None,
-        "chunk_total" : None,
-        "token_count" : _count_tokens(raw.get("content", "")),
-        "subject"     : None,
-        "from"        : None,
-        "date"        : None,
+        "source"          : _safe_str(m.get("source")),
+        "file_id"         : _safe_str(m.get("file_id")) or None,
+        "source_type"     : "pdf_scanned",
+        "section"         : None,
+        "page"            : _safe_int(m.get("page")),
+        "chunk_index"     : None,
+        "chunk_total"     : None,
+        "token_count"     : _count_tokens(raw.get("content", "")),
+        "subject"         : None,
+        "from"            : None,
+        "date"            : None,
+        "attachment_guid" : None,
     }
 
 
 def _meta_from_txt(raw: dict) -> dict:
     m = raw.get("metadata", {})
     return {
-        "source"      : _safe_str(m.get("file_name")),
-        "source_type" : "txt",
-        "section"     : None,
-        "page"        : None,
-        "chunk_index" : None,
-        "chunk_total" : None,
-        "token_count" : _count_tokens(raw.get("content", "")),
-        "subject"     : None,
-        "from"        : None,
-        "date"        : None,
+        "source"          : _safe_str(m.get("file_name")),
+        "file_id"         : _safe_str(m.get("file_id")) or None,
+        "source_type"     : "txt",
+        "section"         : None,
+        "page"            : None,
+        "chunk_index"     : None,
+        "chunk_total"     : None,
+        "token_count"     : _count_tokens(raw.get("content", "")),
+        "subject"         : None,
+        "from"            : None,
+        "date"            : None,
+        "attachment_guid" : None,
     }
 
 
 def _meta_from_image(raw: dict) -> dict:
     m = raw.get("metadata", {})
     return {
-        "source"      : _safe_str(m.get("source")),
-        "source_type" : "image",
-        "section"     : None,
-        "page"        : None,
-        "chunk_index" : None,
-        "chunk_total" : None,
-        "token_count" : _count_tokens(raw.get("content", "")),
-        "subject"     : None,
-        "from"        : None,
-        "date"        : None,
+        "source"          : _safe_str(m.get("source")),
+        "file_id"         : _safe_str(m.get("file_id")) or None,
+        "source_type"     : "image",
+        "section"         : None,
+        "page"            : None,
+        "chunk_index"     : None,
+        "chunk_total"     : None,
+        "token_count"     : _count_tokens(raw.get("content", "")),
+        "subject"         : None,
+        "from"            : None,
+        "date"            : None,
+        "attachment_guid" : None,
     }
 
 
-
 _META_EXTRACTORS = {
-    "pdf_digital" : _meta_from_pdf,
-    "pdf_scanned" : _meta_from_scanned_pdf,
-    "docx"        : lambda r: _meta_from_pdf(r, source_type="docx"),
-    "pptx"        : _meta_from_pptx,
-    "eml"         : _meta_from_eml,
-    "eml_body"         : _meta_from_eml,
-    "eml_body_table"   : _meta_from_eml,
-    "txt"         : _meta_from_txt,
-    "image"       : _meta_from_image,
+    "pdf_digital"    : _meta_from_pdf,
+    "pdf_scanned"    : _meta_from_scanned_pdf,
+    "docx"           : lambda r: _meta_from_pdf(r, source_type="docx"),
+    "pptx"           : _meta_from_pptx,
+    "eml"            : _meta_from_eml,
+    "eml_body"       : _meta_from_eml,
+    "eml_body_table" : _meta_from_eml,
+    "txt"            : _meta_from_txt,
+    "image"          : _meta_from_image,
 }
-
 
 
 def normalize_chunk(raw: dict, source_type: str) -> dict | None:
@@ -163,15 +172,15 @@ def normalize_chunk(raw: dict, source_type: str) -> dict | None:
         chunk_type = "text"
 
     chunk_id = (
-    _safe_str(raw.get("chunk_id"))
-    or _safe_str(raw.get("metadata", {}).get("chunk_id"))
-    or str(uuid.uuid5(
-        uuid.NAMESPACE_DNS,
-        f"{raw.get('metadata', {}).get('source', '')}"
-        f":{raw.get('metadata', {}).get('file_name', '')}"
-        f":{content[:200]}"
-    ))
-)
+        _safe_str(raw.get("chunk_id"))
+        or _safe_str(raw.get("metadata", {}).get("chunk_id"))
+        or str(uuid.uuid5(
+            uuid.NAMESPACE_DNS,
+            f"{raw.get('metadata', {}).get('source', '')}"
+            f":{raw.get('metadata', {}).get('file_name', '')}"
+            f":{content[:200]}"
+        ))
+    )
 
     extractor = _META_EXTRACTORS.get(source_type, _meta_from_pdf)
     metadata  = extractor(raw)
@@ -183,7 +192,6 @@ def normalize_chunk(raw: dict, source_type: str) -> dict | None:
         "embed_text" : _make_embed_text(content, chunk_type),
         "metadata"   : metadata,
     }
-
 
 
 def normalize_chunks(chunker_output, source_type: str) -> list[dict]:
@@ -230,12 +238,12 @@ def normalize_chunks(chunker_output, source_type: str) -> list[dict]:
     return normalized
 
 
-# ── VALIDATION HELPER (optional, for debugging) 
+# VALIDATION HELPER
 
 REQUIRED_FIELDS    = {"chunk_id", "type", "content", "embed_text", "metadata"}
-REQUIRED_META      = {"source", "source_type", "section", "page",
+REQUIRED_META      = {"source", "file_id", "source_type", "section", "page",
                       "chunk_index", "chunk_total", "token_count",
-                      "subject", "from", "date"}
+                      "subject", "from", "date", "attachment_guid"}
 VALID_TYPES        = {"text", "table", "image"}
 VALID_SOURCE_TYPES = {"pdf_digital", "pdf_scanned", "docx", "pptx",
                       "eml", "txt", "image"}
@@ -245,7 +253,6 @@ def validate_chunks(chunks: list[dict]) -> list[str]:
     """
     Validate a list of normalized chunks.
     Returns a list of error strings (empty = all good).
-    Useful during development — not needed in production hot path.
     """
     errors = []
 
@@ -276,24 +283,24 @@ def validate_chunks(chunks: list[dict]) -> list[str]:
     return errors
 
 
-#  QUICK TEST 
+# QUICK TEST
 
 if __name__ == "__main__":
-
 
     fake_pdf_chunk = {
         "chunk_id": "abc-123",
         "type": "text",
         "content": "This is a paragraph from a PDF.",
         "metadata": {
-            "source": "report.pdf",
-            "source_type": "pdf_digital",
-            "section": "Introduction",
-            "page_start": 1,
-            "page_end": 1,
-            "chunk_index": 1,
-            "chunk_total": 10,
-            "token_count": 9,
+            "source"      : "report.pdf",
+            "file_id"     : "file-guid-001",
+            "source_type" : "pdf_digital",
+            "section"     : "Introduction",
+            "page_start"  : 1,
+            "page_end"    : 1,
+            "chunk_index" : 1,
+            "chunk_total" : 10,
+            "token_count" : 9,
         }
     }
 
@@ -301,8 +308,9 @@ if __name__ == "__main__":
         "type": "text",
         "content": "This is a paragraph from a TXT file.",
         "metadata": {
-            "file_name": "notes.txt",
-            "chunk_id": "txt-chunk-uuid",
+            "file_name" : "notes.txt",
+            "file_id"   : "file-guid-002",
+            "chunk_id"  : "txt-chunk-uuid",
         }
     }
 
@@ -313,9 +321,10 @@ if __name__ == "__main__":
                 "type": "table",
                 "content": "Col1 | Col2\n--- | ---\nA | B",
                 "metadata": {
-                    "source": "deck.pptx",
-                    "slide": 3,
-                    "section": "Results",
+                    "source"  : "deck.pptx",
+                    "file_id" : "file-guid-003",
+                    "slide"   : 3,
+                    "section" : "Results",
                 }
             }
         ],
@@ -326,14 +335,52 @@ if __name__ == "__main__":
         "chunk_id": "img-1",
         "type": "image",
         "content": "A bar chart showing quarterly revenue growth.",
-        "metadata": {"source": "chart.png", "image_index": 1}
+        "metadata": {
+            "source"  : "chart.png",
+            "file_id" : "file-guid-004",
+            "image_index": 1,
+        }
+    }
+
+    fake_eml_body_chunk = {
+        "chunk_id": "eml-body-1",
+        "type": "text",
+        "content": "Please find attached the Q3 report.",
+        "metadata": {
+            "source"          : "email.eml",
+            "file_id"         : "file-guid-005",
+            "source_type"     : "eml_body",
+            "subject"         : "Q3 Report",
+            "from"            : "alice@example.com",
+            "to"              : "bob@example.com",
+            "date"            : "2024-01-15",
+            "attachment_guid" : None,
+        }
+    }
+
+    fake_eml_attach_chunk = {
+        "chunk_id": "eml-attach-1",
+        "type": "text",
+        "content": "This is content from an attached PDF.",
+        "metadata": {
+            "source"          : "report.pdf",
+            "file_id"         : "file-guid-005",
+            "source_type"     : "eml_body",
+            "subject"         : "Q3 Report",
+            "from"            : "alice@example.com",
+            "to"              : "bob@example.com",
+            "date"            : "2024-01-15",
+            "attachment_guid" : "attach-guid-001",
+        }
     }
 
     tests = [
-        (fake_pdf_chunk,    "pdf_digital", "PDF chunk"),
-        (fake_txt_chunk,    "txt",         "TXT chunk"),
-        (fake_pptx_output,  "pptx",        "PPTX output"),
-        (fake_image_output, "image",       "Image output"),
+        (fake_pdf_chunk,        "pdf_digital", "PDF chunk"),
+        (fake_txt_chunk,        "txt",         "TXT chunk"),
+        (fake_pptx_output,      "pptx",        "PPTX output"),
+        (fake_image_output,     "image",       "Image output"),
+        (fake_eml_body_chunk,   "eml_body",    "EML body chunk"),
+        (fake_eml_attach_chunk, "eml_body",    "EML attachment chunk"),
     ]
 
     for raw, stype, label in tests:
@@ -342,11 +389,13 @@ if __name__ == "__main__":
 
         print(f"\n── {label} ({'✓' if not errors else '✗'})")
         for chunk in result:
-            print(f"  chunk_id    : {chunk['chunk_id'][:20]}")
-            print(f"  type        : {chunk['type']}")
-            print(f"  source_type : {chunk['metadata']['source_type']}")
-            print(f"  embed_text  : {chunk['embed_text'][:60]}...")
-            print(f"  token_count : {chunk['metadata']['token_count']}")
+            print(f"  chunk_id        : {chunk['chunk_id'][:20]}")
+            print(f"  file_id         : {chunk['metadata']['file_id']}")
+            print(f"  attachment_guid : {chunk['metadata']['attachment_guid']}")
+            print(f"  type            : {chunk['type']}")
+            print(f"  source_type     : {chunk['metadata']['source_type']}")
+            print(f"  embed_text      : {chunk['embed_text'][:60]}...")
+            print(f"  token_count     : {chunk['metadata']['token_count']}")
         if errors:
             for e in errors:
                 print(f"  ERROR: {e}")

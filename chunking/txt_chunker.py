@@ -36,8 +36,10 @@ def _estimate_tokens(text: str) -> int:
 def chunk_txt(cleaner_output: dict) -> dict:
     filename = cleaner_output.get("filename", "unknown.txt")
     chunks   = cleaner_output.get("chunks", [])
+    file_id  = str(uuid.uuid4())  # one GUID for the whole file
 
     print(f"\n[TXT CHUNKER] File     : {filename}")
+    print(f"[TXT CHUNKER] File ID  : {file_id}")
     print(f"[TXT CHUNKER] Chunks in: {len(chunks)}")
 
     result_chunks = []
@@ -57,14 +59,14 @@ def chunk_txt(cleaner_output: dict) -> dict:
 
         if doc_type == "narrative" and total_tokens <= LATE_CHUNK_MAX_TOK:
             print("[TXT CHUNKER] Strategy : LATE CHUNKING")
-            produced = _late_chunk_pipeline(content, metadata)
+            produced = _late_chunk_pipeline(content, metadata, file_id)
 
         else:
             if doc_type == "narrative":
                 print("[TXT CHUNKER] Strategy : SLIDING WINDOW (doc too long for late chunking)")
             else:
                 print(f"[TXT CHUNKER] Strategy : HIERARCHICAL + SLIDING WINDOW ({doc_type})")
-            produced = _hierarchical_sliding_pipeline(content, metadata, doc_type)
+            produced = _hierarchical_sliding_pipeline(content, metadata, doc_type, file_id)
 
         result_chunks.extend(produced)
 
@@ -73,11 +75,11 @@ def chunk_txt(cleaner_output: dict) -> dict:
 
 
 #  STRATEGY A — LATE CHUNKING
-def _late_chunk_pipeline(content: str, metadata: dict) -> list[dict]:
+def _late_chunk_pipeline(content: str, metadata: dict, file_id: str) -> list[dict]:
     sentences = _split_into_sentences(content)
 
     if len(sentences) <= 1:
-        return [_make_chunk(content, metadata)]
+        return [_make_chunk(content, metadata, file_id)]
 
     # Group sentences into token-budget groups first
     groups      = _group_sentences_by_token_budget(sentences)
@@ -88,7 +90,7 @@ def _late_chunk_pipeline(content: str, metadata: dict) -> list[dict]:
     model = _get_model()
     model.encode(group_texts, batch_size=16, return_dense=True)
 
-    return [_make_chunk(text, metadata) for text in group_texts]
+    return [_make_chunk(text, metadata, file_id) for text in group_texts]
 
 
 def _group_sentences_by_token_budget(sentences: list[str]) -> list[list[str]]:
@@ -121,7 +123,8 @@ def _group_sentences_by_token_budget(sentences: list[str]) -> list[list[str]]:
 def _hierarchical_sliding_pipeline(
     content : str,
     metadata: dict,
-    doc_type: str
+    doc_type: str,
+    file_id : str
 ) -> list[dict]:
 
     sections = _split_by_structure(content, doc_type)
@@ -133,7 +136,7 @@ def _hierarchical_sliding_pipeline(
         sentences = _split_into_sentences(section)
 
         if len(sentences) <= 1:
-            result.append(_make_chunk(section, metadata))
+            result.append(_make_chunk(section, metadata, file_id))
             continue
 
         embeddings   = _embed_sentences(sentences)
@@ -145,7 +148,7 @@ def _hierarchical_sliding_pipeline(
         print(f"[TXT CHUNKER] Section '{section_title}' → {len(sub_chunks)} chunks")
 
         for chunk_text in sub_chunks:
-            result.append(_make_chunk(chunk_text, metadata))
+            result.append(_make_chunk(chunk_text, metadata, file_id))
 
     return result
 
@@ -299,14 +302,14 @@ def _build_chunks(sentences: list[str], boundaries: set[int]) -> list[str]:
 
 
 #  OUTPUT HELPER
-def _make_chunk(text: str, metadata: dict) -> list[dict]:
+def _make_chunk(text: str, metadata: dict, file_id: str) -> dict:
     return {
-        "type"    : "text",
-        "content" : text,
+        "type"     : "text",
+        "content"  : text,
         "chunk_id" : str(uuid.uuid4()),
-        "metadata": {
+        "metadata" : {
             "file_name": metadata.get("file_name"),
-            
+            "file_id"  : file_id,
         }
     }
 
@@ -314,7 +317,7 @@ def _make_chunk(text: str, metadata: dict) -> list[dict]:
 if __name__ == "__main__":
     import json
 
-    path = sys.argv[1] if len(sys.argv) > 1 else "test11.txt"
+    path = sys.argv[1] if len(sys.argv) > 1 else "test.txt"
 
     if not os.path.exists(path):
         print(f"[TEST] File not found: {path}")
@@ -341,8 +344,9 @@ if __name__ == "__main__":
     print(f"\n[TEST] Chunks produced: {len(chunked['chunks'])}")
     for i, c in enumerate(chunked["chunks"]):
         preview  = c["content"][:120].replace("\n", " ")
-        chunk_id = c["metadata"]["chunk_id"]
-        print(f"  [{i}] id={chunk_id}")
+        chunk_id = c["chunk_id"]
+        file_id  = c["metadata"]["file_id"]
+        print(f"  [{i}] chunk_id={chunk_id} | file_id={file_id}")
         print(f"       {preview}...")
 
     out = path.replace(".txt", "_chunked.json")

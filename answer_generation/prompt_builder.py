@@ -1,14 +1,14 @@
 """
 prompt_builder.py
 ═════════════════
-Builds structured prompts for RAG answer generation with Groq (llama-3.3-70b).
+Builds structured prompts for RAG answer generation with Qwen2.5.
 
 Combines best of both worlds:
   - Detailed, comprehensive answers (no "be concise")
   - Clear inline citations: [Source: filename, page X]
   - Smart token budget management
   - Per-type chunk formatting (text / table / image)
-  - Generous context window — no RAM limits with API
+  - Generous context window for richer answers
 """
 
 from __future__ import annotations
@@ -17,16 +17,16 @@ from dataclasses import dataclass
 from typing import Optional
 
 
-# ── CONFIG 
+# ── CONFIG ────────────────────────────────────────────────────────────────────
 
-# Rough character-to-token ratio for LLaMA / Groq
+# Rough character-to-token ratio for Qwen2.5
 CHARS_PER_TOKEN: float = 3.8
 
-# Token budgets — generous since we use cloud API (no RAM limit)
+# Token budgets (generous for detailed answers)
 SYSTEM_PROMPT_TOKEN_BUDGET : int = 350
 QUERY_TOKEN_BUDGET         : int = 100
-ANSWER_HEADROOM            : int = 1024   # tokens reserved for model output
-CONTEXT_TOKEN_BUDGET       : int = 6000   # tokens for injected chunks
+ANSWER_HEADROOM            : int = 2000     # was 512 — allow long answers
+CONTEXT_TOKEN_BUDGET       : int = 8000     # was 3500 — use more chunks
 
 # Chunk type labels
 CHUNK_TYPE_LABELS: dict[str, str] = {
@@ -36,7 +36,7 @@ CHUNK_TYPE_LABELS: dict[str, str] = {
 }
 
 
-# ── SYSTEM PROMPT 
+# ── SYSTEM PROMPT ─────────────────────────────────────────────────────────────
 
 SYSTEM_PROMPT = """You are a precise, comprehensive question-answering assistant.
 You are given numbered context excerpts retrieved from a document base.
@@ -56,14 +56,7 @@ STRICT RULES:
 7. Preserve exact numbers, names, and technical terms from the context.
 8. If excerpts contradict each other, note the contradiction explicitly.
 9. Preserve the original language of the question in your answer.
-10. Structure long answers with paragraphs covering different aspects.
-
-CITATION REMINDER:
-- You MUST cite every fact using [Source: filename, page X]
-- If no page number exists, use [Source: filename]
-- Place citations inline immediately after the claim, not at the end
-- Example: "The model was trained on 1T tokens [Source: paper.pdf, page 4]."
-"""
+10. Structure long answers with paragraphs covering different aspects."""
 
 
 # ── DATACLASS ─────────────────────────────────────────────────────────────────
@@ -80,7 +73,7 @@ class BuiltPrompt:
 
 class PromptBuilder:
     """
-    Constructs token-budget-aware ChatML prompts for Groq RAG.
+    Constructs token-budget-aware ChatML prompts for Qwen2.5 RAG.
 
     Args:
         context_budget  : max tokens to spend on injected chunks
@@ -209,9 +202,8 @@ class PromptBuilder:
         return (
             f"{context_block}\n\n"
             f"Question: {query.strip()}\n\n"
-            f"IMPORTANT: You MUST cite every fact using [Source: filename, page X].\n"
-            f"If no page number exists, use [Source: filename].\n"
-            f"Answer (include citations inline, not at the end):"
+            f"Provide a thorough, well-cited answer using the format "
+            f"[Source: filename, page X] for citations:"
         )
 
     # ── TOKEN ESTIMATION ──────────────────────────────────────────────────────

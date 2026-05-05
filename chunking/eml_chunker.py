@@ -11,17 +11,18 @@ from File_processing.eml_handler import extract_eml
 from File_processing.cleaner import clean
 
 
-# ── HELPERS 
+# HELPERS
 
 def _count_tokens(text: str) -> int:
     return max(1, int(len(text) / 3.5))
 
 
 def _build_metadata(eml_metadata: dict, attachment_names: list,
-                    source_type: str) -> dict:
+                    source_type: str, file_id: str) -> dict:
     """Standard metadata block for every chunk."""
     return {
         "source"      : eml_metadata.get("source",  "unknown"),
+        "file_id"     : file_id,
         "source_type" : source_type,
         "eml_source"  : eml_metadata.get("source",  ""),
         "subject"     : eml_metadata.get("subject", ""),
@@ -61,10 +62,10 @@ def _make_table_chunk(headers: list, rows: list, metadata: dict) -> dict:
     }
 
 
-# ── BODY CHUNKER (text only) 
+# BODY CHUNKER
 
 def _chunk_body(body: str, metadata: dict) -> list[dict]:
-    """Split plain text body into ~400-token chunks."""
+    """Split plain text body into ~450-token chunks."""
     if not body or not body.strip():
         return []
 
@@ -97,9 +98,10 @@ def _chunk_body(body: str, metadata: dict) -> list[dict]:
     return [_make_text_chunk(c, metadata) for c in chunks if c.strip()]
 
 
-# ── CONTENT ROUTER 
+# CONTENT ROUTER
 
-def _chunk_content(content, eml_metadata: dict, attachment_names: list) -> list[dict]:
+def _chunk_content(content, eml_metadata: dict, attachment_names: list,
+                   file_id: str) -> list[dict]:
     """
     Route content based on shape:
       - list of {type, ...} chunks → dispatch per type
@@ -107,15 +109,15 @@ def _chunk_content(content, eml_metadata: dict, attachment_names: list) -> list[
     """
     all_chunks = []
 
-    # ── LEGACY: plain string ──────────────────────────
+    # LEGACY: plain string
     if isinstance(content, str):
-        meta = _build_metadata(eml_metadata, attachment_names, "eml_body")
+        meta = _build_metadata(eml_metadata, attachment_names, "eml_body", file_id)
         return _chunk_body(content, meta)
 
     if not isinstance(content, list):
         return []
 
-    # ── NEW: list of typed chunks ─────────────────────
+    # NEW: list of typed chunks
     for item in content:
         if not isinstance(item, dict):
             continue
@@ -125,14 +127,14 @@ def _chunk_content(content, eml_metadata: dict, attachment_names: list) -> list[
         if item_type == "text":
             text = item.get("content", "")
             if text and text.strip():
-                meta = _build_metadata(eml_metadata, attachment_names, "eml_body")
+                meta = _build_metadata(eml_metadata, attachment_names, "eml_body", file_id)
                 all_chunks.extend(_chunk_body(text, meta))
 
         elif item_type == "table":
             headers = item.get("headers", []) or []
             rows    = item.get("rows",    []) or []
             if headers or rows:
-                meta = _build_metadata(eml_metadata, attachment_names, "eml_body_table")
+                meta = _build_metadata(eml_metadata, attachment_names, "eml_body_table", file_id)
                 all_chunks.append(_make_table_chunk(headers, rows, meta))
                 if DEBUG:
                     print(f"[EML CHUNKER] Body table chunk: "
@@ -141,51 +143,58 @@ def _chunk_content(content, eml_metadata: dict, attachment_names: list) -> list[
         else:
             text = item.get("content", "")
             if text and isinstance(text, str) and text.strip():
-                meta = _build_metadata(eml_metadata, attachment_names, "eml_body")
+                meta = _build_metadata(eml_metadata, attachment_names, "eml_body", file_id)
                 all_chunks.extend(_chunk_body(text, meta))
 
     return all_chunks
 
 
-# ── ATTACHMENT CHUNK COLLECTOR ────────────────────────
+# ATTACHMENT CHUNK COLLECTOR
 
 def _normalize_attachment_chunk(chunk: dict, attach_name: str,
-                                 eml_source: str, eml_metadata: dict) -> dict:
+                                 eml_source: str, eml_metadata: dict,
+                                 file_id: str,
+                                 attachment_guid: str = None) -> dict:
     """Force any attachment chunk into the minimal schema."""
     return {
         "chunk_id" : chunk.get("chunk_id", str(uuid.uuid4())),
         "type"     : chunk.get("type", "text"),
         "content"  : chunk.get("content", ""),
         "metadata" : {
-            "source"      : attach_name,
-            "source_type" : chunk.get("metadata", {}).get(
-                                "source_type",
-                                Path(attach_name).suffix.lstrip(".") or "attachment"),
-            "eml_source"  : eml_source,
-            "subject"     : eml_metadata.get("subject", ""),
-            "from"        : eml_metadata.get("from",    ""),
-            "to"          : eml_metadata.get("to",      ""),
-            "date"        : eml_metadata.get("date",    ""),
-            "attachments" : [],
+            "source"          : attach_name,
+            "file_id"         : file_id,
+            "attachment_guid" : attachment_guid or str(uuid.uuid4()),
+            "source_type"     : chunk.get("metadata", {}).get(
+                                    "source_type",
+                                    Path(attach_name).suffix.lstrip(".") or "attachment"),
+            "eml_source"      : eml_source,
+            "subject"         : eml_metadata.get("subject", ""),
+            "from"            : eml_metadata.get("from",    ""),
+            "to"              : eml_metadata.get("to",      ""),
+            "date"            : eml_metadata.get("date",    ""),
+            "attachments"     : [],
         }
     }
 
 
 def _collect_attachment_chunks(attachments: list[dict], eml_source: str,
-                                eml_metadata: dict) -> list[dict]:
+                                eml_metadata: dict, file_id: str) -> list[dict]:
     """
     Collect chunks from already-processed attachments.
     Normalizes all attachment chunks to the minimal schema.
+    Each attachment gets its own attachment_guid shared across all its chunks.
+    All chunks also share the parent eml's file_id.
     """
     all_chunks = []
 
     for attachment in attachments:
-        name   = attachment.get("name",   "unknown")
-        result = attachment.get("result")
-        ext    = Path(name).suffix.lower()
+        name            = attachment.get("name",   "unknown")
+        result          = attachment.get("result")
+        ext             = Path(name).suffix.lower()
+        attachment_guid = str(uuid.uuid4())  # one GUID per attachment
 
         if DEBUG:
-            print(f"[EML CHUNKER] Processing attachment: {name}")
+            print(f"[EML CHUNKER] Processing attachment: {name} (guid={attachment_guid})")
 
         if result is None:
             continue
@@ -200,14 +209,20 @@ def _collect_attachment_chunks(attachments: list[dict], eml_source: str,
         if isinstance(result, list):
             for chunk in result:
                 all_chunks.append(
-                    _normalize_attachment_chunk(chunk, name, eml_source, eml_metadata)
+                    _normalize_attachment_chunk(
+                        chunk, name, eml_source, eml_metadata,
+                        file_id, attachment_guid
+                    )
                 )
 
         # CASE 2: dict with 'chunks' key (PPTX/TXT/scanned PDF)
         elif isinstance(result, dict) and "chunks" in result:
             for chunk in result["chunks"]:
                 all_chunks.append(
-                    _normalize_attachment_chunk(chunk, name, eml_source, eml_metadata)
+                    _normalize_attachment_chunk(
+                        chunk, name, eml_source, eml_metadata,
+                        file_id, attachment_guid
+                    )
                 )
 
         # CASE 3: single dict (image handler)
@@ -215,31 +230,34 @@ def _collect_attachment_chunks(attachments: list[dict], eml_source: str,
             all_chunks.append(
                 _normalize_attachment_chunk(
                     {"type": result.get("type", "image"), "content": result.get("content", "")},
-                    name, eml_source, eml_metadata
+                    name, eml_source, eml_metadata,
+                    file_id, attachment_guid
                 )
             )
 
     return all_chunks
 
 
-# ── MAIN CHUNKER ──────────────────────────────────────
+# MAIN CHUNKER
 
 def chunk_eml(file_path: str) -> list[dict]:
     """
     Full pipeline: parse → clean → chunk.
 
     Every chunk has exactly these fields:
-      - chunk_id  : UUID string
-      - type      : "text" | "table" | "image" | ...
-      - content   : string
-      - metadata  : {source, source_type, eml_source,
-                     subject, from, to, date, attachments}
+      - chunk_id       : UUID string
+      - type           : "text" | "table" | "image" | ...
+      - content        : string
+      - metadata       : {source, file_id, source_type, eml_source,
+                          subject, from, to, date, attachments,
+                          attachment_guid (attachment chunks only)}
     """
     if DEBUG:
         print(f"\n[EML CHUNKER] File: {file_path}")
 
-    parsed = extract_eml(file_path)
-    parsed = clean(parsed)
+    parsed  = extract_eml(file_path)
+    parsed  = clean(parsed)
+    file_id = str(uuid.uuid4())  # one GUID for the whole .eml file
 
     eml_source  = parsed["metadata"].get("source", Path(file_path).name)
     content     = parsed.get("content", "")
@@ -256,13 +274,14 @@ def chunk_eml(file_path: str) -> list[dict]:
                   f"types={[c.get('type') for c in content if isinstance(c, dict)]})")
         else:
             print(f"[EML CHUNKER] Content      : string ({len(content)} chars)")
+        print(f"[EML CHUNKER] File ID      : {file_id}")
         print(f"[EML CHUNKER] Attachments  : {len(attachments)}")
         print(f"[EML CHUNKER] Attach names : {attachment_names}")
 
     all_chunks = []
 
     # Body chunks
-    body_chunks = _chunk_content(content, parsed["metadata"], attachment_names)
+    body_chunks = _chunk_content(content, parsed["metadata"], attachment_names, file_id)
     all_chunks.extend(body_chunks)
 
     if DEBUG:
@@ -271,7 +290,7 @@ def chunk_eml(file_path: str) -> list[dict]:
 
     # Attachment chunks
     attachment_chunks = _collect_attachment_chunks(
-        attachments, eml_source, parsed["metadata"]
+        attachments, eml_source, parsed["metadata"], file_id
     )
     all_chunks.extend(attachment_chunks)
 
@@ -282,7 +301,7 @@ def chunk_eml(file_path: str) -> list[dict]:
     return all_chunks
 
 
-# ── TEST ──────────────────────────────────────────────
+# TEST
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
@@ -295,12 +314,14 @@ if __name__ == "__main__":
     print("\n===== CHUNKS PREVIEW =====")
     for i, chunk in enumerate(chunks[:5]):
         print(f"\nChunk {i+1}:")
-        print(f"  chunk_id   : {chunk['chunk_id']}")
-        print(f"  type       : {chunk['type']}")
-        print(f"  content    : {chunk['content'][:120]}...")
-        print(f"  metadata   :")
+        print(f"  chunk_id        : {chunk['chunk_id']}")
+        print(f"  file_id         : {chunk['metadata']['file_id']}")
+        print(f"  attachment_guid : {chunk['metadata'].get('attachment_guid', 'n/a')}")
+        print(f"  type            : {chunk['type']}")
+        print(f"  content         : {chunk['content'][:120]}...")
+        print(f"  metadata        :")
         for k, v in chunk['metadata'].items():
-            print(f"      {k:12s}: {v}")
+            print(f"      {k:16s}: {v}")
 
     print(f"\n Total chunks: {len(chunks)}")
 

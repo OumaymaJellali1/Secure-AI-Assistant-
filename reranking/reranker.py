@@ -2,22 +2,25 @@
 reranker.py
 ───────────
 Cross-encoder reranker for RAG — refines retrieved candidates using
-BAAI/bge-reranker-v2-m3.
+Jina Reranker API (jina-reranker-v2-base-multilingual).
 
-CPU-optimized:
-  - multi-threading       : forces PyTorch to use all available cores
-  - device="cpu"          : explicit device selection
-  - content truncation    : caps chunk length before reranker pass
-  - fp16                  : halves memory use and speeds up scoring on CPU
+API-based (no local model):
+  - zero RAM usage         : no model loaded locally
+  - multilingual           : 100+ languages supported
+  - free tier              : 1M tokens free on jina.ai
+  - simple REST call       : just requests, no torch/FlagEmbedding needed
 
 Pipeline position:
     query → retriever.search(top_n=10)  →  reranker.rerank(top_n=5)  →  LLM
 
 Dependencies:
-    pip install FlagEmbedding torch
+    pip install requests python-dotenv
+
+Environment:
+    JINA_API_KEY=jina_xxxxxxxxxxxxxxxxxxxxxxxx  (set in your .env)
 
 Usage:
-    from retrieval.reranker import Reranker
+    from reranking.reranker import Reranker
     r = Reranker()
     top = r.rerank(query, candidates, top_n=5)
 """
@@ -28,86 +31,57 @@ import os
 import time
 from typing import Optional
 
-import torch
+import requests
+from dotenv import load_dotenv
 
-# Force PyTorch to use all CPU cores BEFORE loading the model.
-_CPU_COUNT = os.cpu_count() or 4
-torch.set_num_threads(_CPU_COUNT)
-
-from FlagEmbedding import FlagReranker
+load_dotenv()
 
 
-# ── CONFIG ────────────────────────────────────────────────────────────────────
+API_URL       = "https://api.jina.ai/v1/rerank"
+MODEL_NAME    = "jina-reranker-v2-base-multilingual"
+DEFAULT_TOP_N = 5
+MAX_CHUNK_CHARS = 2000
 
-MODEL_NAME        = "BAAI/bge-reranker-v2-m3"
-DEVICE            = "cpu"
-DEFAULT_TOP_N     = 5
-
-# Max chunk content length passed to the reranker (in chars, not tokens).
-# Quadratic cost in sequence length — keeping this tight saves a lot on CPU.
-MAX_CHUNK_CHARS   = 2000
-
-# bge-reranker-v2-m3's internal max sequence length (tokens).
-# 512 is plenty for RAG and keeps CPU inference fast.
-MAX_SEQ_LENGTH    = 512
-
-
-# ── RERANKER CLASS ────────────────────────────────────────────────────────────
 
 class Reranker:
     """
-    Cross-encoder reranker using BAAI/bge-reranker-v2-m3.
+    API-based reranker using Jina AI (jina-reranker-v2-base-multilingual).
 
-    Multilingual (100+ languages), open-source, and significantly faster
-    than jina-reranker-v2-base-multilingual on CPU.
+    Multilingual (100+ languages), no local model, no RAM overhead.
+    Requires JINA_API_KEY environment variable.
 
     Args:
-        model_name       : HuggingFace model ID
-        device           : "cpu" or "cuda"
-        max_chunk_chars  : truncate chunk content to this many chars for scoring
-        max_seq_length   : transformer sequence length cap (tokens)
+        model_name      : Jina model ID
+        max_chunk_chars : truncate chunk content to this many chars before sending
     """
 
     def __init__(
         self,
         model_name      : str = MODEL_NAME,
-        device          : str = DEVICE,
         max_chunk_chars : int = MAX_CHUNK_CHARS,
-        max_seq_length  : int = MAX_SEQ_LENGTH,
     ) -> None:
-        print(f"[RERANKER] Loading {model_name} ...")
-        print(f"[RERANKER] Config: device={device}, "
-              f"cpu_threads={torch.get_num_threads()}, "
-              f"max_seq_length={max_seq_length}")
+        self.api_key = os.getenv("JINA_API_KEY")
+        if not self.api_key:
+            raise ValueError(
+                "[RERANKER] JINA_API_KEY is not set. "
+                "Add it to your .env file: JINA_API_KEY=jina_xxxxxxxx"
+            )
 
-        t0 = time.perf_counter()
-
-        # use_fp16=True halves memory and speeds up CPU scoring with
-        # negligible quality loss. Set to False if you see NaN scores.
-        self.model = FlagReranker(
-            model_name,
-            use_fp16         = True,
-            device           = device,
-        )
-
-        # Cap the sequence length to avoid slow long-context inference.
-        self.model.model.config.max_position_embeddings = max_seq_length
-
-        self.model_name      = model_name
+        self.model_name     = model_name
         self.max_chunk_chars = max_chunk_chars
+        self.api_url        = API_URL
 
-        print(f"[RERANKER] Ready. ({time.perf_counter() - t0:.1f}s)")
+        print(f"[RERANKER] Jina API ready. Model: {model_name}")
 
-    # ── PUBLIC ────────────────────────────────────────────────────────────────
 
     def rerank(
         self,
-        query   : str,
-        chunks  : list[dict],
-        top_n   : Optional[int] = None,
+        query  : str,
+        chunks : list[dict],
+        top_n  : Optional[int] = None,
     ) -> list[dict]:
         """
-        Rerank candidate chunks by cross-encoder relevance.
+        Rerank candidate chunks by cross-encoder relevance via Jina API.
 
         Args:
             query  : user's question
@@ -117,7 +91,7 @@ class Reranker:
         Returns:
             List of top-N chunks, sorted by rerank_score descending.
             Each chunk is augmented with:
-              - rerank_score    : float in [0, 1] (sigmoid-normalized relevance)
+              - rerank_score    : float in [0, 1] (relevance score)
               - retrieval_score : float (original hybrid score, preserved)
         """
         if not chunks:
@@ -129,30 +103,57 @@ class Reranker:
         avg_length = sum(lengths) / len(lengths) if lengths else 0
         max_length = max(lengths) if lengths else 0
 
-        print(f"[RERANKER] Scoring {len(chunks)} candidates "
+        print(f"[RERANKER] Scoring {len(chunks)} candidates via Jina API "
               f"(avg={avg_length:.0f} chars, max={max_length} chars, "
               f"trunc={self.max_chunk_chars})...")
 
         t0 = time.perf_counter()
 
-        # Build (query, chunk_content) pairs, truncated for speed.
-        pairs = [
-            [query, c.get("content", "")[: self.max_chunk_chars]]
+        # Prepare documents list — truncate to stay within token limits
+        documents = [
+            c.get("content", "")[: self.max_chunk_chars]
             for c in chunks
         ]
 
-        # FlagReranker.compute_score returns a list of raw relevance scores.
-        # normalize=True applies sigmoid → scores in [0, 1].
-        scores = self.model.compute_score(pairs, normalize=True)
+        try:
+            response = requests.post(
+                self.api_url,
+                headers={
+                    "Authorization": f"Bearer {self.api_key}",
+                    "Content-Type":  "application/json",
+                },
+                json={
+                    "model":     self.model_name,
+                    "query":     query,
+                    "documents": documents,
+                    "top_n":     len(chunks),   # get all scores, we sort ourselves
+                },
+                timeout=30,
+            )
+            response.raise_for_status()
 
-        # compute_score returns a float (not a list) when given a single pair.
-        if not isinstance(scores, list):
-            scores = [scores]
+        except requests.exceptions.Timeout:
+            print("[RERANKER] WARNING: Jina API timed out. Returning original order.")
+            return chunks[:n]
 
-        # Attach scores, preserve original retrieval score.
-        for chunk, score in zip(chunks, scores):
-            chunk["retrieval_score"] = chunk.get("score")
-            chunk["rerank_score"]    = float(score)
+        except requests.exceptions.RequestException as e:
+            print(f"[RERANKER] WARNING: Jina API error: {e}. Returning original order.")
+            return chunks[:n]
+
+        results = response.json().get("results", [])
+
+        # Map scores back to original chunks by index
+        for result in results:
+            idx   = result["index"]
+            score = result["relevance_score"]
+            chunks[idx]["retrieval_score"] = chunks[idx].get("score")
+            chunks[idx]["rerank_score"]    = float(score)
+
+        # Fill any chunks that didn't get a score (safety net)
+        for chunk in chunks:
+            if "rerank_score" not in chunk:
+                chunk["rerank_score"]    = 0.0
+                chunk["retrieval_score"] = chunk.get("score")
 
         reranked = sorted(
             chunks,
@@ -169,8 +170,6 @@ class Reranker:
 
         return reranked[:n]
 
-
-# ── CLI (for testing in isolation) ────────────────────────────────────────────
 
 if __name__ == "__main__":
     import sys

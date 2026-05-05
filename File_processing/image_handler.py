@@ -124,7 +124,7 @@ def extract_image(file_path: str) -> list[dict]:
 
 # ── TEST ──────────────────────────────────────────────
 if __name__ == "__main__":
-    result = extract_image("1.png")
+    result = extract_image("image.png")
 
     print("\n===== JSON OUTPUT =====")
     print(json.dumps(result, indent=4, ensure_ascii=False))

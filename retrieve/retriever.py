@@ -53,21 +53,17 @@ from embedding.embedder import embed_query
 QDRANT_URL      = "http://localhost:6333"
 COLLECTION_NAME = "rag_chunks"
 
-# How many candidates to fetch from each vector space before fusion
 DENSE_K  = 20
 SPARSE_K = 20
 
-# How many results to return to the LLM after fusion
 TOP_N = 20
 
-# RRF constant — lower values (10-20) give stronger rank separation
-# at small K; 60 is standard for large corpora
+
 RRF_K = 20
 
 SearchMode = Literal["hybrid", "dense", "sparse"]
 
 
-# ── CLIENT SINGLETON ──────────────────────────────────────────────────────────
 
 _client: Optional[QdrantClient] = None
 
@@ -81,7 +77,6 @@ def _get_client() -> QdrantClient:
     return _client
 
 
-# ── RETRIEVER CLASS 
 
 class Retriever:
     """
@@ -110,7 +105,6 @@ class Retriever:
         self.rrf_k           = rrf_k
         self.client          = _get_client()
 
-    # ── PUBLIC ────────────────────────────────────────────────────────────────
 
     def search(
         self,
@@ -155,7 +149,6 @@ class Retriever:
         if filters:
             print(f"[RETRIEVER] Filter : {filters}")
 
-        # ── EMBED QUERY
         print(f"[RETRIEVER] Embedding query...")
         dense_vec, sparse_vec = embed_query(query)
 
@@ -172,7 +165,6 @@ class Retriever:
         print(f"[RETRIEVER] Returning {len(results)} chunks.\n")
         return results
 
-    # ── SEARCH MODES ──────────────────────────────────────────────────────────
 
     def _hybrid_search(
         self,
@@ -224,7 +216,6 @@ class Retriever:
                    for i, h in enumerate(hits)]
         return _format_results(wrapped)
 
-    # ── QDRANT CALLS ──────────────────────────────────────────────────────────
 
     def _run_dense_search(self, dense_vec, qdrant_filter, k: int):
         """Execute dense vector search against Qdrant."""
@@ -254,7 +245,6 @@ class Retriever:
         return response.points
 
 
-# ── RRF FUSION 
 
 def _rrf_fusion(
     dense_hits  : list,
@@ -333,7 +323,6 @@ def _build_filter(filters: dict) -> Filter:
     return Filter(must=conditions)
 
 
-# ── OUTPUT FORMATTER ──────────────────────────────────────────────────────────
 
 def _format_results(fused: list[dict]) -> list[dict]:
     """
@@ -423,7 +412,6 @@ if __name__ == "__main__":
         print(f"   Chunk type : {r['type']}  |  page={r['page']}  |  section={r['section']}")
         print(f"   Tokens     : {r['token_count']}")
         print(f"   Content    :")
-        # indent and truncate for terminal display
         preview = r["content"][:400].replace("\n", "\n             ")
         print(f"             {preview}")
         if len(r["content"]) > 400:

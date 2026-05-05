@@ -5,7 +5,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import json
 from pathlib import Path
 
-from normalizer import normalize_chunks, validate_chunks
+from embedding.normalizer import normalize_chunks, validate_chunks
 
 from chunking.pdf_chunker        import chunk_pdf
 from chunking.docx_chunker       import chunk_docx
