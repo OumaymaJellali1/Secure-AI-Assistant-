@@ -1,171 +1,88 @@
-/**
- * UserSwitcher.jsx — Top-right dropdown to pick the active user.
- *
- * In dev mode, lists Alice/Bob/Test (the dev users).
- * In Phase 3, this becomes a real "logged in as ..." display
- * with a logout option, using MS Graph identity.
- */
 import React from 'react';
 import {
-  Menu,
-  MenuTrigger,
-  MenuPopover,
-  MenuList,
-  MenuItem,
-  Button,
-  Avatar,
-  Text,
-  tokens,
-  makeStyles,
-  Spinner,
+  Menu, MenuTrigger, MenuPopover, MenuList, MenuItem,
+  makeStyles, Spinner,
 } from '@fluentui/react-components';
-import {
-  Person24Regular,
-  ChevronDown16Regular,
-  Checkmark16Regular,
-} from '@fluentui/react-icons';
-
+import { SignOut20Regular, Person16Regular, Checkmark16Regular } from '@fluentui/react-icons';
 import { useUser } from '../context/UserContext';
-
 
 const useStyles = makeStyles({
   trigger: {
+    width: '30px',
+    height: '30px',
+    borderRadius: '50%',
+    border: 'none',
+    background: 'linear-gradient(135deg, #e0e7ff, #c7d2fe)',
     display: 'flex',
     alignItems: 'center',
-    gap: '8px',
-    paddingLeft: '8px',
-    paddingRight: '8px',
+    justifyContent: 'center',
+    cursor: 'pointer',
+    fontSize: '12px',
+    fontWeight: '600',
+    color: '#4338ca',
+    fontFamily: "'DM Sans', sans-serif",
+    transition: 'opacity 0.15s',
+    ':hover': {
+      opacity: 0.8,
+    },
   },
-  triggerName: {
-    fontWeight: 500,
-  },
-  menuItemRow: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '10px',
-    width: '100%',
-  },
-  menuItemInfo: {
+  itemLabel: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '2px',
-    flex: 1,
+    gap: '1px',
   },
-  menuItemEmail: {
-    color: tokens.colorNeutralForeground3,
-    fontSize: '12px',
+  itemName: {
+    fontSize: '13px',
+    fontFamily: "'DM Sans', sans-serif",
   },
-  errorBox: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    color: tokens.colorPaletteRedForeground1,
-    padding: '0 12px',
+  itemEmail: {
+    fontSize: '11px',
+    color: '#9ca3af',
+    fontFamily: "'DM Sans', sans-serif",
   },
 });
 
-
-// Generate a consistent color for each user (used in Avatar)
-const AVATAR_COLORS = ['brand', 'colorful', 'beige', 'cornflower', 'lavender'];
-function colorFor(userId) {
-  if (!userId) return 'neutral';
-  // Hash userId to pick a color
-  let hash = 0;
-  for (let i = 0; i < userId.length; i++) {
-    hash = (hash << 5) - hash + userId.charCodeAt(i);
-    hash |= 0;
-  }
-  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+function initials(name) {
+  if (!name) return '?';
+  return name.split(' ').map(p => p[0]).join('').toUpperCase().slice(0, 2);
 }
 
-
-export default function UserSwitcher() {
+export default function UserSwitcher({ onLogout }) {
   const styles = useStyles();
-  const { activeUser, activeUserId, setActiveUserId, users, loading, error } = useUser();
+  const { activeUser, activeUserId, setActiveUserId, users, loading } = useUser();
 
-  // ── Loading state ────────────────────────────────────────────
-  if (loading) {
-    return (
-      <div className={styles.trigger}>
-        <Spinner size="tiny" />
-        <Text>Loading...</Text>
-      </div>
-    );
-  }
+  if (loading) return <Spinner size="tiny" />;
 
-  // ── Error state ──────────────────────────────────────────────
-  if (error) {
-    return (
-      <div className={styles.errorBox}>
-        <Person24Regular />
-        <Text size={200}>API offline</Text>
-      </div>
-    );
-  }
-
-  // ── Empty state ──────────────────────────────────────────────
-  if (!users || users.length === 0) {
-    return (
-      <div className={styles.trigger}>
-        <Person24Regular />
-        <Text>No users</Text>
-      </div>
-    );
-  }
-
-  // ── Dropdown ─────────────────────────────────────────────────
   const displayName = activeUser?.display_name || activeUserId || 'User';
 
   return (
     <Menu>
       <MenuTrigger disableButtonEnhancement>
-        <Button
-          appearance="subtle"
-          icon={
-            <Avatar
-              size={28}
-              name={displayName}
-              color={colorFor(activeUserId)}
-            />
-          }
-          iconPosition="before"
-        >
-          <span className={styles.triggerName}>{displayName}</span>
-          <ChevronDown16Regular style={{ marginLeft: 6 }} />
-        </Button>
+        <button className={styles.trigger} title={displayName}>
+          {initials(displayName)}
+        </button>
       </MenuTrigger>
-
       <MenuPopover>
         <MenuList>
-          {users.map((u) => {
-            const isActive = u.id === activeUserId;
-            const name = u.display_name || u.id;
-            return (
-              <MenuItem
-                key={u.id}
-                onClick={() => setActiveUserId(u.id)}
-                icon={
-                  <Avatar
-                    size={32}
-                    name={name}
-                    color={colorFor(u.id)}
-                  />
-                }
-                secondaryContent={
-                  isActive ? <Checkmark16Regular /> : null
-                }
-              >
-                <div className={styles.menuItemInfo}>
-                  <Text weight={isActive ? 'semibold' : 'regular'}>
-                    {name}
-                  </Text>
-                  {u.email && (
-                    <Text className={styles.menuItemEmail}>{u.email}</Text>
-                  )}
-                </div>
-              </MenuItem>
-            );
-          })}
+          {(users || []).map(u => (
+            <MenuItem
+              key={u.id}
+              onClick={() => setActiveUserId(u.id)}
+              icon={u.id === activeUserId ? <Checkmark16Regular style={{ color: '#4f46e5' }} /> : <Person16Regular />}
+            >
+              <div className={styles.itemLabel}>
+                <span className={styles.itemName} style={u.id === activeUserId ? { fontWeight: 600, color: '#4f46e5' } : {}}>
+                  {u.display_name || u.id}
+                </span>
+                {u.email && <span className={styles.itemEmail}>{u.email}</span>}
+              </div>
+            </MenuItem>
+          ))}
+          {onLogout && (
+            <MenuItem icon={<SignOut20Regular />} onClick={onLogout}>
+              <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '13px' }}>Sign out</span>
+            </MenuItem>
+          )}
         </MenuList>
       </MenuPopover>
     </Menu>

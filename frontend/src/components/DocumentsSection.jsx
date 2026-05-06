@@ -1,144 +1,107 @@
-/**
- * DocumentsSection.jsx — Sidebar section for the user's uploaded documents.
- *
- * Features:
- *   • "Upload" button → opens hidden file picker
- *   • Progress indicator during upload (shows file is being processed)
- *   • Lists user's own documents (from document_permissions table)
- *   • Hover → ⋯ menu with Delete option
- *   • Auto-refreshes when user switches or after upload/delete
- *
- * Multi-user demo: each user only sees THEIR uploads.
- * Bob can't see Alice's docs in this list.
- */
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
-  Text,
-  Button,
-  Menu,
-  MenuTrigger,
-  MenuPopover,
-  MenuList,
-  MenuItem,
-  Spinner,
-  tokens,
-  makeStyles,
-  mergeClasses,
+  Spinner, Menu, MenuTrigger, MenuPopover, MenuList, MenuItem,
+  makeStyles, mergeClasses,
 } from '@fluentui/react-components';
 import {
-  DocumentRegular,
-  DocumentAdd20Regular,
-  DocumentMultipleRegular,
-  MoreHorizontal20Regular,
-  DeleteRegular,
-  Checkmark16Filled,
+  DocumentRegular, DocumentAdd20Regular, DocumentMultipleRegular,
+  MoreHorizontal20Regular, DeleteRegular,
 } from '@fluentui/react-icons';
-
 import api from '../api';
 import { useUser } from '../context/UserContext';
 
-
-// Allowed extensions (must match backend ALLOWED_EXTENSIONS)
-const ACCEPTED_EXTENSIONS = '.pdf,.docx,.txt,.md,.csv,.xlsx,.pptx,.eml';
-
+const ACCEPTED = '.pdf,.docx,.txt,.md,.csv,.xlsx,.pptx,.eml';
 
 const useStyles = makeStyles({
   section: {
-    marginBottom: '8px',
+    marginBottom: '4px',
   },
   sectionHeader: {
     display: 'flex',
     alignItems: 'center',
-    gap: '6px',
-    padding: '8px 4px 4px',
-    color: tokens.colorNeutralForeground3,
-    fontSize: '11px',
-    fontWeight: 600,
-    textTransform: 'uppercase',
-    letterSpacing: '0.5px',
+    justifyContent: 'space-between',
+    padding: '6px 4px 4px',
+    marginBottom: '2px',
   },
-  uploadButton: {
-    width: '100%',
-    justifyContent: 'flex-start',
-    backgroundColor: tokens.colorNeutralBackground1,
-    border: `1px dashed ${tokens.colorNeutralStroke1}`,
-    marginBottom: '8px',
-    color: tokens.colorBrandForeground1,
-    ':hover': {
-      backgroundColor: tokens.colorBrandBackground2,
-      borderColor: tokens.colorBrandStroke1,
-    },
-  },
-  uploadButtonDisabled: {
-    color: tokens.colorNeutralForeground3,
-    ':hover': {
-      backgroundColor: tokens.colorNeutralBackground1,
-    },
-  },
-  hiddenInput: {
-    display: 'none',
-  },
-
-  // Upload progress
-  progressBox: {
-    padding: '10px 12px',
-    backgroundColor: tokens.colorBrandBackground2,
-    border: `1px solid ${tokens.colorBrandStroke2}`,
-    borderRadius: '6px',
-    marginBottom: '8px',
+  sectionLabel: {
     display: 'flex',
     alignItems: 'center',
-    gap: '8px',
+    gap: '6px',
+    color: '#9ca3af',
+    fontSize: '11px',
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: '0.6px',
+    fontFamily: "'DM Sans', sans-serif",
   },
-  progressText: {
+  uploadBtn: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '5px',
+    border: 'none',
+    background: 'transparent',
+    color: '#6b7280',
     fontSize: '12px',
-    color: tokens.colorBrandForeground1,
-    flex: 1,
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    whiteSpace: 'nowrap',
+    cursor: 'pointer',
+    fontFamily: "'DM Sans', sans-serif",
+    padding: '2px 6px',
+    borderRadius: '6px',
+    transition: 'all 0.15s',
+    ':hover': {
+      background: '#f3f4f6',
+      color: '#374151',
+    },
+  },
+  hiddenInput: { display: 'none' },
+  progressBox: {
+    padding: '7px 10px',
+    background: '#eff6ff',
+    border: '1px solid #bfdbfe',
+    borderRadius: '8px',
+    marginBottom: '6px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '7px',
+    fontSize: '12px',
+    color: '#1d4ed8',
+    fontFamily: "'DM Sans', sans-serif",
   },
   successBox: {
-    padding: '8px 12px',
-    backgroundColor: tokens.colorPaletteGreenBackground2,
-    border: `1px solid ${tokens.colorPaletteGreenBorder1}`,
-    borderRadius: '6px',
-    marginBottom: '8px',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '6px',
+    padding: '7px 10px',
+    background: '#f0fdf4',
+    border: '1px solid #bbf7d0',
+    borderRadius: '8px',
+    marginBottom: '6px',
     fontSize: '12px',
-    color: tokens.colorPaletteGreenForeground1,
+    color: '#166534',
+    fontFamily: "'DM Sans', sans-serif",
   },
   errorBox: {
-    padding: '8px 12px',
-    backgroundColor: tokens.colorPaletteRedBackground2,
-    border: `1px solid ${tokens.colorPaletteRedBorder1}`,
-    borderRadius: '6px',
-    marginBottom: '8px',
+    padding: '7px 10px',
+    background: '#fef2f2',
+    border: '1px solid #fecaca',
+    borderRadius: '8px',
+    marginBottom: '6px',
     fontSize: '12px',
-    color: tokens.colorPaletteRedForeground1,
+    color: '#dc2626',
+    fontFamily: "'DM Sans', sans-serif",
   },
-
-  // Document item
   item: {
     display: 'flex',
     alignItems: 'center',
-    gap: '8px',
-    padding: '6px 10px',
-    borderRadius: '6px',
+    gap: '7px',
+    padding: '6px 8px',
+    borderRadius: '8px',
     cursor: 'default',
-    color: tokens.colorNeutralForeground1,
-    transitionProperty: 'background-color',
-    transitionDuration: '0.1s',
-    minHeight: '32px',
+    transition: 'background 0.12s',
+    minHeight: '30px',
     ':hover': {
-      backgroundColor: tokens.colorNeutralBackground1Hover,
+      background: '#f3f4f6',
     },
   },
   itemIcon: {
-    fontSize: '14px',
-    color: tokens.colorNeutralForeground3,
+    fontSize: '13px',
+    color: '#9ca3af',
     flexShrink: 0,
   },
   itemTitle: {
@@ -146,41 +109,43 @@ const useStyles = makeStyles({
     overflow: 'hidden',
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap',
-    fontSize: '13px',
+    fontSize: '12px',
+    color: '#374151',
+    fontFamily: "'DM Sans', sans-serif",
   },
   itemMeta: {
-    fontSize: '11px',
-    color: tokens.colorNeutralForeground3,
+    fontSize: '10px',
+    color: '#c4c9d4',
+    fontFamily: "'DM Sans', sans-serif",
     flexShrink: 0,
   },
   itemMenu: {
     flexShrink: 0,
     opacity: 0,
-    transitionProperty: 'opacity',
-    transitionDuration: '0.1s',
+    transition: 'opacity 0.1s',
+    minWidth: 'auto',
+    height: '20px',
+    padding: '0 3px',
   },
   itemMenuVisible: {
     opacity: 1,
   },
-
-  // Empty / loading
   emptyMsg: {
-    color: tokens.colorNeutralForeground3,
+    color: '#c4c9d4',
     fontSize: '12px',
     textAlign: 'center',
-    padding: '12px 8px',
+    padding: '10px 8px',
     fontStyle: 'italic',
+    fontFamily: "'DM Sans', sans-serif",
   },
   loadingBox: {
     display: 'flex',
     justifyContent: 'center',
-    padding: '12px',
+    padding: '10px',
   },
 });
 
-
-// ── INDIVIDUAL DOCUMENT ITEM ───────────────────────────────────────
-function DocumentItem({ doc, onDelete }) {
+function DocItem({ doc, onDelete }) {
   const styles = useStyles();
   const [hovered, setHovered] = useState(false);
 
@@ -194,24 +159,18 @@ function DocumentItem({ doc, onDelete }) {
       <DocumentRegular className={styles.itemIcon} />
       <span className={styles.itemTitle}>{doc.filename}</span>
       <span className={styles.itemMeta}>{doc.chunks}c</span>
-
       <Menu>
         <MenuTrigger disableButtonEnhancement>
-          <Button
+          <button
             className={mergeClasses(styles.itemMenu, hovered && styles.itemMenuVisible)}
-            appearance="subtle"
-            size="small"
-            icon={<MoreHorizontal20Regular />}
-          />
+            style={{ border: 'none', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', borderRadius: '5px' }}
+          >
+            <MoreHorizontal20Regular style={{ fontSize: 14, color: '#9ca3af' }} />
+          </button>
         </MenuTrigger>
         <MenuPopover>
           <MenuList>
-            <MenuItem
-              icon={<DeleteRegular />}
-              onClick={() => onDelete(doc)}
-            >
-              Delete
-            </MenuItem>
+            <MenuItem icon={<DeleteRegular />} onClick={() => onDelete(doc)}>Delete</MenuItem>
           </MenuList>
         </MenuPopover>
       </Menu>
@@ -219,28 +178,20 @@ function DocumentItem({ doc, onDelete }) {
   );
 }
 
-
-// ── MAIN COMPONENT ─────────────────────────────────────────────────
 export default function DocumentsSection({ refreshKey }) {
   const styles = useStyles();
   const { activeUserId } = useUser();
-  const fileInputRef = useRef(null);
+  const fileRef = useRef(null);
 
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  // Upload state
   const [uploading, setUploading] = useState(false);
-  const [uploadingFilename, setUploadingFilename] = useState('');
-  const [uploadSuccess, setUploadSuccess] = useState(null); // { filename, chunks }
+  const [uploadFilename, setUploadFilename] = useState('');
+  const [uploadSuccess, setUploadSuccess] = useState(null);
   const [uploadError, setUploadError] = useState(null);
-
-  // Internal refresh trigger (after upload/delete)
   const [internalRefresh, setInternalRefresh] = useState(0);
-  const triggerRefresh = () => setInternalRefresh(k => k + 1);
 
-  // ── Load documents ──────────────────────────────────────────────
   const loadDocuments = useCallback(async () => {
     if (!activeUserId) return;
     try {
@@ -255,146 +206,87 @@ export default function DocumentsSection({ refreshKey }) {
     }
   }, [activeUserId]);
 
-  useEffect(() => {
-    loadDocuments();
-  }, [loadDocuments, refreshKey, internalRefresh]);
-
-  // Auto-clear success message after 5 seconds
+  useEffect(() => { loadDocuments(); }, [loadDocuments, refreshKey, internalRefresh]);
   useEffect(() => {
     if (!uploadSuccess) return;
-    const timer = setTimeout(() => setUploadSuccess(null), 5000);
-    return () => clearTimeout(timer);
+    const t = setTimeout(() => setUploadSuccess(null), 5000);
+    return () => clearTimeout(t);
   }, [uploadSuccess]);
-
-  // ── Upload handler ──────────────────────────────────────────────
-  const handleUploadClick = () => {
-    if (uploading) return;
-    fileInputRef.current?.click();
-  };
 
   const handleFileSelected = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    
-    // Reset input so the same file can be re-selected later
     e.target.value = '';
-
     setUploading(true);
-    setUploadingFilename(file.name);
+    setUploadFilename(file.name);
     setUploadError(null);
     setUploadSuccess(null);
-
     try {
       const result = await api.uploadDocument(activeUserId, file);
-      setUploadSuccess({
-        filename: file.name,
-        chunks: result.chunks || 0,
-      });
-      triggerRefresh();
+      setUploadSuccess({ filename: file.name, chunks: result.chunks || 0 });
+      setInternalRefresh(k => k + 1);
     } catch (err) {
       setUploadError(err.message);
     } finally {
       setUploading(false);
-      setUploadingFilename('');
+      setUploadFilename('');
     }
   };
 
-  // ── Delete handler ──────────────────────────────────────────────
   const handleDelete = async (doc) => {
-    if (!confirm(`Delete "${doc.filename}"? This cannot be undone.`)) return;
-    
+    if (!confirm(`Delete "${doc.filename}"?`)) return;
     try {
       await api.deleteDocument(activeUserId, doc.document_id);
-      triggerRefresh();
+      setInternalRefresh(k => k + 1);
     } catch (err) {
-      alert(`Failed to delete: ${err.message}`);
+      alert(`Failed: ${err.message}`);
     }
   };
 
-  // ── Render ──────────────────────────────────────────────────────
   return (
     <div className={styles.section}>
       <div className={styles.sectionHeader}>
-        <DocumentMultipleRegular style={{ fontSize: 14 }} />
-        Your documents
+        <div className={styles.sectionLabel}>
+          <DocumentMultipleRegular style={{ fontSize: 13 }} />
+          Documents
+        </div>
+        <button
+          className={styles.uploadBtn}
+          onClick={() => fileRef.current?.click()}
+          disabled={uploading}
+        >
+          {uploading ? <Spinner size="tiny" /> : <DocumentAdd20Regular style={{ fontSize: 14 }} />}
+          Upload
+        </button>
       </div>
 
-      {/* Hidden file input */}
-      <input
-        type="file"
-        ref={fileInputRef}
-        className={styles.hiddenInput}
-        accept={ACCEPTED_EXTENSIONS}
-        onChange={handleFileSelected}
-      />
+      <input type="file" ref={fileRef} className={styles.hiddenInput} accept={ACCEPTED} onChange={handleFileSelected} />
 
-      {/* Upload button */}
-      <Button
-        className={mergeClasses(styles.uploadButton, uploading && styles.uploadButtonDisabled)}
-        icon={uploading ? <Spinner size="tiny" /> : <DocumentAdd20Regular />}
-        onClick={handleUploadClick}
-        disabled={uploading}
-      >
-        {uploading ? 'Indexing...' : 'Upload document'}
-      </Button>
-
-      {/* Upload progress */}
       {uploading && (
         <div className={styles.progressBox}>
           <Spinner size="tiny" />
-          <Text className={styles.progressText} title={uploadingFilename}>
-            Processing {uploadingFilename}
-          </Text>
+          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            Indexing {uploadFilename}...
+          </span>
         </div>
       )}
-
-      {/* Upload success */}
       {uploadSuccess && (
         <div className={styles.successBox}>
-          <Checkmark16Filled />
-          <Text>Uploaded {uploadSuccess.filename} ({uploadSuccess.chunks} chunks)</Text>
+          ✓ {uploadSuccess.filename} ({uploadSuccess.chunks} chunks)
         </div>
       )}
+      {uploadError && <div className={styles.errorBox}>✗ {uploadError}</div>}
 
-      {/* Upload error */}
-      {uploadError && (
-        <div className={styles.errorBox}>
-          ❌ {uploadError}
-        </div>
-      )}
+      {loading && <div className={styles.loadingBox}><Spinner size="tiny" /></div>}
+      {error && <div className={styles.errorBox}>{error}</div>}
 
-      {/* Loading state */}
-      {loading && (
-        <div className={styles.loadingBox}>
-          <Spinner size="tiny" />
-        </div>
-      )}
-
-      {/* Error state */}
-      {error && (
-        <div className={styles.errorBox}>{error}</div>
-      )}
-
-      {/* Empty state */}
       {!loading && !error && documents.length === 0 && (
-        <Text className={styles.emptyMsg}>
-          No documents yet.<br />
-          Click "Upload" to add one.
-        </Text>
+        <div className={styles.emptyMsg}>No documents yet</div>
       )}
 
-      {/* Document list */}
-      {!loading && !error && documents.length > 0 && (
-        <div>
-          {documents.map((doc) => (
-            <DocumentItem
-              key={doc.document_id}
-              doc={doc}
-              onDelete={handleDelete}
-            />
-          ))}
-        </div>
-      )}
+      {!loading && !error && documents.map(doc => (
+        <DocItem key={doc.document_id} doc={doc} onDelete={handleDelete} />
+      ))}
     </div>
   );
 }

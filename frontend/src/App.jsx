@@ -1,131 +1,140 @@
 import React, { useState } from 'react';
-import {
-  FluentProvider,
-  webLightTheme,
-  webDarkTheme,
-  Button,
-  Text,
-  tokens,
-  makeStyles,
-} from '@fluentui/react-components';
-import {
-  WeatherSunny24Regular,
-  WeatherMoon24Regular,
-  ChatMultiple24Regular,
-} from '@fluentui/react-icons';
+import { FluentProvider, webLightTheme, makeStyles } from '@fluentui/react-components';
 
 import { UserProvider } from './context/UserContext';
 import { ChatProvider } from './context/ChatContext';
+import AuthPage from './components/AuthPage';
 import UserSwitcher from './components/UserSwitcher';
 import Sidebar from './components/Sidebar';
 import ChatPanel from './components/ChatPanel';
 
+// Import DM Sans font
+const fontLink = document.createElement('link');
+fontLink.rel = 'stylesheet';
+fontLink.href = 'https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap';
+document.head.appendChild(fontLink);
 
 const useStyles = makeStyles({
-  root: {
+  app: {
+    display: 'flex',
+    height: '100vh',
+    fontFamily: "'DM Sans', 'Segoe UI', sans-serif",
+    background: '#F7F6F3',
+    overflow: 'hidden',
+  },
+  sidebar: {
+    width: '260px',
+    flexShrink: 0,
     display: 'flex',
     flexDirection: 'column',
-    height: '100vh',
-    backgroundColor: tokens.colorNeutralBackground2,
-    color: tokens.colorNeutralForeground1,
+    background: '#ffffff',
+    borderRight: '1px solid rgba(0,0,0,0.08)',
+    overflow: 'hidden',
   },
-  header: {
+  sidebarHeader: {
+    padding: '16px 16px 12px',
+    borderBottom: '1px solid rgba(0,0,0,0.07)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: '8px 20px',
-    backgroundColor: tokens.colorNeutralBackground1,
-    borderBottom: `1px solid ${tokens.colorNeutralStroke2}`,
-    minHeight: '52px',
+    flexShrink: 0,
   },
   brand: {
     display: 'flex',
     alignItems: 'center',
     gap: '10px',
   },
-  brandIcon: {
-    fontSize: '24px',
-    color: tokens.colorBrandForeground1,
-  },
-  brandText: {
-    fontWeight: 600,
-    fontSize: '16px',
-  },
-  headerActions: {
+  brandLogo: {
+    width: '32px',
+    height: '32px',
+    borderRadius: '9px',
+    background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
     display: 'flex',
     alignItems: 'center',
-    gap: '8px',
+    justifyContent: 'center',
+    fontSize: '16px',
+    flexShrink: 0,
   },
-  body: {
-    display: 'flex',
+  brandName: {
+    fontSize: '14px',
+    fontWeight: '600',
+    color: '#1a1a2e',
+    letterSpacing: '-0.2px',
+    fontFamily: "'DM Sans', sans-serif",
+  },
+  sidebarBody: {
     flex: 1,
-    overflow: 'hidden',
-  },
-  sidebar: {
-    width: '280px',
-    backgroundColor: tokens.colorNeutralBackground1,
-    borderRight: `1px solid ${tokens.colorNeutralStroke2}`,
-    padding: '16px',
     overflow: 'hidden',
     display: 'flex',
     flexDirection: 'column',
+    padding: '12px 10px',
+  },
+  main: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    overflow: 'hidden',
+    background: '#F7F6F3',
   },
 });
 
-
-function App() {
-  const [isDark, setIsDark] = useState(false);
-  const theme = isDark ? webDarkTheme : webLightTheme;
-
-  return (
-    <FluentProvider theme={theme}>
-      <UserProvider>
-        <ChatProvider>
-          <AppContent isDark={isDark} setIsDark={setIsDark} />
-        </ChatProvider>
-      </UserProvider>
-    </FluentProvider>
-  );
-}
-
-
-function AppContent({ isDark, setIsDark }) {
+function AppShell({ onLogout }) {
   const styles = useStyles();
-  // Bumping this triggers the sidebar to re-fetch conversations
-  // (used when chat panel sends a message and gets an auto-title)
   const [sidebarRefreshKey, setSidebarRefreshKey] = useState(0);
   const refreshSidebar = () => setSidebarRefreshKey(k => k + 1);
 
   return (
-    <div className={styles.root}>
-      {/* HEADER */}
-      <header className={styles.header}>
-        <div className={styles.brand}>
-          <ChatMultiple24Regular className={styles.brandIcon} />
-          <Text className={styles.brandText}>RAG Assistant</Text>
+    <div className={styles.app}>
+      {/* SIDEBAR */}
+      <div className={styles.sidebar}>
+        <div className={styles.sidebarHeader}>
+          <div className={styles.brand}>
+            <div className={styles.brandLogo}>🧠</div>
+            <span className={styles.brandName}>RAG Assistant</span>
+          </div>
+          <UserSwitcher onLogout={onLogout} />
         </div>
-
-        <div className={styles.headerActions}>
-          <Button
-            appearance="subtle"
-            icon={isDark ? <WeatherSunny24Regular /> : <WeatherMoon24Regular />}
-            onClick={() => setIsDark(!isDark)}
-            title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-          />
-          <UserSwitcher />
-        </div>
-      </header>
-
-      {/* BODY */}
-      <div className={styles.body}>
-        <aside className={styles.sidebar}>
+        <div className={styles.sidebarBody}>
           <Sidebar externalRefreshKey={sidebarRefreshKey} />
-        </aside>
+        </div>
+      </div>
 
+      {/* MAIN CONTENT */}
+      <div className={styles.main}>
         <ChatPanel onSidebarRefresh={refreshSidebar} />
       </div>
     </div>
   );
 }
 
-export default App;
+export default function App() {
+  const [authed, setAuthed] = useState(false);
+  const [initialUserId, setInitialUserId] = useState('dev_test');
+
+  const handleLogin = (userId) => {
+    setInitialUserId(userId);
+    setAuthed(true);
+  };
+
+  const handleLogout = () => {
+    setAuthed(false);
+  };
+
+  if (!authed) {
+    return (
+      <FluentProvider theme={webLightTheme}>
+        <AuthPage onLogin={handleLogin} />
+      </FluentProvider>
+    );
+  }
+
+  return (
+    <FluentProvider theme={webLightTheme}>
+      <UserProvider initialUserId={initialUserId}>
+        <ChatProvider>
+          <AppShell onLogout={handleLogout} />
+        </ChatProvider>
+      </UserProvider>
+    </FluentProvider>
+  );
+}

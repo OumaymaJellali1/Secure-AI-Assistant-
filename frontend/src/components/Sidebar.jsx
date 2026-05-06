@@ -1,23 +1,8 @@
-/**
- * Sidebar.jsx — Left sidebar with:
- *   1. New Chat button
- *   2. Documents section (Phase E — NEW)
- *   3. Conversations section
- *
- * Documents section comes BEFORE conversations because:
- *   • Documents are persistent assets (you reference them often)
- *   • Conversations are activity logs (longer list, scrollable)
- */
 import React, { useState } from 'react';
-import {
-  tokens,
-  makeStyles,
-} from '@fluentui/react-components';
-
+import { makeStyles } from '@fluentui/react-components';
 import NewChatButton from './NewChatButton';
 import DocumentsSection from './DocumentsSection';
 import ConversationsSection from './ConversationsSection';
-
 
 const useStyles = makeStyles({
   root: {
@@ -28,33 +13,37 @@ const useStyles = makeStyles({
   },
   scrollArea: {
     flex: 1,
-    overflow: 'auto',
-    paddingRight: '4px',
+    overflowY: 'auto',
+    overflowX: 'hidden',
+    paddingRight: '2px',
   },
   divider: {
     height: '1px',
-    backgroundColor: tokens.colorNeutralStroke2,
-    margin: '12px 0',
+    background: 'rgba(0,0,0,0.07)',
+    margin: '8px 0',
+  },
+  bottomArea: {
+    borderTop: '1px solid rgba(0,0,0,0.07)',
+    paddingTop: '12px',
+    marginTop: '4px',
   },
 });
-
 
 export default function Sidebar({ externalRefreshKey = 0 }) {
   const styles = useStyles();
   const [localRefreshKey, setLocalRefreshKey] = useState(0);
   const refresh = () => setLocalRefreshKey(k => k + 1);
-
-  // Combined key: any refresh trigger updates downstream
   const combinedKey = localRefreshKey + externalRefreshKey * 1000;
 
   return (
     <div className={styles.root}>
-      <NewChatButton onCreated={refresh} />
-      
       <div className={styles.scrollArea}>
         <DocumentsSection refreshKey={combinedKey} />
         <div className={styles.divider} />
-        <ConversationsSection refreshKey={combinedKey} />
+        <ConversationsSection refreshKey={combinedKey} onNewChat={refresh} />
+      </div>
+      <div className={styles.bottomArea}>
+        <NewChatButton onCreated={refresh} />
       </div>
     </div>
   );

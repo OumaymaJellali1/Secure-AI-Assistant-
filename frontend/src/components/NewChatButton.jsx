@@ -1,35 +1,33 @@
-/**
- * NewChatButton.jsx — Creates a new conversation.
- *
- * Click → POST /conversations → set as active → trigger sidebar refresh.
- */
 import React, { useState } from 'react';
-import {
-  Button,
-  Spinner,
-  tokens,
-  makeStyles,
-} from '@fluentui/react-components';
+import { Spinner, makeStyles } from '@fluentui/react-components';
 import { Add20Regular } from '@fluentui/react-icons';
-
 import api from '../api';
 import { useUser } from '../context/UserContext';
 import { useChat } from '../context/ChatContext';
 
-
 const useStyles = makeStyles({
   root: {
     width: '100%',
-    justifyContent: 'flex-start',
-    backgroundColor: tokens.colorNeutralBackground1,
-    border: `1px solid ${tokens.colorNeutralStroke1}`,
-    marginBottom: '12px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    padding: '10px 12px',
+    borderRadius: '10px',
+    border: '1.5px dashed #d1d5db',
+    background: 'transparent',
+    color: '#6b7280',
+    fontSize: '13px',
+    fontWeight: '500',
+    fontFamily: "'DM Sans', sans-serif",
+    cursor: 'pointer',
+    transition: 'all 0.15s',
     ':hover': {
-      backgroundColor: tokens.colorNeutralBackground1Hover,
+      background: '#f9fafb',
+      borderColor: '#9ca3af',
+      color: '#374151',
     },
   },
 });
-
 
 export default function NewChatButton({ onCreated }) {
   const styles = useStyles();
@@ -39,12 +37,10 @@ export default function NewChatButton({ onCreated }) {
 
   const handleClick = async () => {
     if (loading) return;
-    
     try {
       setLoading(true);
       const newConv = await api.createConversation(activeUserId);
       setActiveSessionId(newConv.session_id);
-      // Notify parent (sidebar) to refresh the list
       if (onCreated) onCreated();
     } catch (err) {
       alert(`Failed to create conversation: ${err.message}`);
@@ -54,13 +50,9 @@ export default function NewChatButton({ onCreated }) {
   };
 
   return (
-    <Button
-      className={styles.root}
-      icon={loading ? <Spinner size="tiny" /> : <Add20Regular />}
-      onClick={handleClick}
-      disabled={loading}
-    >
-      New chat
-    </Button>
+    <button className={styles.root} onClick={handleClick} disabled={loading}>
+      {loading ? <Spinner size="tiny" /> : <Add20Regular style={{ fontSize: 16 }} />}
+      New conversation
+    </button>
   );
 }

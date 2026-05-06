@@ -1,84 +1,93 @@
-/**
- * MessageInput.jsx — Text input + send button at bottom of chat panel.
- *
- * Features:
- *   • Multi-line auto-grow textarea
- *   • Enter to send, Shift+Enter for new line
- *   • Disabled while waiting for response
- *   • Send button has loading spinner
- */
 import React, { useState, useRef, useEffect } from 'react';
-import {
-  Button,
-  Textarea,
-  Spinner,
-  tokens,
-  makeStyles,
-} from '@fluentui/react-components';
+import { makeStyles } from '@fluentui/react-components';
 import { Send24Regular } from '@fluentui/react-icons';
-
 
 const useStyles = makeStyles({
   container: {
-    padding: '16px 24px 20px',
-    backgroundColor: tokens.colorNeutralBackground2,
+    padding: '12px 28px 18px',
+    background: '#F7F6F3',
+    flexShrink: 0,
   },
-  inputRow: {
+  inner: {
+    maxWidth: '800px',
+    margin: '0 auto',
+  },
+  box: {
     display: 'flex',
     alignItems: 'flex-end',
-    gap: '8px',
-    backgroundColor: tokens.colorNeutralBackground1,
-    border: `1px solid ${tokens.colorNeutralStroke1}`,
-    borderRadius: '12px',
-    padding: '8px 8px 8px 16px',
-    transitionProperty: 'border-color',
-    transitionDuration: '0.15s',
+    gap: '10px',
+    background: '#ffffff',
+    border: '1.5px solid #e5e7eb',
+    borderRadius: '14px',
+    padding: '10px 10px 10px 16px',
+    transition: 'border-color 0.15s, box-shadow 0.15s',
     ':focus-within': {
-      borderColor: tokens.colorBrandStroke1,
+      borderColor: '#1a1a2e',
+      boxShadow: '0 0 0 3px rgba(26,26,46,0.06)',
     },
   },
   textarea: {
     flex: 1,
     border: 'none',
-    backgroundColor: 'transparent',
+    background: 'transparent',
     resize: 'none',
-    minHeight: '24px',
-    maxHeight: '200px',
+    minHeight: '22px',
+    maxHeight: '180px',
     fontSize: '14px',
-    fontFamily: 'inherit',
+    fontFamily: "'DM Sans', 'Segoe UI', sans-serif",
+    color: '#1a1a2e',
     outline: 'none',
-    padding: '8px 0',
-    color: tokens.colorNeutralForeground1,
+    padding: '4px 0',
+    lineHeight: '1.5',
     overflowY: 'auto',
-    '&::placeholder': {
-      color: tokens.colorNeutralForeground4,
+    '::placeholder': {
+      color: '#c4c9d4',
     },
   },
-  sendButton: {
+  sendBtn: {
+    width: '36px',
+    height: '36px',
+    borderRadius: '10px',
+    border: 'none',
+    background: '#1a1a2e',
+    color: '#ffffff',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer',
     flexShrink: 0,
-    minWidth: '40px',
-    height: '40px',
+    transition: 'opacity 0.15s, transform 0.1s',
+    fontSize: '16px',
+    ':disabled': {
+      opacity: 0.4,
+      cursor: 'not-allowed',
+    },
+    ':hover:not(:disabled)': {
+      opacity: 0.85,
+    },
+    ':active:not(:disabled)': {
+      transform: 'scale(0.95)',
+    },
   },
   hint: {
+    textAlign: 'center',
     fontSize: '11px',
-    color: tokens.colorNeutralForeground4,
+    color: '#c4c9d4',
     marginTop: '6px',
-    paddingLeft: '4px',
+    fontFamily: "'DM Sans', sans-serif",
   },
 });
-
 
 export default function MessageInput({ onSend, disabled }) {
   const styles = useStyles();
   const [value, setValue] = useState('');
   const textareaRef = useRef(null);
 
-  // Auto-grow the textarea as user types
   useEffect(() => {
     const ta = textareaRef.current;
     if (!ta) return;
     ta.style.height = 'auto';
-    ta.style.height = Math.min(ta.scrollHeight, 200) + 'px';
+    ta.style.height = Math.min(ta.scrollHeight, 180) + 'px';
   }, [value]);
 
   const handleSend = () => {
@@ -89,7 +98,6 @@ export default function MessageInput({ onSend, disabled }) {
   };
 
   const handleKeyDown = (e) => {
-    // Enter = send, Shift+Enter = new line
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSend();
@@ -98,25 +106,27 @@ export default function MessageInput({ onSend, disabled }) {
 
   return (
     <div className={styles.container}>
-      <div className={styles.inputRow}>
-        <textarea
-          ref={textareaRef}
-          className={styles.textarea}
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder={disabled ? 'Waiting for response...' : 'Type a message... (Enter to send, Shift+Enter for new line)'}
-          disabled={disabled}
-          rows={1}
-        />
-        <Button
-          className={styles.sendButton}
-          appearance="primary"
-          icon={disabled ? <Spinner size="tiny" appearance="inverted" /> : <Send24Regular />}
-          onClick={handleSend}
-          disabled={disabled || !value.trim()}
-          title="Send (Enter)"
-        />
+      <div className={styles.inner}>
+        <div className={styles.box}>
+          <textarea
+            ref={textareaRef}
+            className={styles.textarea}
+            value={value}
+            onChange={e => setValue(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder={disabled ? 'Generating response...' : 'Ask anything about your documents...'}
+            disabled={disabled}
+            rows={1}
+          />
+          <button
+            className={styles.sendBtn}
+            onClick={handleSend}
+            disabled={disabled || !value.trim()}
+          >
+            <Send24Regular style={{ fontSize: 16 }} />
+          </button>
+        </div>
+        <div className={styles.hint}>Enter to send · Shift+Enter for new line</div>
       </div>
     </div>
   );

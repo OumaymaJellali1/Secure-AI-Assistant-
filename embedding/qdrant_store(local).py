@@ -39,7 +39,7 @@ import uuid
 # ── CONFIG 
 
 QDRANT_URL       = "http://localhost:6333"
-COLLECTION_NAME  = "rag_chunks_voyage"
+COLLECTION_NAME  = "rag_chunks"
 DENSE_DIM        = 1024          # BGE-M3 dense output dimension
 UPSERT_BATCH     = 64            # points per upsert call
 

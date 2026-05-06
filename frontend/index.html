@@ -2,20 +2,52 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧠</text></svg>" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>RAG Assistant</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-      /* Reset and full-height setup */
       *, *::before, *::after { box-sizing: border-box; }
-      html, body, #root { 
-        margin: 0; 
-        padding: 0; 
-        height: 100%; 
-        overflow: hidden;
-      }
+      html, body, #root { margin: 0; padding: 0; height: 100%; overflow: hidden; }
       body {
-        font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        font-family: 'Lexend', 'Segoe UI', system-ui, sans-serif;
+        font-size: 16px;
+        background: #F7F6F3;
+        -webkit-font-smoothing: antialiased;
+      }
+      input, textarea, button, select { font-family: 'Lexend', sans-serif; }
+      ::-webkit-scrollbar { width: 5px; }
+      ::-webkit-scrollbar-track { background: transparent; }
+      ::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 10px; }
+      ::-webkit-scrollbar-thumb:hover { background: #d1d5db; }
+
+      @keyframes fadeSlideUp {
+        from { opacity: 0; transform: translateY(14px); }
+        to   { opacity: 1; transform: translateY(0); }
+      }
+      @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+      @keyframes blink { 0%,50%{opacity:1}51%,100%{opacity:0} }
+      @keyframes slideInRight { from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)} }
+      @keyframes slideInLeft  { from{opacity:0;transform:translateX(-20px)}to{opacity:1;transform:translateX(0)} }
+      @keyframes bounceIn {
+        0%  { opacity:0; transform:scale(.85); }
+        60% { opacity:1; transform:scale(1.03); }
+        100%{ transform:scale(1); }
+      }
+      @keyframes dotPulse {
+        0%,80%,100%{ transform:scale(.5);opacity:.3 }
+        40%        { transform:scale(1);opacity:1 }
+      }
+      @keyframes shimmer {
+        0%  { background-position:-400px 0 }
+        100%{ background-position:400px 0 }
+      }
+      @keyframes overlayIn { from{opacity:0}to{opacity:1} }
+      @keyframes modalIn {
+        from{ opacity:0; transform:translateY(-10px) scale(.97); }
+        to  { opacity:1; transform:translateY(0) scale(1); }
       }
     </style>
   </head>

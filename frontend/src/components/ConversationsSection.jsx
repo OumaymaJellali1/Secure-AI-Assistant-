@@ -1,13 +1,3 @@
-/**
- * ConversationsSection.jsx — Sidebar list of the user's conversations.
- *
- * Features:
- *   • Groups by date (Today / Yesterday / This week / Older)
- *   • Click → opens the conversation
- *   • Highlights the active one
- *   • Right-click / hover menu → rename / delete
- *   • Auto-refreshes when user switches or new chat is created
- */
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   Text,
@@ -18,7 +8,6 @@ import {
   MenuList,
   MenuItem,
   Spinner,
-  tokens,
   makeStyles,
   mergeClasses,
 } from '@fluentui/react-components';
@@ -27,75 +16,104 @@ import {
   MoreHorizontal20Regular,
   DeleteRegular,
   EditRegular,
+  Add16Regular,
 } from '@fluentui/react-icons';
 
 import api from '../api';
 import { useUser } from '../context/UserContext';
 import { useChat } from '../context/ChatContext';
 
-
 const useStyles = makeStyles({
   section: {
-    marginTop: '8px',
+    marginTop: '4px',
   },
   sectionHeader: {
     display: 'flex',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '6px 4px 4px',
+    marginBottom: '2px',
+  },
+  sectionLabel: {
+    display: 'flex',
+    alignItems: 'center',
     gap: '6px',
-    padding: '8px 4px 4px',
-    color: tokens.colorNeutralForeground3,
+    color: '#9ca3af',
     fontSize: '11px',
-    fontWeight: 600,
+    fontWeight: '600',
     textTransform: 'uppercase',
-    letterSpacing: '0.5px',
+    letterSpacing: '0.6px',
+    fontFamily: "'DM Sans', sans-serif",
+  },
+  addBtn: {
+    width: '22px',
+    height: '22px',
+    borderRadius: '6px',
+    border: '1.5px solid #e5e7eb',
+    background: 'transparent',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer',
+    color: '#6b7280',
+    transition: 'all 0.15s',
+    padding: 0,
+    flexShrink: 0,
+    ':hover': {
+      background: '#f3f4f6',
+      borderColor: '#d1d5db',
+      color: '#374151',
+    },
   },
   groupLabel: {
-    padding: '12px 4px 4px',
-    color: tokens.colorNeutralForeground3,
-    fontSize: '11px',
-    fontWeight: 600,
+    padding: '8px 6px 3px',
+    color: '#c4c9d4',
+    fontSize: '10px',
+    fontWeight: '600',
     textTransform: 'uppercase',
     letterSpacing: '0.5px',
+    fontFamily: "'DM Sans', sans-serif",
   },
   emptyMsg: {
-    color: tokens.colorNeutralForeground3,
+    color: '#9ca3af',
     fontSize: '13px',
     textAlign: 'center',
-    padding: '20px 8px',
+    padding: '16px 8px',
     fontStyle: 'italic',
+    lineHeight: '1.5',
   },
   errorMsg: {
-    color: tokens.colorPaletteRedForeground1,
+    color: '#ef4444',
     fontSize: '12px',
     padding: '8px',
   },
-  
-  // Conversation item
   item: {
     display: 'flex',
     alignItems: 'center',
     gap: '8px',
-    padding: '8px 10px',
-    borderRadius: '6px',
+    padding: '7px 8px',
+    borderRadius: '8px',
     cursor: 'pointer',
-    color: tokens.colorNeutralForeground1,
-    transitionProperty: 'background-color',
-    transitionDuration: '0.1s',
-    minHeight: '36px',
+    color: '#374151',
+    transition: 'background 0.12s',
+    minHeight: '34px',
     ':hover': {
-      backgroundColor: tokens.colorNeutralBackground1Hover,
+      background: '#f3f4f6',
     },
   },
   itemActive: {
-    backgroundColor: tokens.colorBrandBackground2,
+    background: '#eef2ff',
     ':hover': {
-      backgroundColor: tokens.colorBrandBackground2Hover,
+      background: '#e0e7ff',
     },
   },
   itemIcon: {
-    fontSize: '16px',
-    color: tokens.colorNeutralForeground3,
+    fontSize: '14px',
+    color: '#9ca3af',
     flexShrink: 0,
+  },
+  itemIconActive: {
+    color: '#6366f1',
   },
   itemTitle: {
     flex: 1,
@@ -103,16 +121,20 @@ const useStyles = makeStyles({
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap',
     fontSize: '13px',
+    fontFamily: "'DM Sans', sans-serif",
+    fontWeight: '400',
   },
   itemTitleActive: {
-    fontWeight: 600,
-    color: tokens.colorBrandForeground1,
+    fontWeight: '500',
+    color: '#4f46e5',
   },
   itemMenu: {
     flexShrink: 0,
     opacity: 0,
-    transitionProperty: 'opacity',
-    transitionDuration: '0.1s',
+    transition: 'opacity 0.1s',
+    minWidth: 'auto',
+    height: '22px',
+    padding: '0 4px',
   },
   itemMenuVisible: {
     opacity: 1,
@@ -120,25 +142,17 @@ const useStyles = makeStyles({
   loadingBox: {
     display: 'flex',
     justifyContent: 'center',
-    padding: '20px',
+    padding: '16px',
   },
 });
 
-
-// ── DATE BUCKETING ─────────────────────────────────────────────────
 function bucketByDate(conversations) {
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);
   const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-  const buckets = {
-    'Today': [],
-    'Yesterday': [],
-    'This week': [],
-    'Older': [],
-  };
-
+  const buckets = { 'Today': [], 'Yesterday': [], 'This week': [], 'Older': [] };
   conversations.forEach((c) => {
     const date = new Date(c.last_active);
     if (date >= today) buckets['Today'].push(c);
@@ -146,12 +160,9 @@ function bucketByDate(conversations) {
     else if (date >= weekAgo) buckets['This week'].push(c);
     else buckets['Older'].push(c);
   });
-
   return buckets;
 }
 
-
-// ── INDIVIDUAL CONVERSATION ITEM ───────────────────────────────────
 function ConversationItem({ conv, isActive, onClick, onRename, onDelete }) {
   const styles = useStyles();
   const [hovered, setHovered] = useState(false);
@@ -165,11 +176,10 @@ function ConversationItem({ conv, isActive, onClick, onRename, onDelete }) {
       onMouseLeave={() => setHovered(false)}
       title={title}
     >
-      <ChatRegular className={styles.itemIcon} />
+      <ChatRegular className={mergeClasses(styles.itemIcon, isActive && styles.itemIconActive)} />
       <span className={mergeClasses(styles.itemTitle, isActive && styles.itemTitleActive)}>
         {title}
       </span>
-
       <Menu>
         <MenuTrigger disableButtonEnhancement>
           <Button
@@ -182,22 +192,10 @@ function ConversationItem({ conv, isActive, onClick, onRename, onDelete }) {
         </MenuTrigger>
         <MenuPopover>
           <MenuList>
-            <MenuItem
-              icon={<EditRegular />}
-              onClick={(e) => {
-                e.stopPropagation();
-                onRename(conv);
-              }}
-            >
+            <MenuItem icon={<EditRegular />} onClick={(e) => { e.stopPropagation(); onRename(conv); }}>
               Rename
             </MenuItem>
-            <MenuItem
-              icon={<DeleteRegular />}
-              onClick={(e) => {
-                e.stopPropagation();
-                onDelete(conv);
-              }}
-            >
+            <MenuItem icon={<DeleteRegular />} onClick={(e) => { e.stopPropagation(); onDelete(conv); }}>
               Delete
             </MenuItem>
           </MenuList>
@@ -207,21 +205,16 @@ function ConversationItem({ conv, isActive, onClick, onRename, onDelete }) {
   );
 }
 
-
-// ── MAIN COMPONENT ─────────────────────────────────────────────────
-export default function ConversationsSection({ refreshKey }) {
+export default function ConversationsSection({ refreshKey, onNewChat }) {
   const styles = useStyles();
   const { activeUserId } = useUser();
   const { activeSessionId, setActiveSessionId, clearActive } = useChat();
-
   const [conversations, setConversations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // ── Load conversations whenever user changes or refreshKey bumps ──
   const loadConversations = useCallback(async () => {
     if (!activeUserId) return;
-    
     try {
       setLoading(true);
       setError(null);
@@ -234,22 +227,21 @@ export default function ConversationsSection({ refreshKey }) {
     }
   }, [activeUserId]);
 
-  useEffect(() => {
-    loadConversations();
-  }, [loadConversations, refreshKey]);
+  useEffect(() => { loadConversations(); }, [loadConversations, refreshKey]);
 
-  // ── Handlers ─────────────────────────────────────────────────────
-  const handleOpen = (sessionId) => {
-    setActiveSessionId(sessionId);
+  const handleNewChat = async () => {
+    try {
+      const newConv = await api.createConversation(activeUserId);
+      setActiveSessionId(newConv.session_id);
+      if (onNewChat) onNewChat();
+    } catch (err) {
+      alert(`Failed: ${err.message}`);
+    }
   };
 
   const handleRename = async (conv) => {
-    const currentTitle = conv.title || '';
-    const newTitle = prompt('New name:', currentTitle);
-    if (newTitle == null || newTitle.trim() === '' || newTitle === currentTitle) {
-      return;
-    }
-    
+    const newTitle = prompt('New name:', conv.title || '');
+    if (!newTitle?.trim() || newTitle === conv.title) return;
     try {
       await api.renameConversation(activeUserId, conv.session_id, newTitle.trim());
       await loadConversations();
@@ -259,63 +251,48 @@ export default function ConversationsSection({ refreshKey }) {
   };
 
   const handleDelete = async (conv) => {
-    const title = conv.title || '(untitled)';
-    if (!confirm(`Delete conversation "${title}"? This cannot be undone.`)) {
-      return;
-    }
-    
+    if (!confirm(`Delete "${conv.title || '(untitled)'}"?`)) return;
     try {
       await api.deleteConversation(activeUserId, conv.session_id);
-      // If we deleted the active one, clear it
-      if (conv.session_id === activeSessionId) {
-        clearActive();
-      }
+      if (conv.session_id === activeSessionId) clearActive();
       await loadConversations();
     } catch (err) {
       alert(`Failed to delete: ${err.message}`);
     }
   };
 
-  // ── Render ───────────────────────────────────────────────────────
   return (
     <div className={styles.section}>
       <div className={styles.sectionHeader}>
-        <ChatRegular style={{ fontSize: 14 }} />
-        Conversations
+        <div className={styles.sectionLabel}>
+          <ChatRegular style={{ fontSize: 13 }} />
+          Conversations
+        </div>
+        <button className={styles.addBtn} onClick={handleNewChat} title="New conversation">
+          <Add16Regular style={{ fontSize: 12 }} />
+        </button>
       </div>
 
-      {loading && (
-        <div className={styles.loadingBox}>
-          <Spinner size="tiny" />
-        </div>
-      )}
-
-      {error && (
-        <div className={styles.errorMsg}>
-          {error}
-        </div>
-      )}
+      {loading && <div className={styles.loadingBox}><Spinner size="tiny" /></div>}
+      {error && <div className={styles.errorMsg}>{error}</div>}
 
       {!loading && !error && conversations.length === 0 && (
-        <Text className={styles.emptyMsg}>
-          No conversations yet.<br />
-          Click "New chat" to start.
-        </Text>
+        <Text className={styles.emptyMsg}>No conversations yet.<br />Click + to start.</Text>
       )}
 
       {!loading && !error && conversations.length > 0 && (
         <>
           {Object.entries(bucketByDate(conversations)).map(([label, items]) => {
-            if (items.length === 0) return null;
+            if (!items.length) return null;
             return (
               <div key={label}>
-                <Text className={styles.groupLabel}>{label}</Text>
+                <div className={styles.groupLabel}>{label}</div>
                 {items.map((conv) => (
                   <ConversationItem
                     key={conv.session_id}
                     conv={conv}
                     isActive={conv.session_id === activeSessionId}
-                    onClick={() => handleOpen(conv.session_id)}
+                    onClick={() => setActiveSessionId(conv.session_id)}
                     onRename={handleRename}
                     onDelete={handleDelete}
                   />

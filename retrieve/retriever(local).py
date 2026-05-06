@@ -51,7 +51,7 @@ from embedding.embedder import embed_query
 # ── CONFIG ────────────────────────────────────────────────────────────────────
 
 QDRANT_URL      = "http://localhost:6333"
-COLLECTION_NAME = "rag_chunks_voyage"
+COLLECTION_NAME = "rag_chunks"
 
 DENSE_K  = 20
 SPARSE_K = 20

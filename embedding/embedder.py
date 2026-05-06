@@ -11,22 +11,26 @@ Usage:
 
 from __future__ import annotations
 import os
+import time
 import numpy as np
 from typing import Any
 
 
 # ── CONFIG ────────────────────────────────────────────────────────────────────
 
-EMBED_BATCH_SIZE  = 128          # Voyage supports up to 128 per batch
+EMBED_BATCH_SIZE  = 32           # Voyage supports up to 128 per batch
 EMBED_MAX_LENGTH  = 512          # tokens (used by BM25 truncation hint)
 VOYAGE_MODEL      = "voyage-multilingual-2"
 VOYAGE_API_KEY    = os.environ.get("VOYAGE_API_KEY", "")
+
+# Free tier: 3 RPM → sleep 21s between batches to stay safe.
+# Set to 0 once you add a payment method to your Voyage account.
+FREE_TIER_SLEEP_S = 21
 
 
 # ── CLIENTS (lazy-loaded singletons) ─────────────────────────────────────────
 
 _voyage_client = None
-_bm25_model    = None   # for sparse vectors
 
 
 def _get_voyage():
@@ -42,18 +46,6 @@ def _get_voyage():
         _voyage_client = voyageai.Client(api_key=VOYAGE_API_KEY)
         print("[EMBEDDER] Voyage AI client ready.")
     return _voyage_client
-
-
-def _get_bm25():
-    """
-    Lazy-load a simple BM25 tokenizer for sparse vectors.
-    Uses rank_bm25 — lightweight, no GPU needed.
-    pip install rank-bm25
-    """
-    global _bm25_model
-    # BM25 is corpus-dependent, so we only use the tokenizer here
-    # and build per-batch sparse vectors from raw token weights
-    return None   # see _to_sparse_bm25() below — stateless approach
 
 
 # ── SPARSE via TF-IDF-style token weights ────────────────────────────────────
@@ -94,8 +86,8 @@ def _to_sparse_bm25(text: str) -> dict:
     # Assign stable integer IDs via hash (keeps it stateless)
     indices, values = [], []
     for term in vocab:
-        idx  = abs(hash(term)) % (2 ** 20)   # 1M token space
-        freq = tf[term] / total
+        idx    = abs(hash(term)) % (2 ** 20)   # 1M token space
+        freq   = tf[term] / total
         weight = freq * (1 + log(1 + tf[term]))  # TF-lite
         indices.append(idx)
         values.append(round(weight, 6))
@@ -109,6 +101,7 @@ def embed_chunks(chunks: list[dict]) -> list[dict]:
     """
     Embed a list of normalized chunks.
     Dense vectors from Voyage AI, sparse from local BM25-lite.
+    Handles free-tier rate limits (3 RPM) with sleep + exponential backoff retry.
 
     Args:
         chunks : normalized chunks from ingest_file()
@@ -135,6 +128,10 @@ def embed_chunks(chunks: list[dict]) -> list[dict]:
     print(f"[EMBEDDER] Embedding {len(texts)} chunks via Voyage AI "
           f"(model={VOYAGE_MODEL}, batch_size={EMBED_BATCH_SIZE})")
 
+    if FREE_TIER_SLEEP_S > 0:
+        print(f"[EMBEDDER] Free-tier mode: sleeping {FREE_TIER_SLEEP_S}s between batches. "
+              f"Add a payment method to voyageai.com to remove this limit.")
+
     all_dense  = []
     all_sparse = []
     skipped    = []
@@ -142,51 +139,80 @@ def embed_chunks(chunks: list[dict]) -> list[dict]:
     total_batches = (len(texts) + EMBED_BATCH_SIZE - 1) // EMBED_BATCH_SIZE
 
     for batch_idx in range(total_batches):
-        start = batch_idx * EMBED_BATCH_SIZE
-        end   = min(start + EMBED_BATCH_SIZE, len(texts))
+        start        = batch_idx * EMBED_BATCH_SIZE
+        end          = min(start + EMBED_BATCH_SIZE, len(texts))
         batch_texts  = texts[start:end]
         batch_chunks = chunks[start:end]
 
-        try:
-            # ── DENSE via Voyage API
-            result      = client.embed(batch_texts, model=VOYAGE_MODEL, input_type="document")
-            dense_vecs  = result.embeddings   # list[list[float]]
+        max_retries = 5
+        success     = False
 
-            # ── SPARSE via local BM25-lite
-            sparse_vecs = [_to_sparse_bm25(t) for t in batch_texts]
+        for attempt in range(max_retries):
+            try:
+                # ── DENSE via Voyage API
+                result     = client.embed(batch_texts, model=VOYAGE_MODEL, input_type="document")
+                dense_vecs = result.embeddings   # list[list[float]]
 
-            # ── SANITY CHECK
-            for local_i, (dvec, chunk) in enumerate(zip(dense_vecs, batch_chunks)):
-                global_i = start + local_i
-                norm     = float(np.linalg.norm(dvec))
-                if norm == 0.0:
+                # ── SPARSE via local BM25-lite
+                sparse_vecs = [_to_sparse_bm25(t) for t in batch_texts]
+
+                # ── SANITY CHECK for zero-norm vectors
+                for local_i, (dvec, chunk) in enumerate(zip(dense_vecs, batch_chunks)):
+                    global_i = start + local_i
+                    norm     = float(np.linalg.norm(dvec))
+                    if norm == 0.0:
+                        skipped.append({
+                            "index"    : global_i,
+                            "chunk_id" : chunk.get("chunk_id", "?"),
+                            "reason"   : "zero-norm dense vector",
+                            "content"  : chunk.get("content", "")[:80],
+                        })
+
+                all_dense.extend(dense_vecs)
+                all_sparse.extend(sparse_vecs)
+
+                print(f"[EMBEDDER]   Batch {batch_idx + 1}/{total_batches} done "
+                      f"(chunks {start + 1}-{end})")
+
+                success = True
+                break  # exit retry loop on success
+
+            except Exception as e:
+                err_str       = str(e)
+                is_rate_limit = (
+                    "rate limit"  in err_str.lower() or
+                    "payment"     in err_str.lower() or
+                    "rpm"         in err_str.lower() or
+                    "429"         in err_str
+                )
+
+                if is_rate_limit and attempt < max_retries - 1:
+                    wait = 25 * (attempt + 1)   # 25s → 50s → 75s → 100s
+                    print(f"[EMBEDDER]   Rate limited on batch {batch_idx + 1}, "
+                          f"waiting {wait}s (attempt {attempt + 1}/{max_retries})...")
+                    time.sleep(wait)
+                    continue
+
+                # Non-rate-limit error OR final retry exhausted
+                print(f"[EMBEDDER] FAILED Batch {batch_idx + 1}: {e}")
+                for local_i in range(len(batch_texts)):
+                    global_i = start + local_i
                     skipped.append({
                         "index"    : global_i,
-                        "chunk_id" : chunk.get("chunk_id", "?"),
-                        "reason"   : "zero-norm dense vector",
-                        "content"  : chunk.get("content", "")[:80],
+                        "chunk_id" : chunks[global_i].get("chunk_id", "?"),
+                        "reason"   : f"batch exception: {e}",
+                        "content"  : chunks[global_i].get("content", "")[:80],
                     })
+                all_dense.extend([None] * len(batch_texts))
+                all_sparse.extend([None] * len(batch_texts))
+                break
 
-            all_dense.extend(dense_vecs)
-            all_sparse.extend(sparse_vecs)
+        # ── Sleep between batches to respect free-tier rate limit
+        if success and FREE_TIER_SLEEP_S > 0 and batch_idx < total_batches - 1:
+            print(f"[EMBEDDER]   Sleeping {FREE_TIER_SLEEP_S}s (free-tier rate limit)...")
+            time.sleep(FREE_TIER_SLEEP_S)
 
-            print(f"[EMBEDDER]   Batch {batch_idx + 1}/{total_batches} done "
-                  f"(chunks {start + 1}-{end})")
-
-        except Exception as e:
-            print(f"[EMBEDDER] FAILED Batch {batch_idx + 1}: {e}")
-            for local_i in range(len(batch_texts)):
-                global_i = start + local_i
-                skipped.append({
-                    "index"    : global_i,
-                    "chunk_id" : chunks[global_i].get("chunk_id", "?"),
-                    "reason"   : f"batch exception: {e}",
-                    "content"  : chunks[global_i].get("content", "")[:80],
-                })
-            all_dense.extend([None] * len(batch_texts))
-            all_sparse.extend([None] * len(batch_texts))
-
-    # ── ATTACH VECTORS
+    # ── ATTACH VECTORS TO CHUNKS
     embedded      = []
     truly_skipped = []
 
@@ -220,10 +246,9 @@ def embed_query(query: str) -> tuple[list[float], dict]:
     if not query or not query.strip():
         raise ValueError("[EMBEDDER] Query string is empty.")
 
-    client = _get_voyage()
-
-    result       = client.embed([query.strip()], model=VOYAGE_MODEL, input_type="query")
-    dense_vector = result.embeddings[0]
+    client        = _get_voyage()
+    result        = client.embed([query.strip()], model=VOYAGE_MODEL, input_type="query")
+    dense_vector  = result.embeddings[0]
     sparse_vector = _to_sparse_bm25(query.strip())
 
     return dense_vector, sparse_vector
@@ -273,7 +298,7 @@ def embedding_health_check() -> bool:
     # CHECK 4: Non-zero vectors
     norms = [float(np.linalg.norm(d)) for d in dense]
     ok    = all(n > 0 for n in norms)
-    print(f"[EMBEDDER] {'PASS' if ok else 'FAIL'}  Dense non-zero      : norms={[round(n,3) for n in norms]}")
+    print(f"[EMBEDDER] {'PASS' if ok else 'FAIL'}  Dense non-zero      : norms={[round(n, 3) for n in norms]}")
     all_passed = all_passed and ok
 
     # CHECK 5: Semantic ordering
@@ -284,7 +309,8 @@ def embedding_health_check() -> bool:
     sim_related   = _cosine(dense[0], dense[1])
     sim_unrelated = _cosine(dense[0], dense[2])
     ok            = sim_related > sim_unrelated
-    print(f"[EMBEDDER] {'PASS' if ok else 'FAIL'}  Semantic ordering   : related={sim_related:.3f}  unrelated={sim_unrelated:.3f}")
+    print(f"[EMBEDDER] {'PASS' if ok else 'FAIL'}  Semantic ordering   : "
+          f"related={sim_related:.3f}  unrelated={sim_unrelated:.3f}")
     all_passed = all_passed and ok
 
     # CHECK 6: Sparse output
@@ -297,7 +323,8 @@ def embedding_health_check() -> bool:
     try:
         dv, sv = embed_query("What is RAG?")
         ok     = len(dv) == 1024 and len(sv["indices"]) > 0
-        print(f"[EMBEDDER] {'PASS' if ok else 'FAIL'}  embed_query()       : dense_dim={len(dv)}  sparse_tokens={len(sv['indices'])}")
+        print(f"[EMBEDDER] {'PASS' if ok else 'FAIL'}  embed_query()       : "
+              f"dense_dim={len(dv)}  sparse_tokens={len(sv['indices'])}")
     except Exception as e:
         print(f"[EMBEDDER] FAIL  embed_query()       : {e}")
         ok = False
@@ -325,7 +352,8 @@ def _embedding_report(input_chunks, embedded, zero_norm, batch_failed):
     print(f"\n[EMBEDDER] ── Embedding Report ──────────────────────────────────")
     print(f"[EMBEDDER] Model              : {VOYAGE_MODEL} (Voyage AI)")
     print(f"[EMBEDDER] Input chunks       : {total_in}")
-    print(f"[EMBEDDER] Embedded OK        : {total_out}" + (" (all good)" if dropped == 0 else f" ({dropped} dropped)"))
+    print(f"[EMBEDDER] Embedded OK        : {total_out}" +
+          (" (all good)" if dropped == 0 else f" ({dropped} dropped)"))
 
     for t, count in sorted(by_type.items()):
         print(f"[EMBEDDER]   {t:<10}          : {count}")
@@ -333,12 +361,14 @@ def _embedding_report(input_chunks, embedded, zero_norm, batch_failed):
     if embedded:
         print(f"[EMBEDDER] Dense dim          : {len(embedded[0]['dense_vector'])}")
         print(f"[EMBEDDER] Dense sample [0:3] : {[round(x, 4) for x in dense_sample]}")
-        print(f"[EMBEDDER] Sparse tok/chunk   : min={min(sparse_lens)}  avg={int(sum(sparse_lens)/len(sparse_lens))}  max={max(sparse_lens)}")
+        print(f"[EMBEDDER] Sparse tok/chunk   : "
+              f"min={min(sparse_lens)}  avg={int(sum(sparse_lens)/len(sparse_lens))}  max={max(sparse_lens)}")
 
     if zero_norm:
         print(f"\n[EMBEDDER] WARNING: Zero-norm vectors ({len(zero_norm)})")
         for item in zero_norm[:5]:
-            print(f"           index={item['index']}  chunk_id={item['chunk_id'][:12]}  content='{item['content'][:60]}'")
+            print(f"           index={item['index']}  chunk_id={item['chunk_id'][:12]}  "
+                  f"content='{item['content'][:60]}'")
 
     if batch_failed:
         print(f"\n[EMBEDDER] ERROR: Chunks NOT embedded ({len(batch_failed)})")
@@ -377,7 +407,8 @@ if __name__ == "__main__":
         c = embedded[0]
         print(f"\n── Step 4: spot check")
         print(f"  chunk_id      : {c['chunk_id']}")
-        print(f"  dense_vector  : dim={len(c['dense_vector'])}  first3={[round(x,4) for x in c['dense_vector'][:3]]}")
+        print(f"  dense_vector  : dim={len(c['dense_vector'])}  "
+              f"first3={[round(x, 4) for x in c['dense_vector'][:3]]}")
         print(f"  sparse_vector : {len(c['sparse_vector']['indices'])} tokens")
 
     print(f"\n── Done. {len(embedded)}/{len(chunks)} chunks embedded successfully.")
