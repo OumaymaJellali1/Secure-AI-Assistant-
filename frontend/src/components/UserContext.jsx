@@ -1,60 +1,62 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import api from '../api';
+/**
+ * UserContext.jsx — shares the active user across all components.
+ * Auth: reads token + user info from localStorage after real login.
+ */
+import React, { createContext, useContext, useState } from 'react';
 
-const STORAGE_KEY = 'rag_active_user_id';
-const DEFAULT_USER = 'dev_test';
+const TOKEN_KEY    = 'rag_auth_token';
+const USER_ID_KEY  = 'rag_user_id';
+const USER_NAME_KEY = 'rag_display_name';
+const USER_EMAIL_KEY = 'rag_email';
 
 const UserContext = createContext(null);
 
-export function UserProvider({ children, initialUserId }) {
-  const [activeUserId, setActiveUserIdState] = useState(() => {
-    return initialUserId || localStorage.getItem(STORAGE_KEY) || DEFAULT_USER;
-  });
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+export function UserProvider({ children }) {
+  const [token, setTokenState] = useState(() => localStorage.getItem(TOKEN_KEY) || '');
+  const [activeUserId, setActiveUserIdState] = useState(() => localStorage.getItem(USER_ID_KEY) || '');
+  const [displayName, setDisplayNameState] = useState(() => localStorage.getItem(USER_NAME_KEY) || '');
+  const [email, setEmailState] = useState(() => localStorage.getItem(USER_EMAIL_KEY) || '');
 
-  useEffect(() => {
-    if (initialUserId) {
-      setActiveUserIdState(initialUserId);
-      localStorage.setItem(STORAGE_KEY, initialUserId);
-    }
-  }, [initialUserId]);
+  // Called after successful login or register
+  const login = (userData) => {
+    // userData = { user_id, email, display_name, token }
+    localStorage.setItem(TOKEN_KEY,     userData.token);
+    localStorage.setItem(USER_ID_KEY,   userData.user_id);
+    localStorage.setItem(USER_NAME_KEY, userData.display_name);
+    localStorage.setItem(USER_EMAIL_KEY, userData.email || '');
 
-  useEffect(() => {
-    let cancelled = false;
-    async function loadUsers() {
-      try {
-        setLoading(true);
-        setError(null);
-        const data = await api.listUsers();
-        if (!cancelled) {
-          setUsers(data);
-          const userExists = data.some(u => u.id === activeUserId);
-          if (!userExists && data.length > 0) {
-            setActiveUserIdState(data[0].id);
-            localStorage.setItem(STORAGE_KEY, data[0].id);
-          }
-        }
-      } catch (err) {
-        if (!cancelled) setError(err.message);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-    loadUsers();
-    return () => { cancelled = true; };
-  }, []);
-
-  const setActiveUserId = (newUserId) => {
-    setActiveUserIdState(newUserId);
-    localStorage.setItem(STORAGE_KEY, newUserId);
+    setTokenState(userData.token);
+    setActiveUserIdState(userData.user_id);
+    setDisplayNameState(userData.display_name);
+    setEmailState(userData.email || '');
   };
 
-  const activeUser = users.find(u => u.id === activeUserId);
+  const logout = () => {
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_ID_KEY);
+    localStorage.removeItem(USER_NAME_KEY);
+    localStorage.removeItem(USER_EMAIL_KEY);
+
+    setTokenState('');
+    setActiveUserIdState('');
+    setDisplayNameState('');
+    setEmailState('');
+  };
+
+  const isLoggedIn = Boolean(token && activeUserId);
 
   return (
-    <UserContext.Provider value={{ activeUserId, activeUser, setActiveUserId, users, loading, error }}>
+    <UserContext.Provider value={{
+      token,
+      activeUserId,
+      displayName,
+      email,
+      isLoggedIn,
+      login,
+      logout,
+      // Legacy compat — some components may still read activeUser.display_name
+      activeUser: isLoggedIn ? { id: activeUserId, display_name: displayName, email } : null,
+    }}>
       {children}
     </UserContext.Provider>
   );

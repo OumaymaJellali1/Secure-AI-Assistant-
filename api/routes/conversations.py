@@ -68,7 +68,11 @@ def _load_turns_from_db(session_id: str) -> list[TurnOut]:
 # ── CRUD ──────────────────────────────────────────────────────────
 
 @router.post("", response_model=ConversationOut, status_code=201)
-def create_conversation(body: ConversationCreate, user_id: str = Depends(get_current_user)):
+def create_conversation(
+    body: ConversationCreate,
+    current_user: dict = Depends(get_current_user),
+):
+    user_id = current_user["user_id"]
     sessions = SessionManager()
     session_id = sessions.create(user_id, title=body.title)
     return _session_to_out(sessions.get(session_id))
@@ -76,17 +80,22 @@ def create_conversation(body: ConversationCreate, user_id: str = Depends(get_cur
 
 @router.get("", response_model=list[ConversationOut])
 def list_conversations(
-    user_id: str = Depends(get_current_user),
+    current_user: dict = Depends(get_current_user),
     active_only: bool = True,
     limit: int = 50,
 ):
+    user_id = current_user["user_id"]
     sessions = SessionManager()
     items = sessions.list_for_user(user_id=user_id, limit=limit, active_only=active_only)
     return [_session_to_out(item) for item in items]
 
 
 @router.get("/{session_id}", response_model=ConversationDetail)
-def get_conversation(session_id: str, user_id: str = Depends(get_current_user)):
+def get_conversation(
+    session_id: str,
+    current_user: dict = Depends(get_current_user),
+):
+    user_id = current_user["user_id"]
     sessions = SessionManager()
     session = sessions.get(session_id)
     if not session or session["user_id"] != user_id:
@@ -106,8 +115,9 @@ def get_conversation(session_id: str, user_id: str = Depends(get_current_user)):
 def update_conversation(
     session_id: str,
     body: ConversationUpdate,
-    user_id: str = Depends(get_current_user),
+    current_user: dict = Depends(get_current_user),
 ):
+    user_id = current_user["user_id"]
     sessions = SessionManager()
     session = sessions.get(session_id)
     if not session or session["user_id"] != user_id:
@@ -118,7 +128,11 @@ def update_conversation(
 
 
 @router.delete("/{session_id}", status_code=204)
-def delete_conversation(session_id: str, user_id: str = Depends(get_current_user)):
+def delete_conversation(
+    session_id: str,
+    current_user: dict = Depends(get_current_user),
+):
+    user_id = current_user["user_id"]
     sessions = SessionManager()
     session = sessions.get(session_id)
     if not session or session["user_id"] != user_id:
@@ -131,7 +145,12 @@ def delete_conversation(session_id: str, user_id: str = Depends(get_current_user
 # ── QUERY (NON-STREAMING) ─────────────────────────────────────────
 
 @router.post("/{session_id}/query", response_model=QueryResponse)
-def query(session_id: str, body: QueryRequest, user_id: str = Depends(get_current_user)):
+def query(
+    session_id: str,
+    body: QueryRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    user_id = current_user["user_id"]
     sessions = SessionManager()
     session = sessions.get(session_id)
     if not session or session["user_id"] != user_id:
@@ -162,11 +181,11 @@ def query(session_id: str, body: QueryRequest, user_id: str = Depends(get_curren
 async def query_stream(
     session_id: str,
     body: QueryRequest,
-    user_id: str = Depends(get_current_user),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Streaming query with classifier routing.
-    
+
     SSE events:
       data: {"type": "status", "stage": "classifying"|"retrieving"|"generating"}
       data: {"type": "route", "category": "NEEDS_RAG"|"DIRECT_ANSWER"}
@@ -174,6 +193,7 @@ async def query_stream(
       data: {"type": "done", "sources": [...], ...}
       data: {"type": "error", "message": "..."}
     """
+    user_id = current_user["user_id"]
     sessions = SessionManager()
     session = sessions.get(session_id)
     if not session or session["user_id"] != user_id:
@@ -188,7 +208,6 @@ async def query_stream(
 
         def run_pipeline_in_thread():
             try:
-                # Status: classifying
                 asyncio.run_coroutine_threadsafe(
                     token_queue.put({"type": "status", "stage": "classifying"}),
                     loop,
@@ -208,8 +227,7 @@ async def query_stream(
                 )
 
                 query_type = state.get("query_type", "NEEDS_RAG")
-                
-                # Tell UI which path was chosen
+
                 asyncio.run_coroutine_threadsafe(
                     token_queue.put({"type": "route", "category": query_type}),
                     loop,
@@ -221,25 +239,24 @@ async def query_stream(
                         token_queue.put({"type": "status", "stage": "generating"}),
                         loop,
                     )
-                    
+
                     history = state.get("history", [])
-                    
+
                     def on_token(token: str):
                         asyncio.run_coroutine_threadsafe(
                             token_queue.put({"type": "token", "content": token}),
                             loop,
                         )
-                    
-                    # Use direct_chat (conversational, no RAG prompt)
+
                     result = direct_chat_stream(
                         question=body.question,
                         history=history,
                         on_token=on_token,
                     )
-                    
+
                     pipeline.memory.save_turn("user",      body.question, extract_facts=False)
                     pipeline.memory.save_turn("assistant", result.get("answer", ""), extract_facts=False)
-                    
+
                     final_result_holder["result"] = {
                         "answer":     result.get("answer", ""),
                         "sources":    [],

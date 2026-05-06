@@ -1,19 +1,19 @@
 /**
  * api.js — HTTP client for the FastAPI backend.
- *
- * NEW: streamQuery() — uses Server-Sent Events for streaming responses.
+ * Auth: token passed as ?token=... query parameter.
  */
 
 const BASE = '/api';
 
+// ── HELPER: get token from localStorage ──────────────────────────
+function getToken() {
+  return localStorage.getItem('rag_auth_token') || '';
+}
+
 // ── HELPER: standard request ──────────────────────────────────────
-async function request(path, { method = 'GET', body, userId, isFile = false } = {}) {
+async function request(path, { method = 'GET', body, isFile = false } = {}) {
   const headers = {};
-  
-  if (userId) {
-    headers['X-Dev-User-Id'] = userId;
-  }
-  
+
   if (body && !isFile) {
     headers['Content-Type'] = 'application/json';
   }
@@ -24,7 +24,12 @@ async function request(path, { method = 'GET', body, userId, isFile = false } = 
     opts.body = isFile ? body : JSON.stringify(body);
   }
 
-  const response = await fetch(`${BASE}${path}`, opts);
+  // Append token as query param
+  const token = getToken();
+  const separator = path.includes('?') ? '&' : '?';
+  const url = token ? `${BASE}${path}${separator}token=${token}` : `${BASE}${path}`;
+
+  const response = await fetch(url, opts);
 
   if (!response.ok) {
     let detail = `HTTP ${response.status}`;
@@ -40,34 +45,19 @@ async function request(path, { method = 'GET', body, userId, isFile = false } = 
 }
 
 
-// ── STREAMING via Server-Sent Events ──────────────────────────────
-/**
- * Stream a query response token-by-token.
- *
- * @param {string} userId       - active user id
- * @param {string} sessionId    - conversation id
- * @param {string} question     - user's question
- * @param {object} callbacks    - { onStatus, onToken, onDone, onError }
- *   onStatus(stage)            - "retrieving" | "generating"
- *   onToken(text)              - called for each token chunk
- *   onDone({ sources, ... })   - called when stream ends with metadata
- *   onError(message)           - called on any error
- */
-async function streamQuery(userId, sessionId, question, callbacks = {}) {
+// ── STREAMING via Server-Sent Events ─────────────────────────────
+async function streamQuery(sessionId, question, callbacks = {}) {
   const { onStatus, onToken, onDone, onError } = callbacks;
 
   try {
-    const response = await fetch(
-      `${BASE}/conversations/${sessionId}/query/stream`,
-      {
-        method: 'POST',
-        headers: {
-          'X-Dev-User-Id': userId,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ question }),
-      }
-    );
+    const token = getToken();
+    const url = `${BASE}/conversations/${sessionId}/query/stream${token ? `?token=${token}` : ''}`;
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question }),
+    });
 
     if (!response.ok) {
       let detail = `HTTP ${response.status}`;
@@ -79,7 +69,6 @@ async function streamQuery(userId, sessionId, question, callbacks = {}) {
       return;
     }
 
-    // Read the SSE stream
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let buffer = '';
@@ -89,34 +78,21 @@ async function streamQuery(userId, sessionId, question, callbacks = {}) {
       if (done) break;
 
       buffer += decoder.decode(value, { stream: true });
-
-      // SSE messages are separated by double newline
       const messages = buffer.split('\n\n');
-      buffer = messages.pop() || ''; // keep incomplete message in buffer
+      buffer = messages.pop() || '';
 
       for (const message of messages) {
         if (!message.trim()) continue;
-
-        // Each message has lines like "data: {...}"
         const lines = message.split('\n');
         for (const line of lines) {
           if (!line.startsWith('data: ')) continue;
           const dataStr = line.slice(6);
-
           try {
             const event = JSON.parse(dataStr);
-
-            if (event.type === 'status') {
-              onStatus?.(event.stage);
-            } else if (event.type === 'token') {
-              onToken?.(event.content);
-            } else if (event.type === 'done') {
-              onDone?.(event);
-              return; // stream complete
-            } else if (event.type === 'error') {
-              onError?.(event.message);
-              return;
-            }
+            if (event.type === 'status')  onStatus?.(event.stage);
+            else if (event.type === 'token') onToken?.(event.content);
+            else if (event.type === 'done')  { onDone?.(event); return; }
+            else if (event.type === 'error') { onError?.(event.message); return; }
           } catch (e) {
             console.error('Failed to parse SSE event:', dataStr, e);
           }
@@ -131,56 +107,43 @@ async function streamQuery(userId, sessionId, question, callbacks = {}) {
 
 // ── API EXPORT ────────────────────────────────────────────────────
 export const api = {
+  // Auth
+  register: (email, password, display_name) =>
+    request('/auth/register', { method: 'POST', body: { email, password, display_name } }),
+  login: (email, password) =>
+    request('/auth/login', { method: 'POST', body: { email, password } }),
+
   // Users
   listUsers: () => request('/users'),
-  getMe: (userId) => request('/users/me', { userId }),
 
   // Conversations
-  listConversations: (userId) => request('/conversations', { userId }),
-  createConversation: (userId, title = null) =>
-    request('/conversations', { method: 'POST', body: { title }, userId }),
-  getConversation: (userId, sessionId) =>
-    request(`/conversations/${sessionId}`, { userId }),
-  renameConversation: (userId, sessionId, title) =>
-    request(`/conversations/${sessionId}`, {
-      method: 'PATCH',
-      body: { title },
-      userId,
-    }),
-  deleteConversation: (userId, sessionId) =>
-    request(`/conversations/${sessionId}`, {
-      method: 'DELETE',
-      userId,
-    }),
+  listConversations: () => request('/conversations'),
+  createConversation: (title = null) =>
+    request('/conversations', { method: 'POST', body: { title } }),
+  getConversation: (sessionId) =>
+    request(`/conversations/${sessionId}`),
+  renameConversation: (sessionId, title) =>
+    request(`/conversations/${sessionId}`, { method: 'PATCH', body: { title } }),
+  deleteConversation: (sessionId) =>
+    request(`/conversations/${sessionId}`, { method: 'DELETE' }),
 
-  // Non-streaming query (kept for fallback)
-  query: (userId, sessionId, question, stream = false) =>
+  // Query
+  query: (sessionId, question) =>
     request(`/conversations/${sessionId}/query`, {
       method: 'POST',
-      body: { question, stream },
-      userId,
+      body: { question },
     }),
-
-  // STREAMING query
   streamQuery,
 
   // Documents
-  listDocuments: (userId) => request('/documents', { userId }),
-  uploadDocument: (userId, file) => {
+  listDocuments: () => request('/documents'),
+  uploadDocument: (file) => {
     const formData = new FormData();
     formData.append('file', file);
-    return request('/documents', {
-      method: 'POST',
-      body: formData,
-      userId,
-      isFile: true,
-    });
+    return request('/documents', { method: 'POST', body: formData, isFile: true });
   },
-  deleteDocument: (userId, documentId) =>
-    request(`/documents/${documentId}`, {
-      method: 'DELETE',
-      userId,
-    }),
+  deleteDocument: (documentId) =>
+    request(`/documents/${documentId}`, { method: 'DELETE' }),
 
   // Health
   health: () => request('/health'),

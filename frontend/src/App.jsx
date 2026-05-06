@@ -1,73 +1,78 @@
 import React, { useState } from 'react';
 import { FluentProvider, webLightTheme, makeStyles } from '@fluentui/react-components';
-
-import { UserProvider } from './context/UserContext';
+import { UserProvider, useUser } from './context/UserContext';
 import { ChatProvider } from './context/ChatContext';
 import AuthPage from './components/AuthPage';
 import UserSwitcher from './components/UserSwitcher';
 import Sidebar from './components/Sidebar';
 import ChatPanel from './components/ChatPanel';
 
-// Import DM Sans font
-const fontLink = document.createElement('link');
-fontLink.rel = 'stylesheet';
-fontLink.href = 'https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap';
-document.head.appendChild(fontLink);
+const F = "'Lexend', 'Segoe UI', sans-serif";
 
 const useStyles = makeStyles({
   app: {
     display: 'flex',
     height: '100vh',
-    fontFamily: "'DM Sans', 'Segoe UI', sans-serif",
+    fontFamily: F,
     background: '#F7F6F3',
     overflow: 'hidden',
   },
   sidebar: {
-    width: '260px',
+    width: '272px',
     flexShrink: 0,
     display: 'flex',
     flexDirection: 'column',
     background: '#ffffff',
     borderRight: '1px solid rgba(0,0,0,0.08)',
     overflow: 'hidden',
+    boxShadow: '2px 0 12px rgba(0,0,0,.04)',
   },
   sidebarHeader: {
-    padding: '16px 16px 12px',
+    padding: '18px 18px 14px',
     borderBottom: '1px solid rgba(0,0,0,0.07)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
     flexShrink: 0,
+    background: '#fafafa',
   },
   brand: {
     display: 'flex',
     alignItems: 'center',
-    gap: '10px',
+    gap: '11px',
   },
   brandLogo: {
-    width: '32px',
-    height: '32px',
-    borderRadius: '9px',
-    background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+    width: '36px',
+    height: '36px',
+    borderRadius: '10px',
+    background: 'linear-gradient(135deg, #1a1a2e 0%, #4f46e5 100%)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    fontSize: '16px',
+    fontSize: '18px',
     flexShrink: 0,
+    boxShadow: '0 4px 12px rgba(79,70,229,.3)',
   },
   brandName: {
-    fontSize: '14px',
-    fontWeight: '600',
+    fontSize: '16px',
+    fontWeight: '700',
     color: '#1a1a2e',
-    letterSpacing: '-0.2px',
-    fontFamily: "'DM Sans', sans-serif",
+    letterSpacing: '-0.3px',
+    fontFamily: F,
+  },
+  brandSub: {
+    fontSize: '11px',
+    color: '#9ca3af',
+    fontWeight: '500',
+    fontFamily: F,
+    letterSpacing: '0.3px',
   },
   sidebarBody: {
     flex: 1,
     overflow: 'hidden',
     display: 'flex',
     flexDirection: 'column',
-    padding: '12px 10px',
+    padding: '14px 12px',
   },
   main: {
     flex: 1,
@@ -90,7 +95,10 @@ function AppShell({ onLogout }) {
         <div className={styles.sidebarHeader}>
           <div className={styles.brand}>
             <div className={styles.brandLogo}>🧠</div>
-            <span className={styles.brandName}>RAG Assistant</span>
+            <div>
+              <div className={styles.brandName}>RAG Assistant</div>
+              <div className={styles.brandSub}>AI Knowledge Platform</div>
+            </div>
           </div>
           <UserSwitcher onLogout={onLogout} />
         </div>
@@ -98,7 +106,6 @@ function AppShell({ onLogout }) {
           <Sidebar externalRefreshKey={sidebarRefreshKey} />
         </div>
       </div>
-
       {/* MAIN CONTENT */}
       <div className={styles.main}>
         <ChatPanel onSidebarRefresh={refreshSidebar} />
@@ -107,33 +114,35 @@ function AppShell({ onLogout }) {
   );
 }
 
-export default function App() {
-  const [authed, setAuthed] = useState(false);
-  const [initialUserId, setInitialUserId] = useState('dev_test');
+// Inner component — has access to UserContext
+function AuthGate() {
+  const { isLoggedIn, login, logout } = useUser();
 
-  const handleLogin = (userId) => {
-    setInitialUserId(userId);
-    setAuthed(true);
+  const handleLogin = (userData) => {
+    // userData = { user_id, email, display_name, token }
+    login(userData);
   };
 
   const handleLogout = () => {
-    setAuthed(false);
+    logout();
   };
 
-  if (!authed) {
-    return (
-      <FluentProvider theme={webLightTheme}>
-        <AuthPage onLogin={handleLogin} />
-      </FluentProvider>
-    );
+  if (!isLoggedIn) {
+    return <AuthPage onLogin={handleLogin} />;
   }
 
   return (
+    <ChatProvider>
+      <AppShell onLogout={handleLogout} />
+    </ChatProvider>
+  );
+}
+
+export default function App() {
+  return (
     <FluentProvider theme={webLightTheme}>
-      <UserProvider initialUserId={initialUserId}>
-        <ChatProvider>
-          <AppShell onLogout={handleLogout} />
-        </ChatProvider>
+      <UserProvider>
+        <AuthGate />
       </UserProvider>
     </FluentProvider>
   );

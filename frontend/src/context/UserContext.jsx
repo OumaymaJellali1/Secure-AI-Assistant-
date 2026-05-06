@@ -1,99 +1,54 @@
-/**
- * UserContext.jsx — shares the active user across all components.
- *
- * Why context? Because EVERY API call needs to know which user
- * is "logged in." Without context, we'd have to pass userId as a
- * prop down through every component layer.
- *
- * Phase 1 (now): user is picked from dropdown
- * Phase 3 (later): user comes from MS Graph token
- *   → only this file changes, not the rest of the app
- */
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import api from '../api';
+﻿import React, { createContext, useContext, useState } from 'react';
 
-// localStorage key — remembers user choice across page reloads
-const STORAGE_KEY = 'rag_active_user_id';
+const TOKEN_KEY = 'rag_auth_token';
+const USER_ID_KEY = 'rag_user_id';
+const USER_NAME_KEY = 'rag_display_name';
+const USER_EMAIL_KEY = 'rag_email';
 
-// Default user if nothing in storage
-const DEFAULT_USER = 'dev_test';
-
-
-// ── CONTEXT ────────────────────────────────────────────────────────
 const UserContext = createContext(null);
 
-
-// ── PROVIDER ───────────────────────────────────────────────────────
 export function UserProvider({ children }) {
-  // Load the active user from localStorage on first render
-  const [activeUserId, setActiveUserIdState] = useState(() => {
-    return localStorage.getItem(STORAGE_KEY) || DEFAULT_USER;
-  });
+  const [token, setTokenState] = useState(() => localStorage.getItem(TOKEN_KEY) || '');
+  const [activeUserId, setActiveUserIdState] = useState(() => localStorage.getItem(USER_ID_KEY) || '');
+  const [displayName, setDisplayNameState] = useState(() => localStorage.getItem(USER_NAME_KEY) || '');
+  const [email, setEmailState] = useState(() => localStorage.getItem(USER_EMAIL_KEY) || '');
 
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  // Fetch the list of users on mount
-  useEffect(() => {
-    let cancelled = false;
-    
-    async function loadUsers() {
-      try {
-        setLoading(true);
-        setError(null);
-        const data = await api.listUsers();
-        if (!cancelled) {
-          setUsers(data);
-          
-          // If our active user isn't in the list, fall back to the first one
-          const userExists = data.some(u => u.id === activeUserId);
-          if (!userExists && data.length > 0) {
-            setActiveUserIdState(data[0].id);
-            localStorage.setItem(STORAGE_KEY, data[0].id);
-          }
-        }
-      } catch (err) {
-        if (!cancelled) {
-          setError(err.message);
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-    
-    loadUsers();
-    return () => { cancelled = true; };
-  }, []);
-
-  // Wrapper that also persists to localStorage
-  const setActiveUserId = (newUserId) => {
-    setActiveUserIdState(newUserId);
-    localStorage.setItem(STORAGE_KEY, newUserId);
+  const login = (userData) => {
+    localStorage.setItem(TOKEN_KEY, userData.token);
+    localStorage.setItem(USER_ID_KEY, userData.user_id);
+    localStorage.setItem(USER_NAME_KEY, userData.display_name);
+    localStorage.setItem(USER_EMAIL_KEY, userData.email || '');
+    setTokenState(userData.token);
+    setActiveUserIdState(userData.user_id);
+    setDisplayNameState(userData.display_name);
+    setEmailState(userData.email || '');
   };
 
-  const activeUser = users.find(u => u.id === activeUserId);
+  const logout = () => {
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_ID_KEY);
+    localStorage.removeItem(USER_NAME_KEY);
+    localStorage.removeItem(USER_EMAIL_KEY);
+    setTokenState('');
+    setActiveUserIdState('');
+    setDisplayNameState('');
+    setEmailState('');
+  };
+
+  const isLoggedIn = Boolean(token && activeUserId);
 
   return (
     <UserContext.Provider value={{
-      activeUserId,
-      activeUser,
-      setActiveUserId,
-      users,
-      loading,
-      error,
+      token, activeUserId, displayName, email, isLoggedIn, login, logout,
+      activeUser: isLoggedIn ? { id: activeUserId, display_name: displayName, email } : null,
     }}>
       {children}
     </UserContext.Provider>
   );
 }
 
-
-// ── HOOK ──────────────────────────────────────────────────────────
 export function useUser() {
   const ctx = useContext(UserContext);
-  if (!ctx) {
-    throw new Error('useUser must be called inside <UserProvider>');
-  }
+  if (!ctx) throw new Error('useUser must be called inside <UserProvider>');
   return ctx;
 }

@@ -72,12 +72,10 @@ def _run_ingestion(file_path: str, document_id: str) -> tuple[int, str]:
     
     Returns: (number_of_chunks, source_type)
     """
-    # Imports for YOUR structure
     from embedding.ingest       import ingest_file, EXT_TO_SOURCE_TYPE
     from embedding.embedder     import embed_chunks
     from embedding.qdrant_store import store
     
-    # Detect source type for metadata
     ext = Path(file_path).suffix.lower()
     source_type = EXT_TO_SOURCE_TYPE.get(ext, "unknown")
     
@@ -91,7 +89,6 @@ def _run_ingestion(file_path: str, document_id: str) -> tuple[int, str]:
     print(f"[UPLOAD]    Got {len(chunks)} chunks")
     
     # ── Step 2: stamp document_id into each chunk's metadata ────
-    # This is what enables permission filtering downstream
     for chunk in chunks:
         chunk.setdefault("metadata", {})["document_id"] = document_id
     
@@ -115,9 +112,11 @@ def _run_ingestion(file_path: str, document_id: str) -> tuple[int, str]:
 @router.post("", response_model=DocumentUploadResponse)
 async def upload_document(
     file: UploadFile = File(...),
-    user_id: str = Depends(get_current_user),
+    current_user: dict = Depends(get_current_user),
 ):
     """Upload + parse + chunk + embed + index + grant ownership."""
+    user_id = current_user["user_id"]
+
     # 1. Validate extension
     ext = Path(file.filename).suffix.lower()
     if ext not in ALLOWED_EXTENSIONS:
@@ -144,7 +143,6 @@ async def upload_document(
     try:
         chunks_count, source_type = _run_ingestion(str(file_path), document_id)
     except HTTPException:
-        # Clean up file on ingestion failure
         try: file_path.unlink()
         except: pass
         raise
@@ -158,7 +156,6 @@ async def upload_document(
     # 4. Save metadata + grant uploader access
     _ensure_documents_table()
     with engine.begin() as conn:
-        # Save document metadata
         conn.execute(
             text("""
                 INSERT INTO documents 
@@ -177,7 +174,6 @@ async def upload_document(
             },
         )
         
-        # Grant uploader full access (Phase 1: only uploader can see it)
         conn.execute(
             text("""
                 INSERT INTO document_permissions 
@@ -202,8 +198,10 @@ async def upload_document(
 # ── LIST ────────────────────────────────────────────────────────
 
 @router.get("", response_model=list[DocumentOut])
-def list_documents(user_id: str = Depends(get_current_user)):
+def list_documents(current_user: dict = Depends(get_current_user)):
     """List documents this user can access."""
+    user_id = current_user["user_id"]
+
     _ensure_documents_table()
     with engine.connect() as conn:
         rows = conn.execute(
@@ -235,12 +233,13 @@ def list_documents(user_id: str = Depends(get_current_user)):
 @router.delete("/{document_id}", status_code=204)
 def delete_document(
     document_id: str,
-    user_id: str = Depends(get_current_user),
+    current_user: dict = Depends(get_current_user),
 ):
     """Delete a document (only if user uploaded it)."""
+    user_id = current_user["user_id"]
+
     _ensure_documents_table()
     
-    # Check ownership
     with engine.connect() as conn:
         row = conn.execute(
             text("""
@@ -255,7 +254,7 @@ def delete_document(
     
     file_path = row[0]
     
-    # Delete chunks from Qdrant (filter by document_id)
+    # Delete chunks from Qdrant
     try:
         from qdrant_client import QdrantClient
         from qdrant_client.models import (

@@ -9,166 +9,35 @@ import MessageBubble from './MessageBubble';
 import MessageInput from './MessageInput';
 
 const useStyles = makeStyles({
-  root: {
-    flex: 1,
-    display: 'flex',
-    flexDirection: 'column',
-    overflow: 'hidden',
-    background: '#F7F6F3',
-  },
+  root: { flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: '#F7F6F3' },
   header: {
-    padding: '0 28px',
-    height: '52px',
-    borderBottom: '1px solid rgba(0,0,0,0.07)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    background: '#ffffff',
-    flexShrink: 0,
+    padding: '0 28px', height: '52px', borderBottom: '1px solid rgba(0,0,0,0.07)',
+    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+    background: '#ffffff', flexShrink: 0,
   },
-  headerTitle: {
-    fontSize: '14px',
-    fontWeight: '600',
-    color: '#1a1a2e',
-    fontFamily: "'DM Sans', sans-serif",
-    letterSpacing: '-0.1px',
-  },
-  headerMeta: {
-    fontSize: '12px',
-    color: '#9ca3af',
-    fontFamily: "'DM Sans', sans-serif",
-  },
-  messagesArea: {
-    flex: 1,
-    overflowY: 'auto',
-    padding: '24px 28px',
-    display: 'flex',
-    flexDirection: 'column',
-  },
-  messagesInner: {
-    maxWidth: '800px',
-    width: '100%',
-    margin: '0 auto',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '4px',
-    flex: 1,
-  },
-  emptyState: {
-    flex: 1,
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: '12px',
-    textAlign: 'center',
-    padding: '60px 24px',
-    color: '#9ca3af',
-  },
-  emptyIcon: {
-    fontSize: '48px',
-    marginBottom: '4px',
-    opacity: 0.5,
-  },
-  emptyTitle: {
-    fontSize: '18px',
-    fontWeight: '600',
-    color: '#374151',
-    fontFamily: "'DM Sans', sans-serif",
-    margin: '0 0 4px',
-  },
-  emptySub: {
-    fontSize: '14px',
-    color: '#9ca3af',
-    margin: 0,
-    lineHeight: '1.5',
-  },
-  welcome: {
-    flex: 1,
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: '60px 40px',
-    textAlign: 'center',
-  },
-  welcomeEmoji: {
-    fontSize: '48px',
-    marginBottom: '16px',
-    display: 'block',
-  },
-  welcomeTitle: {
-    fontSize: '22px',
-    fontWeight: '700',
-    color: '#1a1a2e',
-    fontFamily: "'DM Sans', sans-serif",
-    margin: '0 0 8px',
-    letterSpacing: '-0.3px',
-  },
-  welcomeSub: {
-    fontSize: '14px',
-    color: '#6b7280',
-    margin: '0 0 24px',
-    lineHeight: '1.6',
-    maxWidth: '320px',
-  },
-  hints: {
-    display: 'flex',
-    gap: '10px',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    maxWidth: '500px',
-  },
-  hint: {
-    padding: '8px 14px',
-    borderRadius: '20px',
-    border: '1.5px solid #e5e7eb',
-    background: '#ffffff',
-    fontSize: '13px',
-    color: '#374151',
-    fontFamily: "'DM Sans', sans-serif",
-    cursor: 'default',
-  },
-  statusRow: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '10px',
-    padding: '8px 0',
-  },
-  statusDot: {
-    width: '28px',
-    height: '28px',
-    borderRadius: '50%',
-    background: 'linear-gradient(135deg, #1a1a2e, #4f46e5)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-  },
-  statusText: {
-    color: '#9ca3af',
-    fontSize: '13px',
-    fontStyle: 'italic',
-    fontFamily: "'DM Sans', sans-serif",
-  },
-  errorBox: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    padding: '10px 14px',
-    background: '#fef2f2',
-    border: '1px solid #fecaca',
-    borderRadius: '10px',
-    color: '#dc2626',
-    fontSize: '13px',
-    marginBottom: '12px',
-    fontFamily: "'DM Sans', sans-serif",
-  },
+  headerTitle: { fontSize: '14px', fontWeight: '600', color: '#1a1a2e', fontFamily: "'DM Sans', sans-serif", letterSpacing: '-0.1px' },
+  headerMeta: { fontSize: '12px', color: '#9ca3af', fontFamily: "'DM Sans', sans-serif" },
+  messagesArea: { flex: 1, overflowY: 'auto', padding: '24px 28px', display: 'flex', flexDirection: 'column' },
+  messagesInner: { maxWidth: '800px', width: '100%', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 },
+  emptyState: { flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '12px', textAlign: 'center', padding: '60px 24px', color: '#9ca3af' },
+  emptyIcon: { fontSize: '48px', marginBottom: '4px', opacity: 0.5 },
+  emptyTitle: { fontSize: '18px', fontWeight: '600', color: '#374151', fontFamily: "'DM Sans', sans-serif", margin: '0 0 4px' },
+  emptySub: { fontSize: '14px', color: '#9ca3af', margin: 0, lineHeight: '1.5' },
+  welcome: { flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '60px 40px', textAlign: 'center' },
+  welcomeEmoji: { fontSize: '48px', marginBottom: '16px', display: 'block' },
+  welcomeTitle: { fontSize: '22px', fontWeight: '700', color: '#1a1a2e', fontFamily: "'DM Sans', sans-serif", margin: '0 0 8px', letterSpacing: '-0.3px' },
+  welcomeSub: { fontSize: '14px', color: '#6b7280', margin: '0 0 24px', lineHeight: '1.6', maxWidth: '320px' },
+  hints: { display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'center', maxWidth: '500px' },
+  hint: { padding: '8px 14px', borderRadius: '20px', border: '1.5px solid #e5e7eb', background: '#ffffff', fontSize: '13px', color: '#374151', fontFamily: "'DM Sans', sans-serif", cursor: 'default' },
+  statusRow: { display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 0' },
+  statusDot: { width: '28px', height: '28px', borderRadius: '50%', background: 'linear-gradient(135deg, #1a1a2e, #4f46e5)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+  statusText: { color: '#9ca3af', fontSize: '13px', fontStyle: 'italic', fontFamily: "'DM Sans', sans-serif" },
+  errorBox: { display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 14px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '10px', color: '#dc2626', fontSize: '13px', marginBottom: '12px', fontFamily: "'DM Sans', sans-serif" },
 });
 
 export default function ChatPanel({ onSidebarRefresh }) {
   const styles = useStyles();
-  const { activeUserId, activeUser } = useUser();
+  const { activeUserId, displayName } = useUser();
   const { activeSessionId } = useChat();
 
   const [messages, setMessages] = useState([]);
@@ -180,7 +49,7 @@ export default function ChatPanel({ onSidebarRefresh }) {
   const messagesEndRef = useRef(null);
 
   const loadMessages = useCallback(async () => {
-    if (!activeSessionId || !activeUserId) {
+    if (!activeSessionId) {
       setMessages([]);
       setConversation(null);
       return;
@@ -188,7 +57,7 @@ export default function ChatPanel({ onSidebarRefresh }) {
     try {
       setLoading(true);
       setError(null);
-      const data = await api.getConversation(activeUserId, activeSessionId);
+      const data = await api.getConversation(activeSessionId);   // ← no userId
       setConversation(data);
       setMessages(data.turns || []);
     } catch (err) {
@@ -196,7 +65,7 @@ export default function ChatPanel({ onSidebarRefresh }) {
     } finally {
       setLoading(false);
     }
-  }, [activeUserId, activeSessionId]);
+  }, [activeSessionId]);
 
   useEffect(() => { loadMessages(); }, [loadMessages]);
 
@@ -209,13 +78,14 @@ export default function ChatPanel({ onSidebarRefresh }) {
     setStreaming(true);
     setStreamStatus(null);
     setError(null);
+
     const now = new Date().toISOString();
     const userMsg = { role: 'user', content: question, created_at: now };
     const assistantMsg = { role: 'assistant', content: '', sources: [], created_at: now, streaming: true };
     setMessages(prev => [...prev, userMsg, assistantMsg]);
 
     let buffer = '';
-    await api.streamQuery(activeUserId, activeSessionId, question, {
+    await api.streamQuery(activeSessionId, question, {   // ← no userId
       onStatus: (stage) => setStreamStatus(stage),
       onToken: (token) => {
         buffer += token;
@@ -257,7 +127,7 @@ export default function ChatPanel({ onSidebarRefresh }) {
   };
 
   if (!activeSessionId) {
-    const name = activeUser?.display_name || activeUserId || 'there';
+    const name = displayName || activeUserId || 'there';
     return (
       <div className={styles.root}>
         <div className={styles.welcome}>

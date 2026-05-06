@@ -1,139 +1,70 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
-const F = "'Lexend', sans-serif";
-
-const styles = {
-  root: {
-    minHeight: '100vh', display: 'flex',
-    fontFamily: F, fontSize: '16px',
-    background: '#F7F6F3',
-  },
-  left: {
-    width: '46%', flexShrink: 0,
-    background: 'linear-gradient(150deg, #0f0c29 0%, #1a1a2e 45%, #0d3b6e 100%)',
-    display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
-    padding: '48px 52px', position: 'relative', overflow: 'hidden',
-  },
-  orb1: {
-    position:'absolute', width:'360px', height:'360px', borderRadius:'50%',
-    background:'radial-gradient(circle, rgba(99,179,237,0.18) 0%, transparent 70%)',
-    top:'-80px', right:'-80px', pointerEvents:'none',
-  },
-  orb2: {
-    position:'absolute', width:'280px', height:'280px', borderRadius:'50%',
-    background:'radial-gradient(circle, rgba(139,92,246,0.15) 0%, transparent 70%)',
-    bottom:'60px', left:'-40px', pointerEvents:'none',
-  },
-  orb3: {
-    position:'absolute', width:'200px', height:'200px', borderRadius:'50%',
-    background:'radial-gradient(circle, rgba(52,211,153,0.1) 0%, transparent 70%)',
-    bottom:'200px', right:'60px', pointerEvents:'none',
-  },
-  logoRow: { display:'flex', alignItems:'center', gap:'12px', zIndex:1 },
-  logoBox: {
-    width:'44px', height:'44px', borderRadius:'12px',
-    background:'rgba(255,255,255,0.1)', border:'1px solid rgba(255,255,255,0.2)',
-    display:'flex', alignItems:'center', justifyContent:'center',
-    fontSize:'22px', backdropFilter:'blur(8px)',
-  },
-  logoText: { color:'#fff', fontSize:'20px', fontWeight:600, letterSpacing:'-0.3px' },
-  hero: { zIndex:1, animation:'fadeSlideUp .7s ease both' },
-  heroTitle: {
-    color:'#fff', fontSize:'42px', fontWeight:700, lineHeight:1.12,
-    letterSpacing:'-1px', margin:'0 0 18px',
-  },
-  heroAccent: {
-    background:'linear-gradient(90deg,#63b3ed,#a78bfa)',
-    WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent',
-  },
-  heroSub: { color:'rgba(255,255,255,0.6)', fontSize:'17px', lineHeight:1.65, margin:'0 0 36px' },
-  featureList: { listStyle:'none', padding:0, margin:0, display:'flex', flexDirection:'column', gap:'14px' },
-  featureItem: { display:'flex', alignItems:'center', gap:'14px', color:'rgba(255,255,255,0.78)', fontSize:'15px' },
-  featureDot: {
-    width:'32px', height:'32px', borderRadius:'9px',
-    background:'rgba(255,255,255,0.1)', border:'1px solid rgba(255,255,255,0.15)',
-    display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, fontSize:'16px',
-  },
-  leftFooter: { color:'rgba(255,255,255,0.3)', fontSize:'13px', zIndex:1 },
-  right: { flex:1, display:'flex', alignItems:'center', justifyContent:'center', padding:'48px 56px' },
-  card: { width:'100%', maxWidth:'440px', animation:'fadeSlideUp .5s ease both' },
-  cardTitle: { fontSize:'30px', fontWeight:700, color:'#111827', margin:'0 0 8px', letterSpacing:'-0.4px' },
-  cardSub: { color:'#6b7280', fontSize:'16px', margin:'0 0 32px', lineHeight:1.5 },
-  tabs: {
-    display:'flex', gap:'4px', background:'#EEECF0',
-    borderRadius:'12px', padding:'4px', marginBottom:'28px',
-  },
-  tab: {
-    flex:1, padding:'11px 0', borderRadius:'9px', border:'none',
-    background:'transparent', fontSize:'15px', fontWeight:500,
-    cursor:'pointer', transition:'all .2s', color:'#6b7280',
-    fontFamily:F, letterSpacing:'0',
-  },
-  tabActive: { background:'#fff', color:'#111827', boxShadow:'0 2px 8px rgba(0,0,0,0.1)' },
-  form: { display:'flex', flexDirection:'column', gap:'18px' },
-  field: { display:'flex', flexDirection:'column', gap:'7px' },
-  label: { fontSize:'14px', fontWeight:500, color:'#374151' },
-  input: {
-    padding:'13px 16px', borderRadius:'11px',
-    border:'1.5px solid #e5e7eb', fontSize:'16px',
-    fontFamily:F, color:'#111827', background:'#fff', outline:'none',
-    transition:'border-color .2s, box-shadow .2s',
-  },
-  inputFocus: { borderColor:'#4f46e5', boxShadow:'0 0 0 3px rgba(79,70,229,0.1)' },
-  submitBtn: {
-    marginTop:'4px', padding:'15px', borderRadius:'11px',
-    border:'none', background:'linear-gradient(135deg,#1a1a2e,#4f46e5)',
-    color:'#fff', fontSize:'16px', fontWeight:600,
-    cursor:'pointer', fontFamily:F, transition:'opacity .2s, transform .1s',
-    letterSpacing:'0.1px',
-  },
-  divider: { display:'flex', alignItems:'center', gap:'14px', margin:'2px 0' },
-  dividerLine: { flex:1, height:'1px', background:'#e5e7eb' },
-  dividerTxt: { fontSize:'13px', color:'#9ca3af' },
-  guestBtn: {
-    padding:'13px', borderRadius:'11px', border:'1.5px solid #e5e7eb',
-    background:'#fff', color:'#374151', fontSize:'15px', fontWeight:500,
-    cursor:'pointer', fontFamily:F, transition:'all .15s',
-  },
-  error: {
-    padding:'12px 16px', borderRadius:'10px',
-    background:'#fef2f2', border:'1px solid #fecaca',
-    color:'#dc2626', fontSize:'14px', lineHeight:1.5,
-    animation:'bounceIn .3s ease both',
-  },
-  success: {
-    padding:'12px 16px', borderRadius:'10px',
-    background:'#f0fdf4', border:'1px solid #bbf7d0',
-    color:'#166534', fontSize:'14px', lineHeight:1.5,
-    animation:'bounceIn .3s ease both',
-  },
-  loader: {
-    width:'18px', height:'18px', border:'2.5px solid rgba(255,255,255,0.3)',
-    borderTopColor:'#fff', borderRadius:'50%',
-    display:'inline-block', animation:'spin 0.7s linear infinite',
-    marginRight:'8px', verticalAlign:'middle',
-  },
-};
-
-// inject spin keyframe
-if (!document.getElementById('auth-spin')) {
-  const s = document.createElement('style');
-  s.id = 'auth-spin';
-  s.textContent = '@keyframes spin{to{transform:rotate(360deg)}}';
-  document.head.appendChild(s);
+/* ── FONT INJECTION ─────────────────────────────────────────────────────── */
+if (!document.getElementById('lexend-font')) {
+  const link = document.createElement('link');
+  link.id = 'lexend-font';
+  link.rel = 'stylesheet';
+  link.href = 'https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800;900&family=Lexend+Deca:wght@400;500;600&display=swap';
+  document.head.appendChild(link);
 }
 
+const inject = (id, css) => {
+  if (!document.getElementById(id)) {
+    const s = document.createElement('style');
+    s.id = id;
+    s.textContent = css;
+    document.head.appendChild(s);
+  }
+};
+
+inject('auth-animations', `
+  @keyframes floatA { 0%,100%{transform:translateY(0) rotate(0deg)} 50%{transform:translateY(-28px) rotate(3deg)} }
+  @keyframes floatB { 0%,100%{transform:translateY(0) rotate(0deg)} 50%{transform:translateY(22px) rotate(-2deg)} }
+  @keyframes floatC { 0%,100%{transform:translateX(0)} 50%{transform:translateX(18px)} }
+  @keyframes cardReveal { 0%{opacity:0;transform:translateY(32px) scale(.97)} 100%{opacity:1;transform:translateY(0) scale(1)} }
+  @keyframes inputPop { 0%{transform:scale(.98)} 60%{transform:scale(1.01)} 100%{transform:scale(1)} }
+  @keyframes spinArc { to{transform:rotate(360deg)} }
+  @keyframes errorShake { 0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-6px)} 40%,80%{transform:translateX(6px)} }
+  @keyframes successBounce { 0%{transform:scale(.8);opacity:0} 60%{transform:scale(1.08)} 100%{transform:scale(1);opacity:1} }
+  @keyframes pulseGlow { 0%,100%{box-shadow:0 0 0 0 rgba(99,102,241,.4)} 50%{box-shadow:0 0 0 12px rgba(99,102,241,0)} }
+  @keyframes particleDrift {
+    0% { transform: translateY(100vh) translateX(0) rotate(0deg); opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { transform: translateY(-10vh) translateX(40px) rotate(720deg); opacity: 0; }
+  }
+  .auth-input:focus { animation: inputPop .2s ease; }
+  .auth-btn-active:hover { transform: translateY(-2px) !important; }
+  .auth-btn-active:active { transform: translateY(0px) !important; }
+`);
+
+const F = "'Lexend', 'Segoe UI', sans-serif";
+
+// onLogin receives the full user object { user_id, email, display_name, token }
 export default function AuthPage({ onLogin }) {
   const [mode, setMode] = useState('signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
+  const [focused, setFocused] = useState('');
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [focused, setFocused] = useState('');
+  const [particles, setParticles] = useState([]);
 
-  const callAuth = async (endpoint, body) => {
+  useEffect(() => {
+    setParticles(Array.from({ length: 12 }, (_, i) => ({
+      id: i,
+      left: `${Math.random() * 100}%`,
+      size: `${6 + Math.random() * 10}px`,
+      delay: `${Math.random() * 8}s`,
+      duration: `${8 + Math.random() * 8}s`,
+      color: ['rgba(99,102,241,.6)', 'rgba(139,92,246,.5)', 'rgba(59,130,246,.5)', 'rgba(16,185,129,.4)'][Math.floor(Math.random() * 4)],
+    })));
+  }, []);
+
+  const callApi = async (endpoint, body) => {
     const res = await fetch(`/api${endpoint}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -147,151 +78,224 @@ export default function AuthPage({ onLogin }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(''); setSuccess('');
-    if (!email.trim() || !password.trim()) {
-      setError('Please fill in all required fields.');
-      return;
-    }
-    if (mode === 'signup' && !name.trim()) {
-      setError('Please enter your full name.');
-      return;
-    }
+
+    if (!email.trim()) { setError('Please enter your email address.'); return; }
+    if (!password.trim()) { setError('Please enter your password.'); return; }
+    if (mode === 'signup' && !name.trim()) { setError('Please enter your full name.'); return; }
+
     setLoading(true);
     try {
       if (mode === 'signup') {
-        const data = await callAuth('/auth/register', { email, password, display_name: name });
-        setSuccess('Account created! Signing you in…');
-        setTimeout(() => onLogin(data.user_id || data.id, name), 900);
+        const data = await callApi('/auth/register', { email, password, display_name: name });
+        // data = { user_id, email, display_name, token }
+        setSuccess(`Welcome, ${data.display_name}! Signing you in…`);
+        setTimeout(() => onLogin(data), 1200);
       } else {
-        const data = await callAuth('/auth/login', { email, password });
-        onLogin(data.user_id || data.id, data.display_name || email.split('@')[0]);
+        const data = await callApi('/auth/login', { email, password });
+        // data = { user_id, email, display_name, token }
+        onLogin(data);
       }
     } catch (err) {
-      // Fallback demo mode when backend auth endpoints don't exist yet
-      const userId = email.includes('alice') ? 'dev_alice'
-        : email.includes('bob') ? 'dev_bob' : 'dev_test';
-      if (mode === 'signup') {
-        setSuccess('Account created! (demo mode)');
-        setTimeout(() => onLogin(userId, name || email.split('@')[0]), 900);
-      } else {
-        onLogin(userId, email.split('@')[0]);
-      }
+      setError(err.message || 'Something went wrong. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
+  // Guest login — calls backend with dev_alice user ID
+  const handleGuest = async () => {
+    setLoading(true);
+    try {
+      const data = await callApi('/auth/login', { email: 'dev_alice', password: 'guest' });
+      onLogin(data);
+    } catch (err) {
+      setError('Guest login failed. Please try signing in with an account.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const features = [
+    { icon: '📄', text: 'Upload PDFs, DOCX, emails & more' },
+    { icon: '🔍', text: 'Hybrid dense & sparse retrieval' },
+    { icon: '💬', text: 'Persistent multi-turn memory' },
+    { icon: '🎯', text: 'Inline source citations on every answer' },
+  ];
+
   const inp = (id) => ({
-    style: focused === id ? { ...styles.input, ...styles.inputFocus } : styles.input,
+    className: 'auth-input',
+    style: {
+      width: '100%', padding: '15px 18px', borderRadius: '14px',
+      border: `2px solid ${focused === id ? '#6366f1' : '#e5e7eb'}`,
+      fontSize: '16px', fontFamily: F, color: '#111827',
+      background: focused === id ? '#fafbff' : '#fff',
+      outline: 'none', transition: 'all .2s', boxSizing: 'border-box',
+      boxShadow: focused === id ? '0 0 0 4px rgba(99,102,241,.12)' : 'none',
+    },
     onFocus: () => setFocused(id),
     onBlur: () => setFocused(''),
   });
 
-  const features = [
-    ['📄', 'Upload PDFs, DOCX, emails & more'],
-    ['🔍', 'Hybrid dense & sparse retrieval'],
-    ['💬', 'Persistent multi-turn memory'],
-    ['🎯', 'Inline source citations on every answer'],
-  ];
-
   return (
-    <div style={styles.root}>
-      {/* LEFT */}
-      <div style={styles.left}>
-        <div style={styles.orb1} /><div style={styles.orb2} /><div style={styles.orb3} />
-        <div style={styles.logoRow}>
-          <div style={styles.logoBox}>🧠</div>
-          <span style={styles.logoText}>RAG Assistant</span>
+    <div style={{ minHeight: '100vh', display: 'flex', fontFamily: F, background: '#F7F6F3', overflow: 'hidden' }}>
+
+      {/* LEFT PANEL */}
+      <div style={{
+        width: '48%', flexShrink: 0, position: 'relative', overflow: 'hidden',
+        background: 'linear-gradient(150deg, #0d0221 0%, #1a0533 30%, #0d1b4b 65%, #051640 100%)',
+        display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
+        padding: '52px 56px',
+      }}>
+        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
+          <div style={{ position: 'absolute', width: 420, height: 420, borderRadius: '50%', top: -100, right: -80, background: 'radial-gradient(circle, rgba(99,102,241,.2) 0%, transparent 70%)', animation: 'floatA 9s ease-in-out infinite' }} />
+          <div style={{ position: 'absolute', width: 300, height: 300, borderRadius: '50%', bottom: 40, left: -60, background: 'radial-gradient(circle, rgba(139,92,246,.18) 0%, transparent 70%)', animation: 'floatB 11s ease-in-out infinite' }} />
+          <div style={{ position: 'absolute', width: 180, height: 180, borderRadius: '50%', top: '45%', right: '12%', background: 'radial-gradient(circle, rgba(59,130,246,.15) 0%, transparent 70%)', animation: 'floatC 7s ease-in-out infinite' }} />
+          <div style={{ position: 'absolute', inset: 0, backgroundImage: 'linear-gradient(rgba(255,255,255,.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.03) 1px, transparent 1px)', backgroundSize: '48px 48px' }} />
+          {particles.map(p => (
+            <div key={p.id} style={{
+              position: 'absolute', bottom: 0, left: p.left,
+              width: p.size, height: p.size, borderRadius: '50%',
+              background: p.color, animation: `particleDrift ${p.duration} ${p.delay} infinite linear`,
+            }} />
+          ))}
         </div>
-        <div style={styles.hero}>
-          <h1 style={styles.heroTitle}>
+
+        {/* Logo */}
+        <div style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', gap: 14 }}>
+          <div style={{
+            width: 50, height: 50, borderRadius: 14,
+            background: 'rgba(255,255,255,.1)', border: '1px solid rgba(255,255,255,.2)',
+            backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center',
+            justifyContent: 'center', fontSize: 24,
+          }}>🧠</div>
+          <div>
+            <div style={{ color: '#fff', fontSize: 20, fontWeight: 700, letterSpacing: '-0.3px' }}>RAG Assistant</div>
+            <div style={{ color: 'rgba(255,255,255,.45)', fontSize: 12, fontWeight: 500, letterSpacing: '1.5px', textTransform: 'uppercase' }}>AI Knowledge Platform</div>
+          </div>
+        </div>
+
+        {/* Hero */}
+        <div style={{ position: 'relative', zIndex: 1 }}>
+          <h1 style={{ color: '#fff', fontSize: 46, fontWeight: 800, lineHeight: 1.1, letterSpacing: '-1.5px', margin: '0 0 20px', fontFamily: F }}>
             Your documents,<br />
-            <span style={styles.heroAccent}>instantly answered.</span>
+            <span style={{ background: 'linear-gradient(90deg, #818cf8, #a78bfa, #60a5fa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+              instantly answered.
+            </span>
           </h1>
-          <p style={styles.heroSub}>
-            Upload any file, ask any question. Powered by advanced retrieval-augmented generation with precise source citations.
+          <p style={{ color: 'rgba(255,255,255,.6)', fontSize: 17, lineHeight: 1.7, margin: '0 0 40px', fontWeight: 400 }}>
+            Upload any file, ask any question. Advanced retrieval-augmented generation with precise source citations.
           </p>
-          <ul style={styles.featureList}>
-            {features.map(([icon, txt]) => (
-              <li key={txt} style={styles.featureItem}>
-                <span style={styles.featureDot}>{icon}</span>
-                {txt}
-              </li>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            {features.map(({ icon, text }) => (
+              <div key={text} style={{ display: 'flex', alignItems: 'center', gap: 16, color: 'rgba(255,255,255,.78)', fontSize: 15, fontWeight: 400 }}>
+                <div style={{
+                  width: 38, height: 38, borderRadius: 10, flexShrink: 0,
+                  background: 'rgba(255,255,255,.08)', border: '1px solid rgba(255,255,255,.14)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18,
+                }}>{icon}</div>
+                {text}
+              </div>
             ))}
-          </ul>
+          </div>
         </div>
-        <div style={styles.leftFooter}>© 2025 RAG Assistant · All rights reserved</div>
+
+        <div style={{ position: 'relative', zIndex: 1, color: 'rgba(255,255,255,.25)', fontSize: 13 }}>
+          © 2025 RAG Assistant · All rights reserved
+        </div>
       </div>
 
-      {/* RIGHT */}
-      <div style={styles.right}>
-        <div style={styles.card}>
-          <h2 style={styles.cardTitle}>
-            {mode === 'signin' ? 'Welcome back 👋' : 'Create your account'}
+      {/* RIGHT PANEL */}
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '48px 60px', overflowY: 'auto' }}>
+        <div style={{ width: '100%', maxWidth: 460, animation: 'cardReveal .55s cubic-bezier(.34,1.56,.64,1) both' }}>
+
+          <h2 style={{ fontSize: 32, fontWeight: 800, color: '#0f0f23', margin: '0 0 6px', letterSpacing: '-0.8px', fontFamily: F }}>
+            {mode === 'signin' ? 'Welcome back 👋' : 'Create an account'}
           </h2>
-          <p style={styles.cardSub}>
-            {mode === 'signin'
-              ? 'Sign in to access your conversations and documents.'
-              : 'Get started with your intelligent document assistant.'}
+          <p style={{ color: '#6b7280', fontSize: 16, margin: '0 0 32px', lineHeight: 1.5, fontWeight: 400 }}>
+            {mode === 'signin' ? 'Sign in to access your conversations.' : 'Get started with your AI document assistant.'}
           </p>
 
-          <div style={styles.tabs}>
-            {['signin','signup'].map(m => (
-              <button
-                key={m}
-                style={mode === m ? { ...styles.tab, ...styles.tabActive } : styles.tab}
-                onClick={() => { setMode(m); setError(''); setSuccess(''); }}
-              >
+          {/* Mode tabs */}
+          <div style={{ display: 'flex', gap: 4, background: '#EEECF0', borderRadius: 14, padding: 4, marginBottom: 32 }}>
+            {['signin', 'signup'].map(m => (
+              <button key={m} onClick={() => { setMode(m); setError(''); setSuccess(''); }}
+                style={{
+                  flex: 1, padding: '13px 0', borderRadius: 11, border: 'none', cursor: 'pointer',
+                  fontSize: 16, fontWeight: mode === m ? 600 : 500, fontFamily: F,
+                  background: mode === m ? '#fff' : 'transparent',
+                  color: mode === m ? '#111827' : '#6b7280',
+                  boxShadow: mode === m ? '0 2px 10px rgba(0,0,0,.1)' : 'none',
+                  transition: 'all .2s',
+                }}>
                 {m === 'signin' ? 'Sign In' : 'Sign Up'}
               </button>
             ))}
           </div>
 
-          <form style={styles.form} onSubmit={handleSubmit}>
-            {error   && <div style={styles.error}>{error}</div>}
-            {success && <div style={styles.success}>{success}</div>}
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
 
-            {mode === 'signup' && (
-              <div style={styles.field}>
-                <label style={styles.label}>Full name</label>
-                <input {...inp('name')} type="text" placeholder="Jane Smith"
-                  value={name} onChange={e => setName(e.target.value)} />
+            {error && (
+              <div style={{ padding: '14px 18px', borderRadius: 12, background: '#fef2f2', border: '1.5px solid #fecaca', color: '#dc2626', fontSize: 15, fontWeight: 500, animation: 'errorShake .4s ease', display: 'flex', alignItems: 'center', gap: 10 }}>
+                ⚠️ {error}
               </div>
             )}
-            <div style={styles.field}>
-              <label style={styles.label}>Email address</label>
-              <input {...inp('email')} type="email" placeholder="you@example.com"
-                value={email} onChange={e => setEmail(e.target.value)} />
+            {success && (
+              <div style={{ padding: '14px 18px', borderRadius: 12, background: '#f0fdf4', border: '1.5px solid #bbf7d0', color: '#166534', fontSize: 15, fontWeight: 500, animation: 'successBounce .4s ease', display: 'flex', alignItems: 'center', gap: 10 }}>
+                ✅ {success}
+              </div>
+            )}
+
+            {mode === 'signup' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <label style={{ fontSize: 15, fontWeight: 600, color: '#374151', fontFamily: F }}>Full name</label>
+                <input {...inp('name')} type="text" placeholder="Jane Smith" value={name} onChange={e => setName(e.target.value)} />
+              </div>
+            )}
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <label style={{ fontSize: 15, fontWeight: 600, color: '#374151', fontFamily: F }}>Email address</label>
+              <input {...inp('email')} type="email" placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)} />
             </div>
-            <div style={styles.field}>
-              <label style={styles.label}>Password</label>
-              <input {...inp('pw')} type="password" placeholder="••••••••"
-                value={password} onChange={e => setPassword(e.target.value)} />
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <label style={{ fontSize: 15, fontWeight: 600, color: '#374151', fontFamily: F }}>Password</label>
+              <input {...inp('pw')} type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} />
+              {mode === 'signup' && <span style={{ fontSize: 13, color: '#9ca3af' }}>At least 6 characters</span>}
             </div>
 
             <button
               type="submit"
-              style={styles.submitBtn}
               disabled={loading}
-              onMouseEnter={e => { if (!loading) e.currentTarget.style.opacity = '.85'; }}
-              onMouseLeave={e => e.currentTarget.style.opacity = '1'}
-            >
-              {loading && <span style={styles.loader} />}
+              className={!loading ? 'auth-btn-active' : ''}
+              style={{
+                marginTop: 4, padding: '17px', borderRadius: 14, border: 'none',
+                background: loading ? '#e5e7eb' : 'linear-gradient(135deg, #1a1a2e 0%, #4f46e5 100%)',
+                color: loading ? '#9ca3af' : '#fff', fontSize: 17, fontWeight: 700,
+                cursor: loading ? 'not-allowed' : 'pointer', fontFamily: F,
+                transition: 'all .2s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                animation: !loading ? 'pulseGlow 3s ease-in-out infinite' : 'none',
+              }}>
+              {loading && <span style={{ width: 18, height: 18, border: '2.5px solid rgba(255,255,255,.3)', borderTopColor: '#fff', borderRadius: '50%', display: 'inline-block', animation: 'spinArc .7s linear infinite' }} />}
               {loading ? 'Please wait…' : mode === 'signin' ? 'Sign In →' : 'Create Account →'}
             </button>
 
-            <div style={styles.divider}>
-              <div style={styles.dividerLine} />
-              <span style={styles.dividerTxt}>or</span>
-              <div style={styles.dividerLine} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, margin: '2px 0' }}>
+              <div style={{ flex: 1, height: 1, background: '#e5e7eb' }} />
+              <span style={{ fontSize: 14, color: '#9ca3af' }}>or</span>
+              <div style={{ flex: 1, height: 1, background: '#e5e7eb' }} />
             </div>
 
             <button
               type="button"
-              style={styles.guestBtn}
-              onClick={() => onLogin('dev_test', 'Guest')}
-              onMouseEnter={e => { e.currentTarget.style.background='#f9fafb'; e.currentTarget.style.borderColor='#9ca3af'; }}
-              onMouseLeave={e => { e.currentTarget.style.background='#fff'; e.currentTarget.style.borderColor='#e5e7eb'; }}
-            >
+              onClick={handleGuest}
+              disabled={loading}
+              style={{
+                padding: '15px', borderRadius: 14, border: '2px solid #e5e7eb',
+                background: '#fff', color: '#374151', fontSize: 16, fontWeight: 500,
+                cursor: loading ? 'not-allowed' : 'pointer', fontFamily: F, transition: 'all .15s',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = '#f9fafb'; e.currentTarget.style.borderColor = '#d1d5db'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.borderColor = '#e5e7eb'; }}>
               Continue as Guest
             </button>
           </form>
