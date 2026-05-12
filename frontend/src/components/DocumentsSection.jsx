@@ -6,7 +6,7 @@ import {
 import {
   DocumentRegular, DocumentAdd20Regular, DocumentMultipleRegular,
   MoreHorizontal20Regular, DeleteRegular, CheckmarkCircle20Regular,
-  DismissCircle20Regular,
+  DismissCircle20Regular, ChevronUp16Regular, ChevronDown16Regular,
 } from '@fluentui/react-icons';
 import api from '../api';
 import { useUser } from '../context/UserContext';
@@ -25,8 +25,21 @@ const useStyles = makeStyles({
     display: 'flex', alignItems: 'center', gap: '6px',
     color: '#9ca3af', fontSize: '12px', fontWeight: '700',
     textTransform: 'uppercase', letterSpacing: '0.7px', fontFamily: F,
+    cursor: 'pointer', userSelect: 'none',
+    ':hover': { color: '#6b7280' },
   },
-  // Big beautiful upload button
+  collapseChevron: {
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    width: '16px', height: '16px', flexShrink: 0,
+    transition: 'transform 0.2s ease',
+  },
+  headerRight: {
+    display: 'flex', alignItems: 'center', gap: '6px',
+  },
+  countBadge: {
+    fontSize: '11px', color: '#9ca3af', background: '#f3f4f6',
+    borderRadius: '8px', padding: '1px 6px', fontFamily: F, fontWeight: '600',
+  },
   uploadBtn: {
     display: 'flex', alignItems: 'center', gap: '7px',
     border: '1.5px solid #e0e7ff', background: 'linear-gradient(135deg, #eef2ff, #f5f3ff)',
@@ -36,7 +49,10 @@ const useStyles = makeStyles({
     transition: 'all 0.2s', boxShadow: '0 1px 4px rgba(99,102,241,.15)',
   },
   hiddenInput: { display: 'none' },
-  // Progress toast
+  collapsibleBody: {
+    overflow: 'hidden',
+    transition: 'max-height 0.25s ease, opacity 0.2s ease',
+  },
   toast: {
     padding: '10px 14px', borderRadius: '12px', marginBottom: '8px',
     display: 'flex', alignItems: 'center', gap: '10px',
@@ -144,6 +160,7 @@ export default function DocumentsSection({ refreshKey }) {
   const [uploadError, setUploadError] = useState(null);
   const [internalRefresh, setInternalRefresh] = useState(0);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
 
   const loadDocuments = useCallback(async () => {
     if (!activeUserId) return;
@@ -181,6 +198,8 @@ export default function DocumentsSection({ refreshKey }) {
       const result = await api.uploadDocument(file);
       setUploadSuccess({ filename: file.name, chunks: result.chunks || 0 });
       setInternalRefresh(k => k + 1);
+      // Auto-expand when a file is uploaded
+      setIsExpanded(true);
     } catch (err) {
       setUploadError(err.message);
     } finally {
@@ -219,39 +238,40 @@ export default function DocumentsSection({ refreshKey }) {
       `}</style>
 
       <div className={styles.sectionHeader}>
-        <div className={styles.sectionLabel}>
+        {/* Clickable label area to toggle collapse */}
+        <div
+          className={styles.sectionLabel}
+          onClick={() => setIsExpanded(prev => !prev)}
+          title={isExpanded ? 'Collapse documents' : 'Expand documents'}
+        >
           <DocumentMultipleRegular style={{ fontSize: 13 }} />
           Documents
+          {documents.length > 0 && (
+            <span className={styles.countBadge}>{documents.length}</span>
+          )}
+          <span className={styles.collapseChevron} style={{ transform: isExpanded ? 'rotate(0deg)' : 'rotate(-90deg)' }}>
+            <ChevronDown16Regular style={{ fontSize: 11 }} />
+          </span>
         </div>
-        <button
-          className={`${styles.uploadBtn} upload-btn-hover`}
-          onClick={() => fileRef.current?.click()}
-          disabled={uploading}
-          title="Upload a document">
-          {uploading
-            ? <Spinner size="tiny" />
-            : <DocumentAdd20Regular style={{ fontSize: 16 }} />}
-          Upload
-        </button>
+
+        {/* Upload button always visible */}
+        <div className={styles.headerRight}>
+          <button
+            className={`${styles.uploadBtn} upload-btn-hover`}
+            onClick={() => fileRef.current?.click()}
+            disabled={uploading}
+            title="Upload a document">
+            {uploading
+              ? <Spinner size="tiny" />
+              : <DocumentAdd20Regular style={{ fontSize: 16 }} />}
+            Upload
+          </button>
+        </div>
       </div>
 
       <input type="file" ref={fileRef} className={styles.hiddenInput} accept={ACCEPTED} onChange={handleFileSelected} />
 
-      {/* Drop zone (shown when no docs or always) */}
-      {documents.length === 0 && !loading && (
-        <div
-          className={mergeClasses(styles.dropZone, isDragOver && styles.dropZoneActive)}
-          onClick={() => fileRef.current?.click()}
-          onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
-          onDragLeave={() => setIsDragOver(false)}
-          onDrop={handleDrop}>
-          <div style={{ fontSize: 22, marginBottom: 4 }}>📎</div>
-          <div style={{ fontWeight: 600 }}>Drop a file here</div>
-          <div style={{ fontSize: 12, opacity: .7, marginTop: 2 }}>PDF, DOCX, TXT, PPTX, XLSX…</div>
-        </div>
-      )}
-
-      {/* Upload progress toast */}
+      {/* Upload toasts always visible (outside collapse) */}
       {uploading && (
         <div className={`${styles.toast} ${styles.toastProgress}`}>
           <Spinner size="tiny" />
@@ -261,16 +281,12 @@ export default function DocumentsSection({ refreshKey }) {
           </div>
         </div>
       )}
-
-      {/* Success toast */}
       {uploadSuccess && (
         <div className={`${styles.toast} ${styles.toastSuccess}`}>
           <CheckmarkCircle20Regular style={{ flexShrink: 0 }} />
           <span className={styles.toastMsg}>✓ {uploadSuccess.filename} — {uploadSuccess.chunks} chunks indexed</span>
         </div>
       )}
-
-      {/* Error toast */}
       {uploadError && (
         <div className={`${styles.toast} ${styles.toastError}`}>
           <DismissCircle20Regular style={{ flexShrink: 0 }} />
@@ -278,12 +294,36 @@ export default function DocumentsSection({ refreshKey }) {
         </div>
       )}
 
-      {loading && <div className={styles.loadingBox}><Spinner size="tiny" /></div>}
-      {error && <div className={styles.toastError} style={{ padding: '8px 12px', borderRadius: 8, fontSize: 12, fontFamily: F }}>{error}</div>}
+      {/* Collapsible body */}
+      <div
+        className={styles.collapsibleBody}
+        style={{
+          maxHeight: isExpanded ? '1000px' : '0px',
+          opacity: isExpanded ? 1 : 0,
+          pointerEvents: isExpanded ? 'auto' : 'none',
+        }}
+      >
+        {/* Drop zone (shown when no docs) */}
+        {documents.length === 0 && !loading && (
+          <div
+            className={mergeClasses(styles.dropZone, isDragOver && styles.dropZoneActive)}
+            onClick={() => fileRef.current?.click()}
+            onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
+            onDragLeave={() => setIsDragOver(false)}
+            onDrop={handleDrop}>
+            <div style={{ fontSize: 22, marginBottom: 4 }}>📎</div>
+            <div style={{ fontWeight: 600 }}>Drop a file here</div>
+            <div style={{ fontSize: 12, opacity: .7, marginTop: 2 }}>PDF, DOCX, TXT, PPTX, XLSX…</div>
+          </div>
+        )}
 
-      {!loading && !error && documents.length > 0 && documents.map(doc => (
-        <DocItem key={doc.document_id} doc={doc} onDelete={handleDelete} />
-      ))}
+        {loading && <div className={styles.loadingBox}><Spinner size="tiny" /></div>}
+        {error && <div className={styles.toastError} style={{ padding: '8px 12px', borderRadius: 8, fontSize: 12, fontFamily: F }}>{error}</div>}
+
+        {!loading && !error && documents.length > 0 && documents.map(doc => (
+          <DocItem key={doc.document_id} doc={doc} onDelete={handleDelete} />
+        ))}
+      </div>
     </div>
   );
 }

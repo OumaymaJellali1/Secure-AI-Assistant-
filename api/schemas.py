@@ -7,7 +7,7 @@ Pydantic models give us:
   • Type safety in your code
 """
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Literal
 from pydantic import BaseModel, Field
 
 
@@ -56,16 +56,38 @@ class ConversationDetail(BaseModel):
 
 # ── QUERIES ──────────────────────────────────────────────────────
 
+# Knowledge scope options:
+#   "all_kb"       — uploads + full vector DB (default, existing behaviour)
+#   "uploads_only" — restrict retrieval to documents uploaded by this user
+#   "single_doc"   — restrict retrieval to one specific document_id
+KnowledgeScope = Literal["all_kb", "uploads_only", "single_doc"]
+
+
 class QueryRequest(BaseModel):
     question: str = Field(..., min_length=1, max_length=4000)
     stream: bool = False
+
+    # ── Knowledge-scope controls ──────────────────────────────────
+    scope: KnowledgeScope = Field(
+        default="all_kb",
+        description=(
+            "Controls which knowledge sources are searched.\n"
+            "  all_kb       → uploads + everything in the vector DB (default)\n"
+            "  uploads_only → only documents uploaded by this user\n"
+            "  single_doc   → only the document identified by `document_id`"
+        ),
+    )
+    document_id: str | None = Field(
+        default=None,
+        description="Required when scope='single_doc'. The document_id to restrict search to.",
+    )
 
 
 class SourceOut(BaseModel):
     source: str
     page: int | None = None
     score: float | None = None
-
+    document_id: str | None = None
 
 class QueryResponse(BaseModel):
     answer: str
@@ -74,6 +96,8 @@ class QueryResponse(BaseModel):
     rewritten_query: str
     session_id: str
     total_latency_s: float | None = None
+    scope: KnowledgeScope = "all_kb"
+    document_id: str | None = None
 
 
 # ── DOCUMENTS ────────────────────────────────────────────────────

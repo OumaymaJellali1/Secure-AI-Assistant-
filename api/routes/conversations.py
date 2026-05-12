@@ -4,6 +4,11 @@ api/routes/conversations.py — With classifier + direct_chat for follow-ups.
 Streaming endpoint:
   • DIRECT_ANSWER → direct_chat_stream (conversational LLM, no RAG)
   • NEEDS_RAG     → full pipeline (rewrite, retrieve, rerank, grade, generate)
+
+Knowledge scope is forwarded to the retrieval step:
+  scope="all_kb"       → no filter  (default)
+  scope="uploads_only" → filter by user_id in metadata
+  scope="single_doc"   → filter by document_id in metadata
 """
 import asyncio
 import json
@@ -63,6 +68,42 @@ def _load_turns_from_db(session_id: str) -> list[TurnOut]:
             {"sid": session_id},
         ).fetchall()
     return [TurnOut(role=r[0], content=r[1], created_at=r[2]) for r in rows]
+
+
+def _build_retrieval_filter(scope: str, user_id: str, document_id: str | None) -> dict | None:
+    """
+    Translate the user-facing `scope` value into a Qdrant-compatible
+    metadata filter dict that the RAGPipeline / retriever understands.
+
+    Returns None for "all_kb" (no filtering).
+
+    The retriever is expected to accept a `retrieval_filter` kwarg of the form:
+      {"must": [{"key": "...", "match": {"value": "..."}}]}
+    Adjust the structure to match your actual retriever interface.
+    """
+    if scope == "all_kb":
+        return None
+
+    if scope == "uploads_only":
+        return {
+            "must": [
+                {"key": "uploaded_by", "match": {"value": user_id}},
+            ]
+        }
+
+    if scope == "single_doc":
+        if not document_id:
+            raise HTTPException(
+                400,
+                "scope='single_doc' requires a non-null document_id",
+            )
+        return {
+            "must": [
+                {"key": "document_id", "match": {"value": document_id}},
+            ]
+        }
+
+    return None
 
 
 # ── CRUD ──────────────────────────────────────────────────────────
@@ -155,9 +196,16 @@ def query(
     session = sessions.get(session_id)
     if not session or session["user_id"] != user_id:
         raise HTTPException(404, "Conversation not found")
+
+    retrieval_filter = _build_retrieval_filter(body.scope, user_id, body.document_id)
+
     pipeline = _get_pipeline(user_id, session_id)
     try:
-        result = pipeline.query(body.question, stream=False)
+        result = pipeline.query(
+            body.question,
+            stream=False,
+            retrieval_filter=retrieval_filter,
+        )
         sources = [
             SourceOut(source=s.get("source", "unknown"), page=s.get("page"), score=s.get("score"))
             for s in result.get("sources", [])
@@ -169,6 +217,8 @@ def query(
             rewritten_query=result.get("rewritten_query", body.question),
             session_id=session_id,
             total_latency_s=result.get("total_latency_s"),
+            scope=body.scope,
+            document_id=body.document_id,
         )
     except Exception as e:
         import traceback; traceback.print_exc()
@@ -190,7 +240,7 @@ async def query_stream(
       data: {"type": "status", "stage": "classifying"|"retrieving"|"generating"}
       data: {"type": "route", "category": "NEEDS_RAG"|"DIRECT_ANSWER"}
       data: {"type": "token", "content": "..."}
-      data: {"type": "done", "sources": [...], ...}
+      data: {"type": "done", "sources": [...], "scope": "...", ...}
       data: {"type": "error", "message": "..."}
     """
     user_id = current_user["user_id"]
@@ -198,6 +248,8 @@ async def query_stream(
     session = sessions.get(session_id)
     if not session or session["user_id"] != user_id:
         raise HTTPException(404, "Conversation not found")
+
+    retrieval_filter = _build_retrieval_filter(body.scope, user_id, body.document_id)
 
     pipeline = _get_pipeline(user_id, session_id)
 
@@ -224,6 +276,7 @@ async def query_stream(
                     question=body.question,
                     user_id=user_id,
                     session_id=session_id,
+                    retrieval_filter=retrieval_filter,  # ← scope forwarded here
                 )
 
                 query_type = state.get("query_type", "NEEDS_RAG")
@@ -258,10 +311,12 @@ async def query_stream(
                     pipeline.memory.save_turn("assistant", result.get("answer", ""), extract_facts=False)
 
                     final_result_holder["result"] = {
-                        "answer":     result.get("answer", ""),
-                        "sources":    [],
-                        "no_answer":  False,
-                        "query_type": "DIRECT_ANSWER",
+                        "answer":      result.get("answer", ""),
+                        "sources":     [],
+                        "no_answer":   False,
+                        "query_type":  "DIRECT_ANSWER",
+                        "scope":       body.scope,
+                        "document_id": body.document_id,
                     }
                     return
 
@@ -283,7 +338,13 @@ async def query_stream(
                     augmented = chunks
 
                 if not augmented:
-                    answer = "I couldn't find relevant information in the knowledge base."
+                    scope_label = {
+                        "all_kb":       "the knowledge base",
+                        "uploads_only": "your uploaded documents",
+                        "single_doc":   f"document '{body.document_id}'",
+                    }.get(body.scope, "the knowledge base")
+
+                    answer = f"I couldn't find relevant information in {scope_label}."
                     pipeline.memory.save_turn("user", body.question, extract_facts=False)
                     pipeline.memory.save_turn("assistant", answer, extract_facts=False)
                     asyncio.run_coroutine_threadsafe(
@@ -291,10 +352,12 @@ async def query_stream(
                         loop,
                     )
                     final_result_holder["result"] = {
-                        "answer": answer,
-                        "sources": [],
-                        "no_answer": True,
-                        "query_type": "NEEDS_RAG",
+                        "answer":      answer,
+                        "sources":     [],
+                        "no_answer":   True,
+                        "query_type":  "NEEDS_RAG",
+                        "scope":       body.scope,
+                        "document_id": body.document_id,
                     }
                 else:
                     def on_token(token: str):
@@ -311,20 +374,31 @@ async def query_stream(
 
                     pipeline.memory.save_turn("user",      body.question, extract_facts=True)
                     pipeline.memory.save_turn("assistant", result["answer"], extract_facts=False)
+                    import re
+                    def _extract_doc_id(source_name):
+                       m = re.match(r'^(doc_[a-f0-9]+)_', source_name or '')
+                       return m.group(1) if m else None
 
                     sources_serializable = [
-                        {
-                            "source": s.get("source", "unknown"),
-                            "page": s.get("page"),
-                            "score": s.get("score"),
-                        }
-                        for s in result.get("sources", [])
-                    ]
+    {
+        "source": s.get("source", "unknown"),
+        "page": s.get("page"),
+        "score": s.get("score"),
+        "document_id": (
+            s.get("document_id")
+            or (s.get("metadata") or {}).get("document_id")
+            or _extract_doc_id(s.get("source", ""))
+        ),
+    }
+    for s in result.get("sources", [])
+]
                     final_result_holder["result"] = {
-                        "answer":     result.get("answer", ""),
-                        "sources":    sources_serializable,
-                        "no_answer":  result.get("no_answer", False),
-                        "query_type": "NEEDS_RAG",
+                        "answer":      result.get("answer", ""),
+                        "sources":     sources_serializable,
+                        "no_answer":   result.get("no_answer", False),
+                        "query_type":  "NEEDS_RAG",
+                        "scope":       body.scope,
+                        "document_id": body.document_id,
                     }
 
             except Exception as e:

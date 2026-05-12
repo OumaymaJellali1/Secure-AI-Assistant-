@@ -11,3 +11,8 @@ node_modules/
 .venv/
 .venv1/
 __pycache__/
+# Google OAuth credentials — NEVER commit these
+credentials.json
+ 
+# Per-user auth tokens — NEVER commit these
+tokens/

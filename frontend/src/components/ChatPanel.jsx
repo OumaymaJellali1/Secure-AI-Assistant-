@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Text, Spinner, makeStyles } from '@fluentui/react-components';
-import { ChatMultiple24Regular, ErrorCircle24Regular } from '@fluentui/react-icons';
+import { ErrorCircle24Regular, CheckmarkCircle20Regular } from '@fluentui/react-icons';
 
 import api from '../api';
 import { useUser } from '../context/UserContext';
@@ -8,46 +8,234 @@ import { useChat } from '../context/ChatContext';
 import MessageBubble from './MessageBubble';
 import MessageInput from './MessageInput';
 
+const MAX_W = '720px';
+const F = "'Lexend', 'DM Sans', sans-serif";
+
 const useStyles = makeStyles({
-  root: { flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: '#F7F6F3' },
-  header: {
-    padding: '0 28px', height: '52px', borderBottom: '1px solid rgba(0,0,0,0.07)',
-    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-    background: '#ffffff', flexShrink: 0,
+  root: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    overflow: 'hidden',
+    background: '#F7F6F3',
+    position: 'relative',
   },
-  headerTitle: { fontSize: '14px', fontWeight: '600', color: '#1a1a2e', fontFamily: "'DM Sans', sans-serif", letterSpacing: '-0.1px' },
-  headerMeta: { fontSize: '12px', color: '#9ca3af', fontFamily: "'DM Sans', sans-serif" },
-  messagesArea: { flex: 1, overflowY: 'auto', padding: '24px 28px', display: 'flex', flexDirection: 'column' },
-  messagesInner: { maxWidth: '800px', width: '100%', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 },
-  emptyState: { flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '12px', textAlign: 'center', padding: '60px 24px', color: '#9ca3af' },
-  emptyIcon: { fontSize: '48px', marginBottom: '4px', opacity: 0.5 },
-  emptyTitle: { fontSize: '18px', fontWeight: '600', color: '#374151', fontFamily: "'DM Sans', sans-serif", margin: '0 0 4px' },
-  emptySub: { fontSize: '14px', color: '#9ca3af', margin: 0, lineHeight: '1.5' },
-  welcome: { flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '60px 40px', textAlign: 'center' },
-  welcomeEmoji: { fontSize: '48px', marginBottom: '16px', display: 'block' },
-  welcomeTitle: { fontSize: '22px', fontWeight: '700', color: '#1a1a2e', fontFamily: "'DM Sans', sans-serif", margin: '0 0 8px', letterSpacing: '-0.3px' },
-  welcomeSub: { fontSize: '14px', color: '#6b7280', margin: '0 0 24px', lineHeight: '1.6', maxWidth: '320px' },
-  hints: { display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'center', maxWidth: '500px' },
-  hint: { padding: '8px 14px', borderRadius: '20px', border: '1.5px solid #e5e7eb', background: '#ffffff', fontSize: '13px', color: '#374151', fontFamily: "'DM Sans', sans-serif", cursor: 'default' },
-  statusRow: { display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 0' },
-  statusDot: { width: '28px', height: '28px', borderRadius: '50%', background: 'linear-gradient(135deg, #1a1a2e, #4f46e5)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-  statusText: { color: '#9ca3af', fontSize: '13px', fontStyle: 'italic', fontFamily: "'DM Sans', sans-serif" },
-  errorBox: { display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 14px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '10px', color: '#dc2626', fontSize: '13px', marginBottom: '12px', fontFamily: "'DM Sans', sans-serif" },
+
+  // ── Header ──────────────────────────────────────────────────────
+  header: {
+    padding: '0 28px',
+    height: '52px',
+    borderBottom: '1px solid rgba(0,0,0,0.07)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    background: '#ffffff',
+    flexShrink: 0,
+    position: 'relative',
+  },
+  headerTitle: {
+    fontSize: '14px',
+    fontWeight: '600',
+    color: '#1a1a2e',
+    fontFamily: F,
+    letterSpacing: '-0.1px',
+  },
+  headerMeta: {
+    position: 'absolute',
+    right: '28px',
+    fontSize: '12px',
+    color: '#9ca3af',
+    fontFamily: F,
+  },
+
+  // ── LANDING MODE ────────────────────────────────────────────────
+  landingRoot: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '40px 28px 60px',
+    overflow: 'hidden',
+  },
+  landingInner: {
+    width: '100%',
+    maxWidth: MAX_W,
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+  },
+  landingEmoji: {
+    fontSize: '52px',
+    marginBottom: '20px',
+    display: 'block',
+    lineHeight: 1,
+    animation: 'fadeUp 0.45s ease both',
+  },
+  landingTitle: {
+    fontSize: '26px',
+    fontWeight: '800',
+    color: '#1a1a2e',
+    fontFamily: F,
+    margin: '0 0 10px',
+    letterSpacing: '-0.6px',
+    textAlign: 'center',
+    animation: 'fadeUp 0.45s 0.06s ease both',
+  },
+  landingSub: {
+    fontSize: '14px',
+    color: '#6b7280',
+    margin: '0 0 28px',
+    lineHeight: '1.65',
+    maxWidth: '360px',
+    textAlign: 'center',
+    fontFamily: F,
+    animation: 'fadeUp 0.45s 0.1s ease both',
+  },
+  landingInputWrap: {
+    width: '100%',
+    animation: 'fadeUp 0.45s 0.14s ease both',
+  },
+  hints: {
+    display: 'flex',
+    gap: '8px',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    marginTop: '18px',
+    animation: 'fadeUp 0.45s 0.2s ease both',
+  },
+
+  // ── CHAT MODE ────────────────────────────────────────────────────
+  messagesArea: {
+    flex: 1,
+    overflowY: 'auto',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    padding: '0 28px',
+  },
+  messagesInner: {
+    width: '100%',
+    maxWidth: MAX_W,
+    display: 'flex',
+    flexDirection: 'column',
+    flex: 1,
+    paddingTop: '28px',
+    paddingBottom: '16px',
+    gap: '2px',
+  },
+  bottomInput: {
+    flexShrink: 0,
+  },
+
+  // ── Status / error ───────────────────────────────────────────────
+  statusRow: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    padding: '8px 0',
+  },
+  statusDot: {
+    width: '28px',
+    height: '28px',
+    borderRadius: '50%',
+    background: 'linear-gradient(135deg, #1a1a2e, #4f46e5)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  statusText: {
+    color: '#9ca3af',
+    fontSize: '13px',
+    fontStyle: 'italic',
+    fontFamily: F,
+  },
+  errorBox: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    padding: '10px 14px',
+    background: '#fef2f2',
+    border: '1px solid #fecaca',
+    borderRadius: '10px',
+    color: '#dc2626',
+    fontSize: '13px',
+    marginBottom: '12px',
+    fontFamily: F,
+  },
+
+  // ── Upload toast ─────────────────────────────────────────────────
+  uploadToast: {
+    position: 'fixed',
+    bottom: '100px',
+    left: '50%',
+    transform: 'translateX(-50%)',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    padding: '12px 20px',
+    borderRadius: '40px',
+    fontSize: '13px',
+    fontWeight: '600',
+    fontFamily: F,
+    boxShadow: '0 8px 32px rgba(0,0,0,0.15)',
+    zIndex: 100,
+    whiteSpace: 'nowrap',
+    animation: 'toastPop 0.3s cubic-bezier(.34,1.56,.64,1)',
+  },
+  uploadToastProgress: { background: '#1a1a2e', color: '#fff' },
+  uploadToastSuccess:  { background: '#f0fdf4', border: '1.5px solid #bbf7d0', color: '#166534' },
+  uploadToastError:    { background: '#fef2f2', border: '1.5px solid #fecaca', color: '#dc2626' },
 });
+
+const HINT_PROMPTS = [
+  'Summarize my latest report',
+  'What does the contract say about termination?',
+  'Find all mentions of the budget',
+];
 
 export default function ChatPanel({ onSidebarRefresh }) {
   const styles = useStyles();
   const { activeUserId, displayName } = useUser();
-  const { activeSessionId } = useChat();
+  const { activeSessionId, setActiveSessionId } = useChat();
 
-  const [messages, setMessages] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [streaming, setStreaming] = useState(false);
-  const [streamStatus, setStreamStatus] = useState(null);
-  const [conversation, setConversation] = useState(null);
-  const [error, setError] = useState(null);
+  const [messages, setMessages]           = useState([]);
+  const [loading, setLoading]             = useState(false);
+  const [streaming, setStreaming]         = useState(false);
+  const [streamStatus, setStreamStatus]   = useState(null);
+  const [conversation, setConversation]   = useState(null);
+  const [error, setError]                 = useState(null);
+  const [uploadState, setUploadState]     = useState(null);
+  const [prefillValue, setPrefillValue]   = useState('');
+
+  // ── Knowledge scope state ────────────────────────────────────────
+  const [queryScope, setQueryScope]           = useState('all_kb');
+  const [queryDocumentId, setQueryDocumentId] = useState(null);
+  const [documents, setDocuments]             = useState([]);
+
   const messagesEndRef = useRef(null);
 
+  // ── Load documents list for the scope picker ─────────────────────
+  const loadDocuments = useCallback(async () => {
+    if (!activeUserId) return;
+    try {
+      const data = await api.listDocuments();
+      setDocuments(data || []);
+    } catch {
+      // non-critical — scope picker just shows empty list
+    }
+  }, [activeUserId]);
+
+  useEffect(() => { loadDocuments(); }, [loadDocuments]);
+
+  // Reload docs whenever sidebar refreshes (new upload)
+  const handleSidebarRefresh = useCallback(() => {
+    loadDocuments();
+    onSidebarRefresh?.();
+  }, [loadDocuments, onSidebarRefresh]);
+
+  // ── Load messages when session changes ───────────────────────────
   const loadMessages = useCallback(async () => {
     if (!activeSessionId) {
       setMessages([]);
@@ -57,7 +245,7 @@ export default function ChatPanel({ onSidebarRefresh }) {
     try {
       setLoading(true);
       setError(null);
-      const data = await api.getConversation(activeSessionId);   // ← no userId
+      const data = await api.getConversation(activeSessionId);
       setConversation(data);
       setMessages(data.turns || []);
     } catch (err) {
@@ -73,19 +261,73 @@ export default function ChatPanel({ onSidebarRefresh }) {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, streaming]);
 
+  // Auto-clear upload toast
+  useEffect(() => {
+    if (!uploadState || uploadState.status === 'uploading') return;
+    const t = setTimeout(() => setUploadState(null), 4000);
+    return () => clearTimeout(t);
+  }, [uploadState]);
+
+  // ── Upload handler ───────────────────────────────────────────────
+  const handleUpload = async (file) => {
+    setUploadState({ status: 'uploading', filename: file.name });
+    try {
+      const result = await api.uploadDocument(file);
+      setUploadState({
+        status: 'success',
+        filename: file.name,
+        message: `${result.chunks || 0} chunks indexed`,
+      });
+      handleSidebarRefresh();
+    } catch (err) {
+      setUploadState({ status: 'error', filename: file.name, message: err.message });
+      throw err;
+    }
+  };
+
+  // ── Auto-create session if none selected ─────────────────────────
+  const ensureSession = useCallback(async () => {
+    if (activeSessionId) return activeSessionId;
+    const newConv = await api.createConversation();
+    setActiveSessionId(newConv.session_id);
+    handleSidebarRefresh();
+    return newConv.session_id;
+  }, [activeSessionId, setActiveSessionId, handleSidebarRefresh]);
+
+  // ── Build filters from scope selection ───────────────────────────
+  const buildFilters = () => {
+    if (queryScope === 'uploads_only') return { source_type: 'user_upload' };
+    if (queryScope === 'single_doc' && queryDocumentId) return { document_id: queryDocumentId };
+    return null; // all_kb → no filter
+  };
+
+  // ── Send handler ─────────────────────────────────────────────────
   const handleSend = async (question) => {
-    if (streaming) return;
+    if (streaming || !question.trim()) return;
+
+    let sessionId;
+    try {
+      sessionId = await ensureSession();
+    } catch (err) {
+      setError(`Could not start conversation: ${err.message}`);
+      return;
+    }
+
     setStreaming(true);
     setStreamStatus(null);
     setError(null);
 
     const now = new Date().toISOString();
-    const userMsg = { role: 'user', content: question, created_at: now };
-    const assistantMsg = { role: 'assistant', content: '', sources: [], created_at: now, streaming: true };
-    setMessages(prev => [...prev, userMsg, assistantMsg]);
+    setMessages(prev => [
+      ...prev,
+      { role: 'user',      content: question, created_at: now },
+      { role: 'assistant', content: '', sources: [], created_at: now, streaming: true },
+    ]);
+
+    const filters = buildFilters();
 
     let buffer = '';
-    await api.streamQuery(activeSessionId, question, {   // ← no userId
+    await api.streamQuery(sessionId, question, {
       onStatus: (stage) => setStreamStatus(stage),
       onToken: (token) => {
         buffer += token;
@@ -104,101 +346,201 @@ export default function ChatPanel({ onSidebarRefresh }) {
           const next = [...prev];
           const li = next.length - 1;
           if (li >= 0 && next[li].role === 'assistant') {
-            next[li] = { ...next[li], content: buffer || event.answer || '', sources: event.sources || [], streaming: false };
+            next[li] = {
+              ...next[li],
+              content: buffer || event.answer || '',
+              sources: event.sources || [],
+              streaming: false,
+            };
           }
           return next;
         });
         setStreaming(false);
         setStreamStatus(null);
-        onSidebarRefresh?.();
+        handleSidebarRefresh();
       },
       onError: (errMsg) => {
         setError(errMsg);
         setStreaming(false);
         setStreamStatus(null);
-        setMessages(prev => {
-          if (prev.length > 0 && prev[prev.length - 1].role === 'assistant' && !prev[prev.length - 1].content) {
-            return prev.slice(0, -1);
-          }
-          return prev;
-        });
+        setMessages(prev =>
+          prev.length > 0 && prev[prev.length - 1].role === 'assistant' && !prev[prev.length - 1].content
+            ? prev.slice(0, -1)
+            : prev
+        );
       },
-    });
+    }, filters);
   };
 
-  if (!activeSessionId) {
-    const name = displayName || activeUserId || 'there';
-    return (
-      <div className={styles.root}>
-        <div className={styles.welcome}>
-          <span className={styles.welcomeEmoji}>👋</span>
-          <h2 className={styles.welcomeTitle}>Hello, {name}!</h2>
-          <p className={styles.welcomeSub}>
-            Select a conversation from the sidebar, or start a new one to ask anything about your documents.
-          </p>
-          <div className={styles.hints}>
-            {['Summarize my latest report', 'What does the contract say about...', 'Find all mentions of...'].map(h => (
-              <span key={h} className={styles.hint}>"{h}"</span>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // ── Shared MessageInput props ─────────────────────────────────────
+  const inputProps = {
+    onSend: handleSend,
+    onUpload: handleUpload,
+    disabled: streaming,
+    scope: queryScope,
+    documentId: queryDocumentId,
+    documents,
+    onScopeChange: ({ scope, documentId }) => {
+      setQueryScope(scope);
+      setQueryDocumentId(documentId ?? null);
+    },
+    prefill: prefillValue,
+    onPrefillConsumed: () => setPrefillValue(''),
+  };
 
-  const statusText = streamStatus === 'retrieving' ? 'Searching documents...'
+  const name      = displayName || activeUserId || 'there';
+  const isLanding = messages.length === 0 && !loading;
+
+  const statusText =
+    streamStatus === 'retrieving' ? 'Searching documents...'
     : streamStatus === 'generating' ? 'Generating answer...'
     : null;
 
   return (
     <div className={styles.root}>
+      <style>{`
+        @keyframes fadeUp {
+          from { opacity: 0; transform: translateY(18px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes toastPop {
+          from { opacity: 0; transform: translateX(-50%) translateY(8px) scale(.95); }
+          to   { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+        }
+        .hint-pill {
+          padding: 8px 15px;
+          border-radius: 20px;
+          border: 1.5px solid #e5e7eb;
+          background: #ffffff;
+          font-size: 13px;
+          color: #4b5563;
+          font-family: 'Lexend', 'DM Sans', sans-serif;
+          cursor: pointer;
+          transition: all 0.15s;
+          user-select: none;
+          display: inline-block;
+        }
+        .hint-pill:hover {
+          border-color: #c7d2fe;
+          background: #eef2ff;
+          color: #4338ca;
+          transform: translateY(-1px);
+        }
+      `}</style>
+
+      {/* ── Header ───────────────────────────────────────────────── */}
       <div className={styles.header}>
-        <span className={styles.headerTitle}>{conversation?.title || 'New conversation'}</span>
-        <span className={styles.headerMeta}>{messages.length} messages</span>
+        <span className={styles.headerTitle}>
+          {isLanding && !activeSessionId
+            ? 'RAG Assistant'
+            : conversation?.title || 'New conversation'}
+        </span>
+        {!isLanding && (
+          <span className={styles.headerMeta}>{messages.length} messages</span>
+        )}
       </div>
 
-      <div className={styles.messagesArea}>
-        <div className={styles.messagesInner}>
-          {loading && (
-            <div className={styles.emptyState}>
-              <Spinner size="medium" />
-              <Text style={{ fontFamily: "'DM Sans', sans-serif", color: '#9ca3af' }}>Loading...</Text>
+      {/* ══════════════════════════════════════════════════════════
+          LANDING MODE — input centered on the page
+      ══════════════════════════════════════════════════════════ */}
+      {isLanding && (
+        <div className={styles.landingRoot}>
+          <div className={styles.landingInner}>
+
+            <span className={styles.landingEmoji}>👋</span>
+            <h2 className={styles.landingTitle}>Hello, {name}!</h2>
+            <p className={styles.landingSub}>
+              Ask anything about your documents — choose a scope below, or attach one with&nbsp;📎.
+            </p>
+
+            {/* Input + scope picker centered */}
+            <div className={styles.landingInputWrap}>
+              <MessageInput {...inputProps} />
             </div>
-          )}
 
-          {!loading && messages.length === 0 && (
-            <div className={styles.emptyState}>
-              <ChatMultiple24Regular className={styles.emptyIcon} />
-              <p className={styles.emptyTitle}>Start the conversation</p>
-              <p className={styles.emptySub}>Type your question below to get answers from your documents.</p>
+            {/* Hint chips */}
+            <div className={styles.hints}>
+              {HINT_PROMPTS.map(h => (
+                <span key={h} className="hint-pill" onClick={() => setPrefillValue(h)}>
+                  {h}
+                </span>
+              ))}
             </div>
-          )}
 
-          {!loading && messages.map((msg, i) => (
-            <MessageBubble key={i} message={msg} />
-          ))}
-
-          {streaming && statusText && (
-            <div className={styles.statusRow}>
-              <div className={styles.statusDot}>
-                <Spinner size="tiny" appearance="inverted" />
+            {error && (
+              <div className={styles.errorBox} style={{ marginTop: '20px', width: '100%' }}>
+                <ErrorCircle24Regular />
+                <span>{error}</span>
               </div>
-              <span className={styles.statusText}>{statusText}</span>
-            </div>
-          )}
-
-          {error && (
-            <div className={styles.errorBox}>
-              <ErrorCircle24Regular />
-              <span>{error}</span>
-            </div>
-          )}
-
-          <div ref={messagesEndRef} />
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
-      <MessageInput onSend={handleSend} disabled={streaming} />
+      {/* ══════════════════════════════════════════════════════════
+          CHAT MODE — messages scroll, input at bottom
+      ══════════════════════════════════════════════════════════ */}
+      {!isLanding && (
+        <>
+          <div className={styles.messagesArea}>
+            <div className={styles.messagesInner}>
+
+              {loading && (
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
+                  <Spinner size="medium" />
+                  <Text style={{ fontFamily: F, color: '#9ca3af' }}>Loading…</Text>
+                </div>
+              )}
+
+              {!loading && messages.map((msg, i) => (
+                <MessageBubble key={i} message={msg} />
+              ))}
+
+              {streaming && statusText && (
+                <div className={styles.statusRow}>
+                  <div className={styles.statusDot}>
+                    <Spinner size="tiny" appearance="inverted" />
+                  </div>
+                  <span className={styles.statusText}>{statusText}</span>
+                </div>
+              )}
+
+              {error && (
+                <div className={styles.errorBox}>
+                  <ErrorCircle24Regular />
+                  <span>{error}</span>
+                </div>
+              )}
+
+              <div ref={messagesEndRef} />
+            </div>
+          </div>
+
+          <div className={styles.bottomInput}>
+            <MessageInput {...inputProps} prefill={undefined} onPrefillConsumed={undefined} />
+          </div>
+        </>
+      )}
+
+      {/* ── Upload toast ──────────────────────────────────────────── */}
+      {uploadState && (
+        <div className={`${styles.uploadToast} ${
+          uploadState.status === 'uploading' ? styles.uploadToastProgress
+          : uploadState.status === 'success'  ? styles.uploadToastSuccess
+          : styles.uploadToastError
+        }`}>
+          {uploadState.status === 'uploading' && <Spinner size="tiny" appearance="inverted" />}
+          {uploadState.status === 'success'   && <CheckmarkCircle20Regular style={{ flexShrink: 0 }} />}
+          {uploadState.status === 'error'     && <span>⚠️</span>}
+          <span>
+            {uploadState.status === 'uploading'
+              ? `Indexing ${uploadState.filename}…`
+              : uploadState.status === 'success'
+              ? `✓ ${uploadState.filename} · ${uploadState.message}`
+              : `${uploadState.filename}: ${uploadState.message}`}
+          </span>
+        </div>
+      )}
     </div>
   );
 }

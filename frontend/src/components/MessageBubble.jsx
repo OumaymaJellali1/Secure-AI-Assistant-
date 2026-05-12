@@ -119,6 +119,12 @@ const useStyles = makeStyles({
     fontSize: '13px',
     color: '#4b5563',
     fontFamily: F,
+    cursor: 'pointer',
+    textDecoration: 'none',
+    borderRadius: '6px',
+    padding: '2px 4px',
+    transition: 'background 0.12s, color 0.12s',
+    ':hover': { background: '#f3f4f6', color: '#1f2937' },
   },
   sourceIcon: { fontSize: '14px', color: '#9ca3af', flexShrink: 0 },
 });
@@ -133,9 +139,60 @@ function initials(name) {
   return name.split(' ').map(p => p[0]).join('').toUpperCase().slice(0, 2);
 }
 
+/**
+ * Strips the internal doc ID prefix from a filename.
+ * "doc_1317132caea5_test3.pptx" → "test3.pptx"
+ */
+function cleanSourceName(raw) {
+  if (!raw) return 'Unknown';
+  return raw.replace(/^doc_[a-f0-9]+_/i, '');
+}
+
+/**
+ * Replaces [Source: filename, page X] citations in the answer text
+ * with a small clean inline badge showing just the human-readable filename.
+ */
+function renderContentWithCitations(content) {
+  if (!content) return null;
+
+  const pattern = /\[Source:\s*([^\],]+?)(?:,\s*page\s+(\d+))?\]/gi;
+  const parts = [];
+  let lastIndex = 0;
+  let match;
+
+  while ((match = pattern.exec(content)) !== null) {
+    // Plain text before this citation
+    if (match.index > lastIndex) {
+      parts.push(content.slice(lastIndex, match.index));
+    }
+    const name = cleanSourceName(match[1].trim());
+    const page = match[2] ? `, p. ${match[2]}` : '';
+    parts.push(
+      <span
+        key={match.index}
+        style={{
+          fontSize: '11.5px',
+          color: '#6b7280',
+          fontStyle: 'italic',
+          marginLeft: '2px',
+        }}
+      >
+        [{name}{page}]
+      </span>
+    );
+    lastIndex = pattern.lastIndex;
+  }
+
+  if (lastIndex < content.length) {
+    parts.push(content.slice(lastIndex));
+  }
+
+  return parts;
+}
+
 export default function MessageBubble({ message }) {
   const styles = useStyles();
-  const { activeUser, activeUserId } = useUser();
+  const { activeUser, activeUserId ,token } = useUser();
   const [sourcesOpen, setSourcesOpen] = useState(false);
   const isUser = message.role === 'user';
   const sources = message.sources || [];
@@ -155,7 +212,9 @@ export default function MessageBubble({ message }) {
           isUser ? styles.bubbleUser : styles.bubbleAssistant,
           isEmpty && isStreaming && styles.bubbleEmpty,
         )}>
-          {message.content}
+          {isUser
+            ? message.content
+            : renderContentWithCitations(message.content)}
           {isStreaming && <span className={styles.cursor} />}
         </div>
 
@@ -165,18 +224,48 @@ export default function MessageBubble({ message }) {
 
         {sources.length > 0 && (
           <div>
-            <button className={styles.sourcesToggle} onClick={() => setSourcesOpen(!sourcesOpen)}>
+            <button
+              className={styles.sourcesToggle}
+              onClick={() => setSourcesOpen(!sourcesOpen)}
+            >
               📎 {sources.length} source{sources.length !== 1 ? 's' : ''}
-              {sourcesOpen ? <ChevronUp16Regular style={{ fontSize: 12 }} /> : <ChevronDown16Regular style={{ fontSize: 12 }} />}
+              {sourcesOpen
+                ? <ChevronUp16Regular style={{ fontSize: 12 }} />
+                : <ChevronDown16Regular style={{ fontSize: 12 }} />}
             </button>
+
             {sourcesOpen && (
               <div className={styles.sourcesList}>
-                {sources.map((src, i) => (
-                  <div key={i} className={styles.sourceItem}>
-                    <DocumentRegular className={styles.sourceIcon} />
-                    [{i + 1}] {src.source || 'Unknown'}{src.page ? `, p. ${src.page}` : ''}
-                  </div>
-                ))}
+                {sources.map((src, i) => {
+                  const displayName = cleanSourceName(src.source);
+                  const page = src.page ? `, p. ${src.page}` : '';
+
+                  // src.url  → direct link your backend provides (preferred)
+                  // src.path → fallback: served via a dedicated file endpoint
+                  // Without either, render non-clickable.
+                  const fileUrl = src.document_id
+  ? `/api/documents/${src.document_id}/download?token=${encodeURIComponent(token || '')}`
+  : null;
+
+                  return fileUrl ? (
+                    <a
+                      key={i}
+                      className={styles.sourceItem}
+                      href={fileUrl}
+                      target="_blank"          // opens in new tab, not inside your app
+                      rel="noopener noreferrer"
+                      title={`Open ${displayName}`}
+                    >
+                      <DocumentRegular className={styles.sourceIcon} />
+                      {displayName}{page}
+                    </a>
+                  ) : (
+                    <div key={i} className={styles.sourceItem} style={{ cursor: 'default' }}>
+                      <DocumentRegular className={styles.sourceIcon} />
+                      {displayName}{page}
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
