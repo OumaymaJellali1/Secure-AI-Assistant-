@@ -308,6 +308,8 @@ def extract_eml(file_path: str) -> dict:
                         print(f"[EML HANDLER] Temp file  : {temp_path}")
 
                     result = handler(str(temp_path))
+                    if not isinstance(result, dict):
+                     print(f"⚠️  WARNING: {attach_name} handler returned {type(result).__name__}, not dict: {str(result)[:100]}")
                     _cleanup_json(str(temp_path))
                     attachments_results.append({
                         "name"  : attach_name,

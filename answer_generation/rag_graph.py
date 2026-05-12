@@ -1,16 +1,23 @@
+from __future__ import annotations
 """
-answer_generation/rag_graph.py — LangGraph RAG with classifier + corrective retry loop.
+generation/rag_graph.py — LangGraph RAG with classifier + corrective retry loop.
+
+UPDATED: direct_answer node now uses direct_chat (conversational LLM)
+instead of going through the strict-RAG generator prompt.
+"""
+"""
+generation/rag_graph.py — LangGraph RAG with classifier + corrective retry loop.
 
 UPDATED:
-  - RAGState carries `retrieval_filter` (scope filter from the API layer)
-  - make_retrieve_node now passes caller_id + is_admin to retriever.search()
-    so the ACL is enforced server-side in Qdrant (not post-filtered in Python)
-  - The old Python-side doc-ID filtering loop is REMOVED — Qdrant does it
-  - run_graph / run_graph_until_generate accept + pass retrieval_filter through
-  - direct_answer node uses direct_chat (conversational LLM, no RAG)
-  - User-existence guard added at the top of run_graph()
+  • direct_answer node uses direct_chat (conversational LLM)
+  • 🆕 doc_filter support — per-conversation document filter
+
+NEW in this version:
+  • RAGState.doc_filter — list of doc IDs to restrict retrieval to (empty = no filter)
+  • retrieve_node intersects allowed_docs with doc_filter
+  • run_graph + run_graph_until_generate accept doc_filter parameter
 """
-from __future__ import annotations
+
 
 import sys
 import os
@@ -21,22 +28,22 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from langgraph.graph import StateGraph, END
 
-from retrieve.retriever           import Retriever
-from reranking.reranker           import Reranker
-from answer_generation.generator  import Generator
-from memory                       import MemoryManager
+from retrieve.retriever  import Retriever
+from reranking.reranker   import Reranker
+from answer_generation.generator import Generator
+from memory               import MemoryManager
 
-from llm_as_a_judge.rag_judge     import score_chunks
-from answer_generation.classifier import classify_query
-from answer_generation.direct_chat import direct_chat
+from llm_as_a_judge.rag_judge import score_chunks
+from answer_generation.classifier       import classify_query
+from answer_generation.direct_chat      import direct_chat
 
 
 # ── CONFIG ────────────────────────────────────────────────────────
-RETRIEVAL_POOL       = 20
-TOP_N                = 5
-MAX_ATTEMPTS         = 2
-WEAK_CHUNK_THRESHOLD = 3
-WEAK_CHUNK_RATIO     = 0.5
+RETRIEVAL_POOL         = 20
+TOP_N                  = 5
+MAX_ATTEMPTS           = 2
+WEAK_CHUNK_THRESHOLD   = 3
+WEAK_CHUNK_RATIO       = 0.5
 
 NEXT_MODE: dict[str, str] = {
     "hybrid": "dense",
@@ -46,30 +53,27 @@ NEXT_MODE: dict[str, str] = {
 
 
 # ── STATE ─────────────────────────────────────────────────────────
-class RAGState(TypedDict):
-    question:          str
-    id:           str
-    session_id:        str
-    query_type:        Literal["NEEDS_RAG", "DIRECT_ANSWER"]
-    history:           list[dict]
-    rewritten_query:   str
-    retrieval_mode:    Literal["hybrid", "dense", "sparse"]
-    attempt:           int
-    candidates:        list[dict]
-    chunks:            list[dict]
-    chunk_scores:      list[dict]
-    should_retry:      bool
-    memory_context:    str
-    answer:            str
-    sources:           list[dict]
-    no_answer:         bool
-    tokens:            dict
-    latency_s:         float
-    total_latency_s:   float
-    # ── Scope / knowledge-source filter ──────────────────────────
-    retrieval_filter:  dict | None   # {"must": [{"key": ..., "match": {"value": ...}}]}
-    # ── Access-control fields ─────────────────────────────────────
-    is_admin:          bool          # True → no ACL filter in Qdrant
+class RAGState(TypedDict, total=False):
+    question:        str
+    user_id:         str
+    session_id:      str
+    doc_filter:      list[str]    # 🆕 optional filter (empty = no filter)
+    query_type:      Literal["NEEDS_RAG", "DIRECT_ANSWER"]
+    history:         list[dict]
+    rewritten_query: str
+    retrieval_mode:  Literal["hybrid", "dense", "sparse"]
+    attempt:         int
+    candidates:      list[dict]
+    chunks:          list[dict]
+    chunk_scores:    list[dict]
+    should_retry:    bool
+    memory_context:  str
+    answer:          str
+    sources:         list[dict]
+    no_answer:       bool
+    tokens:          dict
+    latency_s:       float
+    total_latency_s: float
 
 
 # ── HELPERS ───────────────────────────────────────────────────────
@@ -90,9 +94,27 @@ def _build_memory_chunk(memory_context: str) -> dict:
     }
 
 
+def _get_document_id(chunk: dict) -> str | None:
+    doc_id = chunk.get("document_id")
+    if doc_id:
+        return doc_id
+    payload = chunk.get("payload", {})
+    if isinstance(payload, dict):
+        doc_id = payload.get("document_id")
+        if doc_id:
+            return doc_id
+    metadata = chunk.get("metadata", {})
+    if isinstance(metadata, dict):
+        doc_id = metadata.get("document_id")
+        if doc_id:
+            return doc_id
+    return None
+
+
 def _load_recent_history_from_db(session_id: str, n: int = 4) -> list[dict]:
     from sqlalchemy import text
     from shared.db import engine
+    
     try:
         with engine.connect() as conn:
             rows = conn.execute(
@@ -116,7 +138,7 @@ def _load_recent_history_from_db(session_id: str, n: int = 4) -> list[dict]:
 def make_classify_node():
     def classify_node(state: RAGState) -> RAGState:
         print(f"\n[GRAPH 1/6] Classifying query...")
-        history  = _load_recent_history_from_db(state["session_id"], n=4)
+        history = _load_recent_history_from_db(state["session_id"], n=4)
         category = classify_query(state["question"], history)
         print(f"  Question: {state['question'][:80]}{'...' if len(state['question']) > 80 else ''}")
         print(f"  → Category: {category}")
@@ -140,35 +162,68 @@ def make_rewrite_node(memory: MemoryManager):
 
 def make_retrieve_node(retriever: Retriever, memory: MemoryManager, pool: int):
     def retrieve_node(state: RAGState) -> RAGState:
-        attempt  = state["attempt"]
-        mode     = state["retrieval_mode"]
-        id  = state["id"]
-        is_admin = state.get("is_admin", False)
+        attempt    = state["attempt"]
+        mode       = state["retrieval_mode"]
+        doc_filter = state.get("doc_filter") or []   # 🆕 read filter from state
+        
+        print(f"\n[GRAPH 3/6] Retrieving (attempt={attempt}, mode={mode}, pool={pool})...")
 
-        print(f"\n[GRAPH 3/6] Retrieving "
-              f"(attempt={attempt}, mode={mode}, pool={pool}, "
-              f"user={id}, admin={is_admin})...")
+        allowed_docs = memory.get_allowed_doc_ids() or []
+        allowed_set  = set(allowed_docs)
+        print(f"  User has access to {len(allowed_set)} private docs")
 
-        retrieval_filter = state.get("retrieval_filter")
-        if retrieval_filter:
-            print(f"  Scope filter active: {retrieval_filter}")
+        # 🆕 Compute effective filter (intersection of user's docs + filter)
+        if doc_filter:
+            filter_set = set(doc_filter)
+            effective_filter = filter_set & allowed_set
+            print(f"  🎯 FILTER ACTIVE: {len(filter_set)} requested → {len(effective_filter)} allowed")
+            if not effective_filter:
+                print(f"  ⚠ No accessible docs in filter — returning empty")
+                return {**state, "candidates": []}
+        else:
+            effective_filter = None  # No filter
+            print(f"  No filter — searching all accessible chunks")
 
-        # ── Single retriever.search() call — ACL enforced server-side ──────────
-        # The retriever builds a Qdrant SHOULD filter:
-        #   (id == caller_id) OR (id IS NULL)
-        # Admin bypasses this; scope filter is ANDed on top.
-        candidates = retriever.search(
+        raw_candidates = retriever.search(
             state["rewritten_query"],
-            mode             = mode,
-            top_n            = pool,
-            retrieval_filter = retrieval_filter,
-            caller_id        = id,
-            is_admin         = is_admin,
+            mode=mode,
+            top_n=pool * 3,
         )
 
-        print(f"  Got {len(candidates)} candidates.")
-        return {**state, "candidates": candidates}
+        candidates = []
+        n_dropped_perm = 0
+        n_dropped_filter = 0
+        
+        for c in raw_candidates:
+            doc_id = _get_document_id(c)
+            
+            # 🆕 Filter logic: when filter is active, ONLY filter docs (no public)
+            if effective_filter is not None:
+                if not doc_id or doc_id not in effective_filter:
+                    n_dropped_filter += 1
+                    continue
+                candidates.append(c)
+            else:
+                # Original logic: public + user's private
+                if not doc_id:
+                    candidates.append(c)
+                elif doc_id in allowed_set:
+                    candidates.append(c)
+                else:
+                    n_dropped_perm += 1
+            
+            if len(candidates) >= pool:
+                break
 
+        n_public  = sum(1 for c in candidates if not _get_document_id(c))
+        n_private = len(candidates) - n_public
+        print(f"  Kept {len(candidates)} chunks ({n_public} public, {n_private} private)")
+        if n_dropped_perm:
+            print(f"  Dropped {n_dropped_perm} chunks (permission)")
+        if n_dropped_filter:
+            print(f"  Dropped {n_dropped_filter} chunks (filter)")
+        
+        return {**state, "candidates": candidates}
     return retrieve_node
 
 
@@ -189,57 +244,52 @@ def make_grade_chunks_node():
         print(f"\n[GRAPH 5/6] Grading chunks...")
         chunks = state["chunks"]
         if not chunks:
-            print("  No chunks — forcing retry.")
-            return {
-                **state,
-                "chunk_scores": [],
-                "should_retry": state["attempt"] < MAX_ATTEMPTS,
-                "attempt":      state["attempt"] + 1,
-                "retrieval_mode": NEXT_MODE.get(state["retrieval_mode"], "hybrid"),
-            }
+            print("  No chunks to grade — flagging for retry.")
+            return {**state, "chunk_scores": [], "should_retry": state["attempt"] < MAX_ATTEMPTS}
+        try:
+            chunk_scores = score_chunks(state["rewritten_query"], chunks)
+        except Exception as e:
+            print(f"  ⚠ Chunk grading failed: {e}")
+            return {**state, "chunk_scores": [], "should_retry": False}
 
-        chunk_scores = score_chunks(state["rewritten_query"], chunks)
+        weak       = [c for c in chunk_scores if c["score"] < WEAK_CHUNK_THRESHOLD]
+        weak_ratio = len(weak) / len(chunk_scores) if chunk_scores else 1.0
+        print(f"  Weak chunks: {len(weak)}/{len(chunk_scores)} ({weak_ratio:.0%})")
 
-        weak   = sum(1 for s in chunk_scores if s.get("score", 5) < WEAK_CHUNK_THRESHOLD)
-        ratio  = weak / len(chunk_scores)
-        retry  = (
-            state["attempt"] < MAX_ATTEMPTS
-            and ratio >= WEAK_CHUNK_RATIO
-        )
-
-        print(f"  Weak chunks: {weak}/{len(chunk_scores)} (ratio={ratio:.2f})"
-              f" → retry={retry}")
-
-        return {
-            **state,
-            "chunk_scores":   chunk_scores,
-            "should_retry":   retry,
-            "attempt":        state["attempt"] + 1,
-            "retrieval_mode": NEXT_MODE.get(state["retrieval_mode"], "hybrid") if retry else state["retrieval_mode"],
-        }
+        should_retry = weak_ratio > WEAK_CHUNK_RATIO and state["attempt"] < MAX_ATTEMPTS
+        if should_retry:
+            print(f"  → Retry triggered (attempt {state['attempt']} < max {MAX_ATTEMPTS})")
+        else:
+            print(f"  → {'Max attempts reached' if state['attempt'] >= MAX_ATTEMPTS else 'Chunks look good'}, proceeding to generation.")
+        return {**state, "chunk_scores": chunk_scores, "should_retry": should_retry}
     return grade_chunks_node
 
 
 def make_reformulate_node():
     def reformulate_node(state: RAGState) -> RAGState:
-        mode = state["retrieval_mode"]
-        print(f"\n[GRAPH] Reformulating → next mode: {mode}")
-        return state
+        next_mode = NEXT_MODE[state["retrieval_mode"]]
+        print(f"\n[GRAPH] Reformulating: switching mode "
+              f"{state['retrieval_mode']} → {next_mode}, "
+              f"attempt {state['attempt']} → {state['attempt'] + 1}")
+        return {**state, "retrieval_mode": next_mode, "attempt": state["attempt"] + 1}
     return reformulate_node
 
 
 def make_generate_node(generator: Generator, memory: MemoryManager):
+    """RAG-style generation (uses retrieved chunks)."""
     def generate_node(state: RAGState) -> RAGState:
-        print(f"\n[GRAPH 6/6] Generating answer...")
+        print(f"\n[GRAPH 6/6] Generating (with retrieved chunks)...")
         chunks = state["chunks"]
-
-        # Prepend memory context as a synthetic chunk if present
-        augmented = []
-        if state.get("memory_context"):
-            augmented.append(_build_memory_chunk(state["memory_context"]))
-        augmented.extend(chunks)
+        if state["memory_context"]:
+            memory_chunk = _build_memory_chunk(state["memory_context"])
+            augmented    = [memory_chunk] + chunks
+        else:
+            augmented = chunks
 
         if not augmented:
+            print("  No chunks available — returning no-answer.")
+            memory.save_turn("user",      state["question"], extract_facts=False)
+            memory.save_turn("assistant", "I couldn't find relevant information.", extract_facts=False)
             return {
                 **state,
                 "answer":    "I couldn't find relevant information in the knowledge base.",
@@ -267,16 +317,16 @@ def make_generate_node(generator: Generator, memory: MemoryManager):
 def make_direct_answer_node(memory: MemoryManager):
     """
     Direct conversational answer — NO retrieval, NO RAG prompt.
-    Uses direct_chat which has a conversational system prompt.
     """
     def direct_answer_node(state: RAGState) -> RAGState:
         print(f"\n[GRAPH] Direct answer (conversational)...")
+        
         history = state.get("history", [])
-        result  = direct_chat(state["question"], history)
-
+        result = direct_chat(state["question"], history)
+        
         memory.save_turn("user",      state["question"], extract_facts=False)
         memory.save_turn("assistant", result.get("answer", ""), extract_facts=False)
-
+        
         return {
             **state,
             "answer":          result.get("answer", ""),
@@ -289,18 +339,19 @@ def make_direct_answer_node(memory: MemoryManager):
     return direct_answer_node
 
 
-# ── ROUTING ───────────────────────────────────────────────────────
+# ── ROUTING FUNCTIONS ─────────────────────────────────────────────
 
 def route_after_classify(state: RAGState) -> str:
-    return "direct_answer" if state["query_type"] == "DIRECT_ANSWER" else "rewrite"
+    if state["query_type"] == "DIRECT_ANSWER":
+        return "direct_answer"
+    return "rewrite"
 
 
 def route_after_grading(state: RAGState) -> str:
     return "reformulate" if state["should_retry"] else "generate"
 
 
-# ── GRAPH BUILDER (FULL) ──────────────────────────────────────────
-
+# ── GRAPH BUILDER (FULL — WITH GENERATION) ────────────────────────
 def build_rag_graph(
     retriever : Retriever,
     reranker  : Reranker,
@@ -323,25 +374,28 @@ def build_rag_graph(
     builder.set_entry_point("classify")
 
     builder.add_conditional_edges(
-        "classify", route_after_classify,
+        "classify",
+        route_after_classify,
         {"rewrite": "rewrite", "direct_answer": "direct_answer"},
     )
+
     builder.add_edge("rewrite",       "retrieve")
     builder.add_edge("retrieve",      "rerank")
     builder.add_edge("rerank",        "grade_chunks")
     builder.add_edge("reformulate",   "retrieve")
     builder.add_edge("generate",      END)
     builder.add_edge("direct_answer", END)
+
     builder.add_conditional_edges(
-        "grade_chunks", route_after_grading,
+        "grade_chunks",
+        route_after_grading,
         {"reformulate": "reformulate", "generate": "generate"},
     )
 
     return builder.compile()
 
 
-# ── GRAPH BUILDER (STREAMING — no generate node) ─────────────────
-
+# ── GRAPH BUILDER (STREAMING — WITHOUT GENERATION) ────────────────
 def build_rag_graph_streaming(
     retriever : Retriever,
     reranker  : Reranker,
@@ -349,6 +403,10 @@ def build_rag_graph_streaming(
     pool      : int = RETRIEVAL_POOL,
     top_n     : int = TOP_N,
 ):
+    """
+    Build streaming graph: classifier + retrieval pipeline.
+    Generation happens in the streaming endpoint (so tokens stream live).
+    """
     builder = StateGraph(RAGState)
 
     builder.add_node("classify",     make_classify_node())
@@ -361,12 +419,16 @@ def build_rag_graph_streaming(
     builder.set_entry_point("classify")
 
     def route_after_classify_streaming(state):
-        return END if state["query_type"] == "DIRECT_ANSWER" else "rewrite"
+        if state["query_type"] == "DIRECT_ANSWER":
+            return END
+        return "rewrite"
 
     builder.add_conditional_edges(
-        "classify", route_after_classify_streaming,
+        "classify",
+        route_after_classify_streaming,
         {"rewrite": "rewrite", END: END},
     )
+
     builder.add_edge("rewrite",     "retrieve")
     builder.add_edge("retrieve",    "rerank")
     builder.add_edge("rerank",      "grade_chunks")
@@ -376,7 +438,8 @@ def build_rag_graph_streaming(
         return "reformulate" if state["should_retry"] else END
 
     builder.add_conditional_edges(
-        "grade_chunks", route_streaming,
+        "grade_chunks",
+        route_streaming,
         {"reformulate": "reformulate", END: END},
     )
 
@@ -384,66 +447,11 @@ def build_rag_graph_streaming(
 
 
 # ── RUN HELPERS ───────────────────────────────────────────────────
-
-def _initial_state(
-    question         : str,
-    id          : str,
-    session_id       : str,
-    mode             : str  = "hybrid",
-    retrieval_filter : dict | None = None,
-    is_admin         : bool = False,
-) -> RAGState:
-    return {
-        "question":         question,
-        "id":               id,
-        "session_id":       session_id,
-        "query_type":       "NEEDS_RAG",
-        "history":          [],
-        "rewritten_query":  question,
-        "retrieval_mode":   mode,
-        "attempt":          0,
-        "candidates":       [],
-        "chunks":           [],
-        "chunk_scores":     [],
-        "should_retry":     False,
-        "memory_context":   "",
-        "answer":           "",
-        "sources":          [],
-        "no_answer":        False,
-        "tokens":           {"prompt": 0, "completion": 0, "total": 0},
-        "latency_s":        0.0,
-        "total_latency_s":  0.0,
-        "retrieval_filter": retrieval_filter,
-        "is_admin":         is_admin,
-    }
-
-
-def run_graph(
-    graph,
-    question         : str,
-    id               : str,
-    session_id       : str,
-    mode             : str       = "hybrid",
-    retrieval_filter : dict | None = None,
-    is_admin         : bool = False,
-) -> dict:
-    # ── User-existence guard ──────────────────────────────────────
-    from auth.users import get_user
-    if not get_user(id):
-        return {
-            "answer":           "Access denied: unknown user.",
-            "sources":          [],
-            "no_answer":        True,
-            "tokens":           {"prompt": 0, "completion": 0, "total": 0},
-            "latency_s":        0.0,
-            "total_latency_s":  0.0,
-        }
-
-    t_total       = time.perf_counter()
-    initial_state = _initial_state(
-        question, id, session_id, mode, retrieval_filter, is_admin
-    )
-    final_state   = graph.invoke(initial_state)
+def run_graph(graph, question, user_id, session_id, mode="hybrid", doc_filter=None):
+    """Non-streaming. Now accepts optional doc_filter."""
+    t_total = time.perf_counter()
+    initial_state = _initial_state(question, user_id, session_id, mode, doc_filter)
+    final_state = graph.invoke(initial_state)
     total_latency = round(time.perf_counter() - t_total, 3)
 
     return {
@@ -463,16 +471,33 @@ def run_graph(
     }
 
 
-def run_graph_until_generate(
-    graph,
-    question         : str,
-    id          : str,
-    session_id       : str,
-    mode             : str       = "hybrid",
-    retrieval_filter : dict | None = None,
-    is_admin         : bool = False,
-) -> RAGState:
-    initial_state = _initial_state(
-        question, id, session_id, mode, retrieval_filter, is_admin
-    )
-    return graph.invoke(initial_state)
+def run_graph_until_generate(graph, question, user_id, session_id, mode="hybrid", doc_filter=None):
+    """Streaming. Now accepts optional doc_filter."""
+    initial_state = _initial_state(question, user_id, session_id, mode, doc_filter)
+    final_state = graph.invoke(initial_state)
+    return final_state
+
+
+def _initial_state(question, user_id, session_id, mode, doc_filter=None):
+    return {
+        "question":        question,
+        "user_id":         user_id,
+        "session_id":      session_id,
+        "doc_filter":      doc_filter or [],   # 🆕
+        "query_type":      "NEEDS_RAG",
+        "history":         [],
+        "rewritten_query": question,
+        "retrieval_mode":  mode,
+        "attempt":         0,
+        "candidates":      [],
+        "chunks":          [],
+        "chunk_scores":    [],
+        "should_retry":    False,
+        "memory_context":  "",
+        "answer":          "",
+        "sources":         [],
+        "no_answer":       False,
+        "tokens":          {"prompt": 0, "completion": 0, "total": 0},
+        "latency_s":       0.0,
+        "total_latency_s": 0.0,
+    }

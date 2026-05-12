@@ -1,0 +1,185 @@
+{
+  "chunks": [
+    {
+      "chunk_id": "a789532c-1f4e-45ad-b7bf-fa2ddce3bd54",
+      "type": "image",
+      "content": "Multi-Agent Medical Diagnostic System for Chest X-Ray Classification\nPresented By:\nMayssa Ben Soussia\nOumayma Jellali\nThe image presents a detailed illustration of the human respiratory and circulatory systems, focusing on the heart and lungs. The graphic is set against a white background.\nHeart\nThe heart is prominently displayed in the center of the image.\nIt is depicted in a deep red color with a pinkish outline.\nThe heart's shape is typical, with four chambers: the right and left atria (upper chambers) and the right and left ventricles (lower chambers).\nLungs\nThe lungs are shown on either side of the heart.\nThey are illustrated in a light pink color with a subtle shading effect to indicate their three-dimensional shape.\nThe lungs have a distinctive shape, with the right lung appearing slightly larger than the left.\nBlood Vessels\nThe blood vessels are depicted in orange and blue colors.\nThe arteries are shown in orange, while",
+      "metadata": {
+        "source": "attachment_1.pptx",
+        "file_id": "a306622a-d63d-4b32-8661-33fc010c601f",
+        "slide": 1,
+        "section": null,
+        "image_index": 1
+      }
+    },
+    {
+      "chunk_id": "41f5040e-4769-4c0b-90a1-f4b1087d3d69",
+      "type": "text",
+      "content": "Table of contents\n\n03\n\n01\n\n02\n\nPROBLEM STATEMENT\n\nDataset & Technical stack\n\n06\n\n04\n\n05\n\nMODELS & SYSTEM ARCHITECTURE\n\nAgents\n\nRAG VS GraphRAG VS Agentic GraphRAG\n\nNeo4j Scenarios\n\n07\n\n08\n\nDEMO\n\nConclusion & Perspectives",
+      "metadata": {
+        "source": "attachment_1.pptx",
+        "file_id": "a306622a-d63d-4b32-8661-33fc010c601f",
+        "slide": 2,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "72050b56-5001-45b7-9c7b-740bfa234935",
+      "type": "text",
+      "content": "Core Problem:\n\n\"How can we develop a reliable, explainable, and accessible AI system to assist in rapid chest X-ray classification for COVID-19 and pneumonia detection?\"\n\nGap in Existing Solutions:\n\nMost systems use single black-box models\n\nLack of explainability\n\nHeavy computational requirements\n\nNo case-based reasoning\n\nMain Objective:\n\nDevelop an intelligent multi-agent system for automated chest X-ray classification",
+      "metadata": {
+        "source": "attachment_1.pptx",
+        "file_id": "a306622a-d63d-4b32-8661-33fc010c601f",
+        "slide": 4,
+        "section": "01 - PROBLEM STATEMENT"
+      }
+    },
+    {
+      "chunk_id": "8f249f80-d4dd-47f0-8dcd-fa9a9624d970",
+      "type": "image",
+      "content": "a comprehensive overview of the dataset distribution for a medical imaging project, likely focused on diagnosing pneumonia, COVID-19, and normal conditions. The visual content is organized into three main sections: a bar chart illustrating the distribution of classes, a pie chart showing the proportion of each class, and another bar chart detailing the train/test distribution.\nDistribution des Classes (Class Distribution) Bar Chart:\nPNEUMONIA: 1800 images\nNORMAL Classe: 1802 images\nCOVID: 1626 images\nThis chart provides a clear breakdown of the number of images in each class, indicating that the dataset is relatively balanced, with NORMAL Classe having the highest number of images and COVID having the lowest.\nProportion des Classes (Class Proportion) Pie Chart:\nPNEUMONIA: 34.4%\nCOVID: 31.1%\nNORMAL: 34.",
+      "metadata": {
+        "source": "attachment_1.pptx",
+        "file_id": "a306622a-d63d-4b32-8661-33fc010c601f",
+        "slide": 6,
+        "section": "02 - Dataset & Technical stack",
+        "image_index": 2
+      }
+    },
+    {
+      "chunk_id": "d788a044-069a-4e67-954c-f4f9d733924d",
+      "type": "text",
+      "content": "Dataset composition:\n\nThe three classes are used:Normal, Pneumonia, and Covid-19.\n\nImage resizing:\n\nAll images were resized to 224×224 pixels and normalized between 0 and 1(Min–Max).\n\nDataset splitting:\n\n80% for training,10% for validation,10% for testing",
+      "metadata": {
+        "source": "attachment_1.pptx",
+        "file_id": "a306622a-d63d-4b32-8661-33fc010c601f",
+        "slide": 6,
+        "section": "02 - Dataset & Technical stack"
+      }
+    },
+    {
+      "chunk_id": "54f35ca1-c001-4522-8740-74a9d120bb1b",
+      "type": "text",
+      "content": "Chosen Models:\n\nTraditional ML: XGBoost\n\nDeep Learning: MobileNetV2\n\nInterpretable feature importance\n\nFast training and inference\n\nPre-trained on ImageNet\n\nTransfer Learning:\n\n-Freeze first 100 layers\n\n-Fine-tune last 30 layers\n\nWhy Multiple Models?\n\nDifferent perspectives reduce bias\n\nEnsemble improves accuracy\n\nComplementary strengths\n\nRobust consensus",
+      "metadata": {
+        "source": "attachment_1.pptx",
+        "file_id": "a306622a-d63d-4b32-8661-33fc010c601f",
+        "slide": 9,
+        "section": "03 - MODELS & SYSTEM ARCHITECTURE"
+      }
+    },
+    {
+      "chunk_id": "31a19782-9d07-4425-ab5b-c1a428942d8a",
+      "type": "image",
+      "content": "a flowchart illustrating a multi-agent system for medical diagnosis, specifically designed for X-ray image analysis. The chart is divided into several sections, each representing a distinct agent or component of the system.\nX-Ray Image: The process begins with an X-ray image, which is fed into the system.\nCrewAI Orchestrator: The X-ray image is then processed by the CrewAI Orchestrator, which coordinates the actions of the various agents in the system.\nMulti-Agent System: The multi-agent system consists of five agents:\nAgent 1: XGBoost (ML Classification): This agent uses machine learning classification techniques to analyze the X-ray image.\nAgent 2: Deep Learning (Image Analysis): This agent employs deep learning techniques to perform image analysis on the X-ray image.\nAgent 3: XAI (Explainability): This agent provides explanations for the decisions made by",
+      "metadata": {
+        "source": "attachment_1.pptx",
+        "file_id": "a306622a-d63d-4b32-8661-33fc010c601f",
+        "slide": 10,
+        "section": "03 - MODELS & SYSTEM ARCHITECTURE",
+        "image_index": 3
+      }
+    },
+    {
+      "chunk_id": "c400c128-570a-4adc-b200-22a273bc78d3",
+      "type": "text",
+      "content": "Step-by-Step Flow:\n\nImage Upload → Patient ID + X-ray image\n\nPreprocessing → Resize, normalize\n\nParallel Processing:\n\nAgent 1: Extract features → XGBoost prediction\n\nAgent 2: MobileNetV2 prediction\n\nXAI Generation:\n\nAgent 3: Grad-CAM, LIME, SHAP\n\nKnowledge Storage:\n\nAgent 4: Store in Neo4j graph\n\nConsensus Building:\n\nAgent 5: Aggregate predictions\n\nOutput → Final diagnosis + explanations",
+      "metadata": {
+        "source": "attachment_1.pptx",
+        "file_id": "a306622a-d63d-4b32-8661-33fc010c601f",
+        "slide": 10,
+        "section": "03 - MODELS & SYSTEM ARCHITECTURE"
+      }
+    },
+    {
+      "chunk_id": "3aa0215c-3264-4cc0-b58a-a4012fa2e85b",
+      "type": "text",
+      "content": "Agent 5 - CrewAI Orchestrator :\n\n-Role: Multi-Agent Coordinator & Consensus Builder\n\n-Responsibilities:\n\nOrchestration: Coordinate execution of all agents\n\nTask Distribution: Assign tasks to specialized agents\n\nResult Aggregation: Collect predictions from all agents\n\nConsensus Building: Combine opinions into final decision\n\nConflict Resolution: Handle disagreements between agents\n\nReport Generation: Create comprehensive diagnostic report",
+      "metadata": {
+        "source": "attachment_1.pptx",
+        "file_id": "a306622a-d63d-4b32-8661-33fc010c601f",
+        "slide": 13,
+        "section": "04 - Agents"
+      }
+    },
+    {
+      "chunk_id": "587a7817-c3db-4fe2-a6c2-e6d093b0ea40",
+      "type": "image",
+      "content": "RadiographicFeature\nDiagnosis\nSymptom\nDisplay all nodes and relationships\nXAIExplanation\nXRay\nThe image depicts a complex network graph illustrating the relationships between various nodes, which represent medical concepts and entities. The nodes are depicted as circles in different colors, with their labels providing more information.\nKey Nodes and Relationships:\nCentral Nodes:\nA central orange node labeled datafr...\nA blue node labeled COVID\nSurrounding Nodes:\nThese nodes are connected to the central nodes via arrows, which represent relationships such as:\nHAS SYMPTOM\nSHOWS FEATURE\nDIAGNOSED AS\nEXPLAINED BY\nANALYZED BY\nMedical Concepts and Entities:\nThe nodes represent various medical concepts and entities, including:\nSymptoms (e.g., Fever, Cough, Dyspnea)\nDiagnosis (e.g., COVID, Pneum...)",
+      "metadata": {
+        "source": "attachment_1.pptx",
+        "file_id": "a306622a-d63d-4b32-8661-33fc010c601f",
+        "slide": 15,
+        "section": "05 - Neo4j Scenarios",
+        "image_index": 4
+      }
+    },
+    {
+      "chunk_id": "a5fbfc44-6d32-45a8-8335-fdc6637b1aa2",
+      "type": "image",
+      "content": "Graph centered on a patient\nThe image presents a node-link diagram, a type of network visualization, comprising eight circular nodes connected by labeled arrows. The nodes are colored and labeled as follows:\nCOVID (blue)\nTest Patient (purple)\ndata/xray (orange)\noutputs/ (green)\nxgb_P00... (pink)\ndl_P00... (pink)\nGround Glass Opac... (red)\nFever, Cough, Dyspnea (tan)\nThe nodes are interconnected by gray arrows with descriptive labels, including:\nHAS_SYMPTOM\nSHOWS_FEATURE\nDIAGNOSED_AS\nANALYZED_BY\nEXPLAINED_BY\nHAS_XRAY\nThe diagram illustrates the relationships between COVID-19 symptoms, patient data, and machine learning model outputs. The node-link diagram effectively visualizes the connections between these entities, providing a clear and",
+      "metadata": {
+        "source": "attachment_1.pptx",
+        "file_id": "a306622a-d63d-4b32-8661-33fc010c601f",
+        "slide": 16,
+        "section": "05 - Neo4j Scenarios",
+        "image_index": 5
+      }
+    },
+    {
+      "chunk_id": "2ca56cc9-fbd2-4c3c-b06e-70996d03aa98",
+      "type": "image",
+      "content": "The image appears to display a node in a graph database, specifically showing the properties of a node related to a medical diagnosis. The node properties are:\nDiagnosis (highlighted in pink)\nelementId: a unique identifier\nid: 11\nconfidence: 0.92\ndiagnosis_id: xgb_P001_1765264321.023165\nmodel: XGBoost\npredicted_class: COVID\nprobabilities: a JSON object with the following probabilities:\n+ COVID: 0.92\n+ PNEUMONIA: 0.05\n+ NORMAL: 0.03\nThis node likely represents a predicted diagnosis of COVID with high confidence (0.92) using an XGBoost model.",
+      "metadata": {
+        "source": "attachment_1.pptx",
+        "file_id": "a306622a-d63d-4b32-8661-33fc010c601f",
+        "slide": 16,
+        "section": "05 - Neo4j Scenarios",
+        "image_index": 6
+      }
+    },
+    {
+      "chunk_id": "40e07aa0-a550-46d5-aa73-3730d7d67f6f",
+      "type": "image",
+      "content": "a table illustrating Node properties for a patient in a graph database, likely Neo4j.\nThe table displays the following properties:\nElement ID (a unique identifier)\nID (node ID)\nName (the patient's name)\nPatient ID (a unique identifier for the patient)\nThe property values are as follows:\n4:5c839331-9eae-46ab-b997-6f583c1fd119:0\n0\nTest Patient\nP001\nThe Patient label is prominently displayed in a pink oval at the top left of the image. The section title '05 - Neo4j Scenarios' suggests that this image is part of a presentation discussing use cases or scenarios for Neo4j, a graph database management system.",
+      "metadata": {
+        "source": "attachment_1.pptx",
+        "file_id": "a306622a-d63d-4b32-8661-33fc010c601f",
+        "slide": 16,
+        "section": "05 - Neo4j Scenarios",
+        "image_index": 7
+      }
+    },
+    {
+      "chunk_id": "42e7e1f3-c83a-43fe-ab11-e7d3202dcaa9",
+      "type": "image",
+      "content": "Demo:\nThe image appears to be a diagram or chart comparing RAG, GraphRAG, and Agentic GraphRAG.\nImage Details:\nThe image is in black and white.\nThere are no visible labels or text in the provided image.\nIt seems to feature nodes and connections, possibly representing relationships between different components or entities.\nWithout more context or a clearer view of the image, it's difficult to provide further details. However, based on the title of the section '06 - RAG VS GraphRAG VS Agentic GraphRAG', it can be inferred that the image is likely illustrating the differences and comparisons between these three concepts, possibly in the context of artificial intelligence, data structures, or network analysis.",
+      "metadata": {
+        "source": "attachment_1.pptx",
+        "file_id": "a306622a-d63d-4b32-8661-33fc010c601f",
+        "slide": 19,
+        "section": "06 - RAG VS GraphRAG VS Agentic GraphRAG",
+        "image_index": 8
+      }
+    },
+    {
+      "chunk_id": "bc25c6bc-183e-45f4-bee5-e6d56100544b",
+      "type": "text",
+      "content": "Conclusion & Perspectives\n\nA multi-agent system that enhances diagnostic accuracy\n\nTransparent decisions thanks to integrated XAI\n\nKnowledge graph adds context and improves reasoning\n\nFinal consensus ensures reliable and consistent outputs\n\nFuture work: Integrate more advanced models\n\nExpand and enrich the medical knowledge graph",
+      "metadata": {
+        "source": "attachment_1.pptx",
+        "file_id": "a306622a-d63d-4b32-8661-33fc010c601f",
+        "slide": 20,
+        "section": "06 - RAG VS GraphRAG VS Agentic GraphRAG"
+      }
+    }
+  ],
+  "metadata": {
+    "source": "attachment_1.pptx",
+    "file_id": "a306622a-d63d-4b32-8661-33fc010c601f",
+    "slide_count": 21,
+    "text_count": 8,
+    "table_count": 3,
+    "image_count": 8
+  }
+}

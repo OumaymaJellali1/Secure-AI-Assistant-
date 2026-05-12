@@ -125,7 +125,7 @@ class RAGPipeline:
             question         = question,
             id          = self.id,
             session_id       = self.session_id,
-            retrieval_filter = retrieval_filter,
+            doc_filter = retrieval_filter,
             is_admin         = self.is_admin,
         )
         print(f"\n{result['answer']}\n")

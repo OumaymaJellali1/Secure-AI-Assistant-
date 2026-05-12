@@ -41,7 +41,7 @@ _pipeline_cache: dict[tuple[str, str], RAGPipeline] = {}
 def _get_pipeline(user_id: str, session_id: str) -> RAGPipeline:
     key = (user_id, session_id)
     if key not in _pipeline_cache:
-        _pipeline_cache[key] = RAGPipeline(user_id=user_id, session_id=session_id)
+        _pipeline_cache[key] = RAGPipeline(id=user_id, session_id=session_id)
     return _pipeline_cache[key]
 
 
@@ -272,12 +272,12 @@ async def query_stream(
                 from answer_generation.direct_chat import direct_chat_stream
 
                 state = run_graph_until_generate(
-                    graph=pipeline.graph_streaming,
-                    question=body.question,
-                    user_id=user_id,
-                    session_id=session_id,
-                    retrieval_filter=retrieval_filter,  # ← scope forwarded here
-                )
+                   graph=pipeline.graph_streaming,
+                   question=body.question,
+                   user_id=user_id,
+                   session_id=session_id,
+                   doc_filter=retrieval_filter,
+               )
 
                 query_type = state.get("query_type", "NEEDS_RAG")
 

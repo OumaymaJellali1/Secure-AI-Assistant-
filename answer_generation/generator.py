@@ -372,7 +372,7 @@ def print_answer(result: dict, show_sources: bool = True) -> None:
             source    = src.get("source", "unknown")
             page      = src.get("page")
             section   = src.get("section")
-            retrieval = src.get("retrieval", "?")
+            retrieve = src.get("retrieve", "?")
             score     = src.get("score", 0) or 0
 
             location = f"{source}"
@@ -384,7 +384,7 @@ def print_answer(result: dict, show_sources: bool = True) -> None:
             preview = src.get("content", "").replace("\n", " ")[:200]
 
             print(f"\n  [{i}] {location}")
-            print(f"      score={score:.4f} | retrieval={retrieval}")
+            print(f"      score={score:.4f} | retrieve={retrieve}")
             print(f"      {preview}...")
 
     print(f"\n{'─'*70}")
@@ -408,7 +408,7 @@ if __name__ == "__main__":
       python generator.py "Explain RAG" --stream            # one-shot streaming
       python generator.py "summary" --filter source_type=pdf --top_n 5
     """
-    from retrieval.retriever import Retriever
+    from retrieve.retriever import Retriever
 
     # ── REPL MODE ─────────────────────────────────────────────────────────────
     if "--repl" in sys.argv:

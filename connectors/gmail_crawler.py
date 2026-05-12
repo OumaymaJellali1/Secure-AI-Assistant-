@@ -1,17 +1,20 @@
 # connectors/gmail_crawler.py
 # Crawls an entire Gmail mailbox for one user.
 # Tags every chunk with id + owner_email so Qdrant can filter by owner.
-# Hands off to your existing eml_chunker pipeline — nothing downstream changes.
+# Uses the full extract_eml pipeline for proper parsing.
 
 import uuid
 import base64
-import re
 import os
 import sys
+import tempfile
+from pathlib import Path
+
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+
 from auth.gmail_auth import get_gmail_service
-from File_processing.cleaner import clean_email
-from chunking.eml_chunker import _chunk_body, _build_metadata
+from File_processing.eml_handler import extract_eml
+from chunking.eml_chunker import _chunk_body
 
 
 def crawl_user(
@@ -26,9 +29,10 @@ def crawl_user(
     which is stored in Qdrant for access-control filtering at query time.
 
     Args:
-        id     : unique identifier matching the users table
-        user_email  : the user's Gmail address (used as OAuth login_hint)
-        batch_size  : messages per API page (max 500)
+        id         : unique identifier matching the users table
+        user_email : the user's Gmail address (used as OAuth login_hint)
+        batch_size : messages per API page (max 500)
+        max_emails : optional cap on number of emails to fetch
 
     Returns:
         List of chunk dicts ready for normalize_chunks() → embed_chunks() → store()
@@ -41,7 +45,6 @@ def crawl_user(
     print(f"\n[CRAWLER] Starting full crawl for {id} ({user_email})")
 
     while True:
-        # Fetch a page of message IDs (no query filter = all mail)
         kwargs: dict = {"userId": "me", "maxResults": batch_size}
         if page_token:
             kwargs["pageToken"] = page_token
@@ -55,11 +58,13 @@ def crawl_user(
 
         for msg_ref in messages:
             if max_emails and total_fetched >= max_emails:
-              break
+                break
+
+            # ── fetch raw RFC-822 bytes ──────────────────────────
             msg = service.users().messages().get(
                 userId="me",
                 id=msg_ref["id"],
-                format="full"
+                format="raw"        # ← raw gives us exact .eml bytes
             ).execute()
 
             chunks = _message_to_chunks(msg, id, user_email)
@@ -71,8 +76,8 @@ def crawl_user(
             f"{total_fetched} emails fetched → {len(all_chunks)} chunks so far"
         )
 
-        if not page_token:
-            break   # no more pages
+        if not page_token or (max_emails and total_fetched >= max_emails):
+            break
 
     print(f"[CRAWLER] Done: {id} → {len(all_chunks)} total chunks")
     return all_chunks
@@ -85,83 +90,190 @@ def _message_to_chunks(
     id: str,
     user_email: str,
 ) -> list[dict]:
-    """Convert one Gmail API message into chunks tagged with user identity."""
-    headers = {
-        h["name"]: h["value"]
-        for h in msg["payload"].get("headers", [])
-    }
+    """
+    Convert one Gmail API message into chunks using the full extract_eml pipeline.
+    Handles reply stripping, forward stripping, inline tables,
+    attachments (PDF/DOCX/PPTX/images), and CSV → Postgres.
+    """
 
-    eml_metadata = {
-        "source"      : f"{msg['id']}.gmail",
-        "subject"     : headers.get("Subject", ""),
-        "from"        : headers.get("From",    ""),
-        "to"          : headers.get("To",      ""),
-        "date"        : headers.get("Date",    ""),
-        # ── SECURITY FIELDS — stored in Qdrant payload ──────────────
-        "id"     : id,
+    # 1. Decode raw RFC-822 bytes
+    raw = _decode_raw(msg)
+    if not raw:
+        print(f"[CRAWLER] Empty raw payload for message {msg.get('id')} — skipping")
+        return []
+
+    # 2. Write to temp .eml file
+    tmp_path = None
+    try:
+        with tempfile.NamedTemporaryFile(suffix=".eml", delete=False) as tmp:
+            tmp.write(raw)
+            tmp_path = tmp.name
+
+        # 3. Run through your full extract_eml pipeline
+        result = extract_eml(tmp_path)
+
+    except Exception as e:
+        print(f"[CRAWLER] extract_eml failed for {msg.get('id')}: {e}")
+        return []
+
+    finally:
+        # Cleanup temp .eml file
+        if tmp_path and Path(tmp_path).exists():
+            try:
+                os.remove(tmp_path)
+            except Exception:
+                pass
+
+        # Cleanup side-effect JSON that extract_eml writes
+        if tmp_path:
+            json_path = Path(tmp_path).stem + "_parsed.json"
+            if Path(json_path).exists():
+                try:
+                    os.remove(json_path)
+                except Exception:
+                    pass
+
+    # 4. Inject access-control + source fields into metadata
+    result["metadata"].update({
+        "id"         : id,
+        "owner_email": user_email,
+        "source"     : f"{msg['id']}.gmail",
+        "source_type": "gmail",
+        "eml_source" : f"{msg['id']}.gmail",
+    })
+
+    # 5. Build flat chunk list from structured extract_eml result
+    return _build_chunks_from_result(result, id, user_email)
+
+
+def _decode_raw(msg: dict) -> bytes | None:
+    """Decode the base64url-encoded raw RFC-822 bytes from a Gmail API response."""
+    raw_data = msg.get("raw")
+    if not raw_data:
+        return None
+    try:
+        return base64.urlsafe_b64decode(raw_data + "==")
+    except Exception as e:
+        print(f"[CRAWLER] base64 decode error: {e}")
+        return None
+
+
+def _build_chunks_from_result(result: dict, id: str, user_email: str) -> list[dict]:
+    """
+    Turn extract_eml's structured output into a flat list of chunks
+    ready for normalize_chunks() → embed_chunks() → store().
+
+    Handles:
+      - Body text chunks
+      - Inline table chunks
+      - Attachment chunks (PDF, DOCX, PPTX, images)
+    """
+    all_chunks = []
+    base_meta  = result["metadata"]
+
+    # ── BODY CHUNKS (text + inline tables) ───────────────────────
+    for content_block in result.get("content", []):
+        block_type = content_block.get("type")
+
+        if block_type == "text":
+            text = content_block.get("content", "").strip()
+            if not text:
+                continue
+            meta   = _build_chunk_meta(base_meta, id, user_email)
+            chunks = _chunk_body(text, meta)
+            all_chunks.extend(chunks)
+
+        elif block_type == "table":
+            # Serialize table to plain text so it can be embedded
+            text = _table_to_text(content_block)
+            if not text.strip():
+                continue
+            meta   = _build_chunk_meta(base_meta, id, user_email)
+            chunks = _chunk_body(text, meta)
+            all_chunks.extend(chunks)
+
+    # ── ATTACHMENT CHUNKS ─────────────────────────────────────────
+    for att in result.get("attachments", []):
+        att_name   = att.get("name", "unknown")
+        att_result = att.get("result", {})
+
+        # ── FIX 1: skip if handler returned a string instead of dict ──
+        if not isinstance(att_result, dict):
+            print(f"[CRAWLER] ⚠️  Skipping {att_name}: result is {type(att_result).__name__}, not dict")
+            continue
+
+        # Different handlers return chunks under different keys
+        content_blocks = (
+            att_result.get("chunks")       # pptx_chunker, scanned_pdf_chunker
+            or att_result.get("content")   # digital_pdf, eml_handler style
+            or []
+        )
+
+        for content_block in content_blocks:
+            # ── FIX 2: handle string content_block ──
+            if isinstance(content_block, str):
+                print(f"[CRAWLER] ⚠️  [{att_name}] content_block is string: {content_block[:80]}")
+                text = content_block
+            else:
+                # Normalize: some handlers use "content", others use "text"
+                text = (
+                    content_block.get("content")
+                    or content_block.get("text", "")
+                )
+
+            if not isinstance(text, str) or not text.strip():
+                continue
+
+            att_meta = _build_chunk_meta(
+                base_meta, id, user_email,
+                source_override=f"{att_name} (in {base_meta.get('source', '')})",
+            )
+            chunks = _chunk_body(text, att_meta)
+            all_chunks.extend(chunks)
+
+    return all_chunks
+
+
+def _build_chunk_meta(
+    base_meta: dict,
+    id: str,
+    user_email: str,
+    source_override: str = None,
+) -> dict:
+    """Build a metadata dict in the shape eml_chunker expects."""
+    return {
+        "source"      : source_override or base_meta.get("source", ""),
+        "file_id"     : str(uuid.uuid4()),
+        "source_type" : "gmail",
+        "eml_source"  : base_meta.get("eml_source", base_meta.get("source", "")),
+        "subject"     : base_meta.get("subject", ""),
+        "from"        : base_meta.get("from", ""),
+        "to"          : base_meta.get("to", ""),
+        "date"        : base_meta.get("date", ""),
+        "attachments" : base_meta.get("attachments", []),
+        # Access-control fields
+        "id"          : id,
         "owner_email" : user_email,
     }
 
-    plain_text = _extract_body_text(msg["payload"])
-    cleaned    = clean_email(plain_text)
 
-    if not cleaned.strip():
-        return []   # skip empty emails
-
-    file_id = str(uuid.uuid4())
-    meta    = _build_metadata_with_owner(eml_metadata, file_id)
-
-    # Reuse your existing _chunk_body — unchanged
-    return _chunk_body(cleaned, meta)
-
-
-def _build_metadata_with_owner(eml_metadata: dict, file_id: str) -> dict:
+def _table_to_text(table_block: dict) -> str:
     """
-    Build a metadata dict in the shape eml_chunker expects,
-    extended with id and owner_email for access control.
+    Serialize an inline table chunk from extract_eml into plain text
+    so it can be passed to _chunk_body() for embedding.
+
+    Example output:
+        Headers: Name | Revenue | Region
+        Row: Alice | 1000 | North
+        Row: Bob   | 2000 | South
     """
-    return {
-        # Standard eml fields
-        "source"      : eml_metadata.get("source",  ""),
-        "file_id"     : file_id,
-        "source_type" : "gmail",
-        "eml_source"  : eml_metadata.get("source",  ""),
-        "subject"     : eml_metadata.get("subject", ""),
-        "from"        : eml_metadata.get("from",    ""),
-        "to"          : eml_metadata.get("to",      ""),
-        "date"        : eml_metadata.get("date",    ""),
-        "attachments" : [],
-        # Access-control fields
-        "id"     : eml_metadata["id"],
-        "owner_email" : eml_metadata["owner_email"],
-    }
+    headers = table_block.get("headers", [])
+    rows    = table_block.get("rows", [])
 
+    lines = []
+    if headers:
+        lines.append("Headers: " + " | ".join(str(h) for h in headers))
+    for row in rows:
+        lines.append("Row: " + " | ".join(str(c) for c in row))
 
-def _extract_body_text(payload: dict) -> str:
-    """Recursively extract plain text from a Gmail MIME payload."""
-    mime = payload.get("mimeType", "")
-
-    if mime == "text/plain":
-        data = payload.get("body", {}).get("data", "")
-        if data:
-            return base64.urlsafe_b64decode(data + "==").decode("utf-8", errors="ignore")
-
-    if mime == "text/html":
-        data = payload.get("body", {}).get("data", "")
-        if data:
-            html = base64.urlsafe_b64decode(data + "==").decode("utf-8", errors="ignore")
-            try:
-                from bs4 import BeautifulSoup
-                return BeautifulSoup(html, "html.parser").get_text(
-                    separator=" ", strip=True
-                )
-            except Exception:
-                return re.sub(r"<[^>]+>", " ", html)
-
-    # Recurse into multipart
-    for part in payload.get("parts", []):
-        result = _extract_body_text(part)
-        if result:
-            return result
-
-    return ""
+    return "\n".join(lines)

@@ -1,0 +1,133 @@
+{
+  "chunks": [
+    {
+      "chunk_id": "9389438f-50ad-4470-8849-78acabb27c60",
+      "type": "text",
+      "content": "Systéme de détection de Casques de Sécurité\n\nPrésenté par :\n\nSalem Jamel",
+      "metadata": {
+        "source": "attachment_4.pptx",
+        "file_id": "54574d4c-0e22-468f-9fc9-f5233984ea2a",
+        "slide": 1,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "3d829c74-81fc-4280-9c2d-e9f3cfcf2a55",
+      "type": "text",
+      "content": "Problematique :\n\n-La sécurité sur les chantiers est un enjeu majeur : blessures graves et accidents fréquents.\n\n-Le port du casque de sécurité est obligatoire, mais difficile à contrôler en continu.\n\nObjectif du projet : Détecter automatiquement si les ouvriers portent leur casque pour réduire les risques d’accidents.",
+      "metadata": {
+        "source": "attachment_4.pptx",
+        "file_id": "54574d4c-0e22-468f-9fc9-f5233984ea2a",
+        "slide": 3,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "a3ca7db1-95e5-4899-bc3b-6dbc46b377a6",
+      "type": "text",
+      "content": "Avantages du système :\n\nSurveillance automatisée 24h/24 et 7j/7.\n\nRéduction des accidents sur chantier.\n\nSystème peu coûteux et modulable.",
+      "metadata": {
+        "source": "attachment_4.pptx",
+        "file_id": "54574d4c-0e22-468f-9fc9-f5233984ea2a",
+        "slide": 4,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "e880ac77-3645-4982-9ebc-cb7863e20c72",
+      "type": "text",
+      "content": "pipeline du projet\n\nLa caméra capture l’image en temps réel.\n\nImage envoyée au modèle YOLOv8.\n\nDétection de chaque personne et de leur casque.\n\nAlerte LED/Buzzer",
+      "metadata": {
+        "source": "attachment_4.pptx",
+        "file_id": "54574d4c-0e22-468f-9fc9-f5233984ea2a",
+        "slide": 5,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "c65528b7-ea03-42d2-b61a-187d8cddd077",
+      "type": "text",
+      "content": "Système IoT et Capteurs\n\nRaspberry Pi 4:exécute le modèle YOLOv8 et gère les capteurs/actionneurs.\n\nCaméra Pi :Capteur principal qui capture des images ou flux vidéo en temps réel du chantier.\n\nLED :Indicateur visuel qui s’allume lorsqu’une personne est détectée sans casque.\n\nBuzzer:Indicateur sonore qui émet un son d’alerte immédiate si le casque est absent.",
+      "metadata": {
+        "source": "attachment_4.pptx",
+        "file_id": "54574d4c-0e22-468f-9fc9-f5233984ea2a",
+        "slide": 6,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "d1ebe546-ae3f-4b2e-bec8-d12fa6381d72",
+      "type": "text",
+      "content": "Systéme IA\n\nDataset utilisé:",
+      "metadata": {
+        "source": "attachment_4.pptx",
+        "file_id": "54574d4c-0e22-468f-9fc9-f5233984ea2a",
+        "slide": 7,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "1641b6a6-f3f0-4e3f-b877-54935ac95d6f",
+      "type": "text",
+      "content": "Systéme IA\n\nDataset utilisé:",
+      "metadata": {
+        "source": "attachment_4.pptx",
+        "file_id": "54574d4c-0e22-468f-9fc9-f5233984ea2a",
+        "slide": 8,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "08062fa2-5851-4456-9947-edfbb359eb7a",
+      "type": "text",
+      "content": "Systéme IA\n\nModéle utilisé :\n\nModèle de détection d’objets en temps réel.\n\nLéger et rapide, adapté à la Raspberry Pi 4.",
+      "metadata": {
+        "source": "attachment_4.pptx",
+        "file_id": "54574d4c-0e22-468f-9fc9-f5233984ea2a",
+        "slide": 9,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "10e4115d-48f7-4a0d-b51e-a2951e371615",
+      "type": "text",
+      "content": "Systéme IA\n\nLes métriques d’evaluation :",
+      "metadata": {
+        "source": "attachment_4.pptx",
+        "file_id": "54574d4c-0e22-468f-9fc9-f5233984ea2a",
+        "slide": 10,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "7d420489-e9e8-4a54-aa8c-bdb78fcf5b37",
+      "type": "text",
+      "content": "Systéme IA\n\nLa phase de test :",
+      "metadata": {
+        "source": "attachment_4.pptx",
+        "file_id": "54574d4c-0e22-468f-9fc9-f5233984ea2a",
+        "slide": 11,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "b25f3711-09d2-468b-9319-f7b59daad75c",
+      "type": "text",
+      "content": "Merci de Votre attention",
+      "metadata": {
+        "source": "attachment_4.pptx",
+        "file_id": "54574d4c-0e22-468f-9fc9-f5233984ea2a",
+        "slide": 12,
+        "section": null
+      }
+    }
+  ],
+  "metadata": {
+    "source": "attachment_4.pptx",
+    "file_id": "54574d4c-0e22-468f-9fc9-f5233984ea2a",
+    "slide_count": 12,
+    "text_count": 11,
+    "table_count": 1,
+    "image_count": 0
+  }
+}

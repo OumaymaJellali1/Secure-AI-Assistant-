@@ -148,6 +148,7 @@ _META_EXTRACTORS = {
     "eml_body_table" : _meta_from_eml,
     "txt"            : _meta_from_txt,
     "image"          : _meta_from_image,
+    "google_drive" : lambda r: _meta_from_eml(r),
 }
 
 
@@ -246,7 +247,7 @@ REQUIRED_META      = {"source", "file_id", "source_type", "section", "page",
                       "subject", "from", "date", "attachment_guid"}
 VALID_TYPES        = {"text", "table", "image"}
 VALID_SOURCE_TYPES = {"pdf_digital", "pdf_scanned", "docx", "pptx",
-                      "eml", "txt", "image"}
+                      "eml", "txt", "image","google_drive"}
 
 
 def validate_chunks(chunks: list[dict]) -> list[str]:

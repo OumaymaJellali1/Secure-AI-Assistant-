@@ -50,7 +50,7 @@ def run_full_crawl(caller_id: str) -> None:
 
         try:
           # 1. Crawl only 50 emails
-          raw_chunks = crawl_user(id, email, max_emails=50)
+          raw_chunks = crawl_user(id, email, max_emails=10)
 
           if not raw_chunks:
             print(f"[TEST] {id}: no content found")

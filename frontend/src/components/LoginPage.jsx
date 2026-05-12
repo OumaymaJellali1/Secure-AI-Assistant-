@@ -241,28 +241,35 @@ function getInitials(name) {
 }
 
 export default function LoginPage({ onLogin }) {
-  const { users, loading, error, activeUserId, setActiveUserId } = useUser();
-  const [selected, setSelected] = useState(activeUserId || null);
-  const [hoveredId, setHoveredId] = useState(null);
-  const [loggingIn, setLoggingIn] = useState(false);
+  const [users, setUsers]       = useState([]);
+  const [loading, setLoading]   = useState(true);
+  const [error, setError]       = useState(null);
+  const [selected, setSelected] = useState(null);
+  const [hoveredId, setHoveredId]   = useState(null);
+  const [loggingIn, setLoggingIn]   = useState(false);
   const [loginError, setLoginError] = useState(null);
 
+  // Load users list from backend on mount
   useEffect(() => {
-    if (!selected && users.length > 0) {
-      setSelected(users[0].id);
-    }
-  }, [users]);
+    api.get('/auth/users')
+      .then(res => {
+        setUsers(res.data);
+        if (res.data.length > 0) setSelected(res.data[0].id);
+      })
+      .catch(e => setError(e.response?.data?.detail || e.message))
+      .finally(() => setLoading(false));
+  }, []);
 
   const handleLogin = async () => {
     if (!selected) return;
     setLoggingIn(true);
     setLoginError(null);
     try {
-      setActiveUserId(selected);
-      await new Promise(r => setTimeout(r, 400));
-      onLogin();
+      const res = await api.post('/auth/login', { user_id: selected });
+      // res.data = { user_id, email, display_name, token }
+      onLogin(res.data);
     } catch (e) {
-      setLoginError(e.message);
+      setLoginError(e.response?.data?.detail || e.message);
       setLoggingIn(false);
     }
   };
@@ -325,7 +332,7 @@ export default function LoginPage({ onLogin }) {
             <div style={styles.userGrid}>
               {users.map((user, i) => {
                 const isSelected = selected === user.id;
-                const isHovered = hoveredId === user.id;
+                const isHovered  = hoveredId === user.id;
                 const name = user.display_name || user.id;
                 return (
                   <button
