@@ -84,15 +84,17 @@ def _to_sparse_bm25(text: str) -> dict:
     vocab   = sorted(set(tokens))
 
     # Assign stable integer IDs via hash (keeps it stateless)
-    indices, values = [], []
+    merged = {}
     for term in vocab:
-        idx    = abs(hash(term)) % (2 ** 20)   # 1M token space
-        freq   = tf[term] / total
-        weight = freq * (1 + log(1 + tf[term]))  # TF-lite
-        indices.append(idx)
-        values.append(round(weight, 6))
+     idx    = abs(hash(term)) % (2 ** 20)
+     freq   = tf[term] / total
+     weight = freq * (1 + log(1 + tf[term]))
+     if idx in merged:
+        merged[idx] += round(weight, 6)  # merge collisions
+     else:
+        merged[idx]  = round(weight, 6)
 
-    return {"indices": indices, "values": values}
+    return {"indices": list(merged.keys()), "values": list(merged.values())}
 
 
 # ── CORE EMBED FUNCTION ───────────────────────────────────────────────────────

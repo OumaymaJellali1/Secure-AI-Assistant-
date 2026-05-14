@@ -105,6 +105,10 @@ def _create_payload_indexes(client: QdrantClient, collection_name: str) -> None:
         ("page",        PayloadSchemaType.INTEGER),
         ("document_id", PayloadSchemaType.KEYWORD),  # scope: single_doc
         ("uploaded_by", PayloadSchemaType.KEYWORD),  # scope: uploads_only
+        ("id",            PayloadSchemaType.KEYWORD),
+        ("owner_email",   PayloadSchemaType.KEYWORD),
+        ("allowed_users", PayloadSchemaType.KEYWORD),  # Qdrant supports array matching
+        ("is_public",     PayloadSchemaType.BOOL),
     ]
 
     for field_name, schema_type in indexes:

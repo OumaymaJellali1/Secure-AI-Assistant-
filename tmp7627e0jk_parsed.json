@@ -1,0 +1,26 @@
+{
+  "filename": "tmp7627e0jk.pdf",
+  "chunks": [
+    {
+      "type": "table",
+      "content": "| 1 · File Processing                    | Q · User Query Input                  |\n| -------------------------------------- | ------------------------------------- |\n| Docling · RapidOCR · Groq vision       | Raw question + ACL check              |\n| PDF · DOCX · PPTX · CSV · TXT · IMG    | Rephrase via Groq LLM                 |\n| 2 · Cleaning & Normalization           |                                       |\n| Remove noise · normalize text          | 6 · Hybrid Retrieval                  |\n| Merge sentences · strip bullets        | vector store                          |\n| 3 · Chunking                           | Dense (BGE-M3) + Sparse (BM25)        |\n| Structural → sentence → mini-chunks    | RRF fusion → top-K candidates         |\n| 4 · Embedding                          | 7 · Cross-Encoder Reranker            |\n| BGE-M3 · dense + sparse vectors        | BGE-reranker (local · free)           |\n| 1024-dim · multilingual                | Scores & reorders top-K               |\n| 5 · Indexing                           | 8 · LLM as a Judge                    |\n| Qdrant · cosine similarity             | Groq Llama-4-Scout                    |\n| Metadata: filename · type · ACL        | Relevance eval · pass / reject        |\n| ACL · PostgreSQL                       | 9 · Answer Generation                 |\n| User roles · document permissions      | Qwen2.5-7B · inject validated context |\n|                                        | Generate final answer                 |\n|                                        | 10 · Hybrid Memory                    |\n| Short: sliding window · Mid: summaries |                                       |\n| Long-term: Qdrant vector store         |                                       |",
+      "metadata": {
+        "source": "tmp7627e0jk.pdf",
+        "page_start": 1,
+        "page_end": 1,
+        "section": "② Query Pipeline",
+        "table_index": 1
+      }
+    },
+    {
+      "type": "text",
+      "content": "Docling         BGE-M3        Qdrant        Groq LLM             PostgreSQL parsing         embedding     vector DB     judge + rephrase     ACL / permissions Best practice:  Cross-encoder reranker runs locally before LLM judge → saves tokens · improves precision · reduces latency RAG Pipeline Architecture · PFE 2026",
+      "metadata": {
+        "source": "tmp7627e0jk.pdf",
+        "page_start": 1,
+        "page_end": 1,
+        "section": "② Query Pipeline"
+      }
+    }
+  ]
+}

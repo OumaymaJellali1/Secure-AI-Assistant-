@@ -56,6 +56,8 @@ NEXT_MODE: dict[str, str] = {
 class RAGState(TypedDict, total=False):
     question:        str
     user_id:         str
+    caller_id:       str    # ← add
+    is_admin:        bool
     session_id:      str
     doc_filter:      list[str]    # 🆕 optional filter (empty = no filter)
     query_type:      Literal["NEEDS_RAG", "DIRECT_ANSWER"]
@@ -164,15 +166,14 @@ def make_retrieve_node(retriever: Retriever, memory: MemoryManager, pool: int):
     def retrieve_node(state: RAGState) -> RAGState:
         attempt    = state["attempt"]
         mode       = state["retrieval_mode"]
-        doc_filter = state.get("doc_filter") or []   # 🆕 read filter from state
-        
+        doc_filter = state.get("doc_filter") or []
+
         print(f"\n[GRAPH 3/6] Retrieving (attempt={attempt}, mode={mode}, pool={pool})...")
 
         allowed_docs = memory.get_allowed_doc_ids() or []
         allowed_set  = set(allowed_docs)
         print(f"  User has access to {len(allowed_set)} private docs")
 
-        # 🆕 Compute effective filter (intersection of user's docs + filter)
         if doc_filter:
             filter_set = set(doc_filter)
             effective_filter = filter_set & allowed_set
@@ -181,37 +182,44 @@ def make_retrieve_node(retriever: Retriever, memory: MemoryManager, pool: int):
                 print(f"  ⚠ No accessible docs in filter — returning empty")
                 return {**state, "candidates": []}
         else:
-            effective_filter = None  # No filter
+            effective_filter = None
             print(f"  No filter — searching all accessible chunks")
+
+        # ── look up the caller's email ────────────────────────────
+        from auth.users import load_users
+        users      = load_users()
+        user_email = users.get(state.get("caller_id"), {}).get("email", "")
+        # ─────────────────────────────────────────────────────────
 
         raw_candidates = retriever.search(
             state["rewritten_query"],
             mode=mode,
             top_n=pool * 3,
+            caller_id=state.get("caller_id"),
+            user_email=user_email,              # ← added
+            is_admin=state.get("is_admin", False),
         )
 
         candidates = []
         n_dropped_perm = 0
         n_dropped_filter = 0
-        
+
         for c in raw_candidates:
             doc_id = _get_document_id(c)
-            
-            # 🆕 Filter logic: when filter is active, ONLY filter docs (no public)
+
             if effective_filter is not None:
                 if not doc_id or doc_id not in effective_filter:
                     n_dropped_filter += 1
                     continue
                 candidates.append(c)
             else:
-                # Original logic: public + user's private
                 if not doc_id:
                     candidates.append(c)
                 elif doc_id in allowed_set:
                     candidates.append(c)
                 else:
                     n_dropped_perm += 1
-            
+
             if len(candidates) >= pool:
                 break
 
@@ -222,7 +230,7 @@ def make_retrieve_node(retriever: Retriever, memory: MemoryManager, pool: int):
             print(f"  Dropped {n_dropped_perm} chunks (permission)")
         if n_dropped_filter:
             print(f"  Dropped {n_dropped_filter} chunks (filter)")
-        
+
         return {**state, "candidates": candidates}
     return retrieve_node
 
@@ -447,10 +455,9 @@ def build_rag_graph_streaming(
 
 
 # ── RUN HELPERS ───────────────────────────────────────────────────
-def run_graph(graph, question, user_id, session_id, mode="hybrid", doc_filter=None):
-    """Non-streaming. Now accepts optional doc_filter."""
+def run_graph(graph, question, user_id, session_id, mode="hybrid", doc_filter=None, is_admin=False):
     t_total = time.perf_counter()
-    initial_state = _initial_state(question, user_id, session_id, mode, doc_filter)
+    initial_state = _initial_state(question, user_id, session_id, mode, doc_filter, is_admin)
     final_state = graph.invoke(initial_state)
     total_latency = round(time.perf_counter() - t_total, 3)
 
@@ -471,17 +478,18 @@ def run_graph(graph, question, user_id, session_id, mode="hybrid", doc_filter=No
     }
 
 
-def run_graph_until_generate(graph, question, user_id, session_id, mode="hybrid", doc_filter=None):
-    """Streaming. Now accepts optional doc_filter."""
-    initial_state = _initial_state(question, user_id, session_id, mode, doc_filter)
+def run_graph_until_generate(graph, question, user_id, session_id, mode="hybrid", doc_filter=None, is_admin=False):
+    initial_state = _initial_state(question, user_id, session_id, mode, doc_filter, is_admin)
     final_state = graph.invoke(initial_state)
     return final_state
 
 
-def _initial_state(question, user_id, session_id, mode, doc_filter=None):
+def _initial_state(question, user_id, session_id, mode, doc_filter=None, is_admin=False):
     return {
         "question":        question,
         "user_id":         user_id,
+        "caller_id":       user_id,    # ← add this
+        "is_admin":        is_admin,
         "session_id":      session_id,
         "doc_filter":      doc_filter or [],   # 🆕
         "query_type":      "NEEDS_RAG",

@@ -10,7 +10,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from auth.gmail_auth import get_gmail_service
 from File_processing.eml_handler import extract_eml
@@ -64,7 +64,7 @@ def crawl_user(
             msg = service.users().messages().get(
                 userId="me",
                 id=msg_ref["id"],
-                format="raw"        # ← raw gives us exact .eml bytes
+                format="raw",
             ).execute()
 
             chunks = _message_to_chunks(msg, id, user_email)
@@ -109,7 +109,7 @@ def _message_to_chunks(
             tmp.write(raw)
             tmp_path = tmp.name
 
-        # 3. Run through your full extract_eml pipeline
+        # 3. Run through the full extract_eml pipeline
         result = extract_eml(tmp_path)
 
     except Exception as e:
@@ -126,8 +126,8 @@ def _message_to_chunks(
 
         # Cleanup side-effect JSON that extract_eml writes
         if tmp_path:
-            json_path = Path(tmp_path).stem + "_parsed.json"
-            if Path(json_path).exists():
+            json_path = Path(Path(tmp_path).stem + "_parsed.json")
+            if json_path.exists():
                 try:
                     os.remove(json_path)
                 except Exception:
@@ -173,6 +173,9 @@ def _build_chunks_from_result(result: dict, id: str, user_email: str) -> list[di
 
     # ── BODY CHUNKS (text + inline tables) ───────────────────────
     for content_block in result.get("content", []):
+        if not isinstance(content_block, dict):
+            continue
+
         block_type = content_block.get("type")
 
         if block_type == "text":
@@ -184,7 +187,6 @@ def _build_chunks_from_result(result: dict, id: str, user_email: str) -> list[di
             all_chunks.extend(chunks)
 
         elif block_type == "table":
-            # Serialize table to plain text so it can be embedded
             text = _table_to_text(content_block)
             if not text.strip():
                 continue
@@ -197,30 +199,36 @@ def _build_chunks_from_result(result: dict, id: str, user_email: str) -> list[di
         att_name   = att.get("name", "unknown")
         att_result = att.get("result", {})
 
-        # ── FIX 1: skip if handler returned a string instead of dict ──
-        if not isinstance(att_result, dict):
-            print(f"[CRAWLER] ⚠️  Skipping {att_name}: result is {type(att_result).__name__}, not dict")
+        # Skip if handler returned nothing usable
+        if not att_result or not isinstance(att_result, dict):
             continue
 
-        # Different handlers return chunks under different keys
-        content_blocks = (
-            att_result.get("chunks")       # pptx_chunker, scanned_pdf_chunker
-            or att_result.get("content")   # digital_pdf, eml_handler style
+        # Different handlers return chunks under different keys:
+        #   "chunks"  → pptx_chunker, scanned_pdf_chunker
+        #   "content" → digital_pdf, image_handler  (may be a string OR list)
+        raw_blocks = (
+            att_result.get("chunks")
+            or att_result.get("content")
             or []
         )
 
-        for content_block in content_blocks:
-            # ── FIX 2: handle string content_block ──
-            if isinstance(content_block, str):
-                print(f"[CRAWLER] ⚠️  [{att_name}] content_block is string: {content_block[:80]}")
-                text = content_block
-            else:
-                # Normalize: some handlers use "content", others use "text"
-                text = (
-                    content_block.get("content")
-                    or content_block.get("text", "")
-                )
+        # Normalize: image/txt handlers may return a plain string instead of a list
+        if isinstance(raw_blocks, str):
+            content_blocks = [{"type": "text", "content": raw_blocks}] if raw_blocks.strip() else []
+        elif isinstance(raw_blocks, list):
+            content_blocks = raw_blocks
+        else:
+            content_blocks = []
 
+        for content_block in content_blocks:
+            # Guard: skip bare strings that slipped through mixed lists
+            if not isinstance(content_block, dict):
+                continue
+
+            text = (
+                content_block.get("content")
+                or content_block.get("text", "")
+            )
             if not isinstance(text, str) or not text.strip():
                 continue
 
@@ -251,7 +259,7 @@ def _build_chunk_meta(
         "to"          : base_meta.get("to", ""),
         "date"        : base_meta.get("date", ""),
         "attachments" : base_meta.get("attachments", []),
-        # Access-control fields
+        # Access-control fields — carried through to Qdrant payload
         "id"          : id,
         "owner_email" : user_email,
     }

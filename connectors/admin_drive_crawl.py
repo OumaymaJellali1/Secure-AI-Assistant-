@@ -51,7 +51,7 @@ def run_drive_crawl(caller_id: str, max_files: int = None, dry_run: bool = False
                 continue
 
             # 2. Normalize
-            normalized = normalize_chunks(raw_chunks, source_type="google_drive")
+            normalized = raw_chunks
 
             if dry_run:
                 # ── PREVIEW ONLY — no embed, no store ────────────
@@ -85,17 +85,7 @@ def run_drive_crawl(caller_id: str, max_files: int = None, dry_run: bool = False
 
             else:
                 # ── FULL PIPELINE ─────────────────────────────────
-                # inject access control
-                for chunk in normalized:
-                    raw_meta = next(
-                        (r["metadata"] for r in raw_chunks
-                         if r["metadata"]["file_id"] == chunk["metadata"]["file_id"]),
-                        {}
-                    )
-                    chunk["metadata"]["owner_email"]   = raw_meta.get("owner_email", email)
-                    chunk["metadata"]["allowed_users"] = raw_meta.get("allowed_users", [email])
-                    chunk["metadata"]["is_public"]     = raw_meta.get("is_public", False)
-                    chunk["metadata"]["drive_file_id"] = raw_meta.get("drive_file_id", "")
+                
 
                 embedded = embed_chunks(normalized)
                 result   = _store_with_access_control(embedded)
@@ -146,7 +136,7 @@ def _store_with_access_control(embedded: list[dict]) -> dict:
                 "owner_email"   : meta.get("owner_email"),
                 "allowed_users" : meta.get("allowed_users", []),
                 "is_public"     : meta.get("is_public", False),
-                "drive_file_id" : meta.get("drive_file_id", ""),
+                "drive_file_id" : meta.get("drive_file_id"),
             }
 
             sv = chunk["sparse_vector"]

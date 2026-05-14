@@ -31,7 +31,12 @@ SUPPORTED_MIME = {
     "application/pdf",
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document",   # .docx
     "application/vnd.openxmlformats-officedocument.presentationml.presentation", # .pptx
-    "text/plain",                                                                 # .txt
+    "text/plain",             
+    "image/png",
+    "image/jpeg",
+    "image/jpg",
+    "image/bmp",
+    "image/tiff",                                                    # .txt
 }
 
 # Mime → file extension (needed for temp file + ingest_file auto-detection)
@@ -43,6 +48,11 @@ MIME_TO_EXT = {
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document"   : ".docx",
     "application/vnd.openxmlformats-officedocument.presentationml.presentation" : ".pptx",
     "text/plain"                               : ".txt",
+    "image/png"  : ".png",
+    "image/jpeg" : ".jpg",
+    "image/jpg"  : ".jpg",
+    "image/bmp"  : ".bmp",
+    "image/tiff" : ".tiff",
 }
 
 
@@ -216,6 +226,7 @@ def _file_to_chunks(
     # so we add them here. These get stored in Qdrant payload
     # and used at query time to filter by user.
     for chunk in chunks:
+        chunk["metadata"]["source"]        = file_name  # ← real filename
         chunk["metadata"]["owner_email"]   = user_email
         chunk["metadata"]["allowed_users"] = allowed_users
         chunk["metadata"]["is_public"]     = is_public

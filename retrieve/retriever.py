@@ -19,7 +19,8 @@ Three search modes:
 from __future__ import annotations
 
 from typing import Literal, Optional
-
+from qdrant_client.models import MatchAny
+from qdrant_client.models import IsEmptyCondition
 from qdrant_client import QdrantClient
 from qdrant_client.models import (
     Filter,
@@ -75,31 +76,22 @@ def _build_filter(filters: dict) -> Filter:
     return Filter(must=conditions)
 
 
-def _build_user_acl_filter(caller_id: str) -> Filter:
-    """
-    Build the access-control filter for a regular (non-admin) user.
+from qdrant_client.models import MatchAny
 
-    Logic: return chunks where EITHER:
-      (a) id == caller_id  (this user's Gmail data)
-      OR
-      (b) id IS NULL       (non-Gmail chunks: pdf, docx, eml… always public)
-
-    This is expressed in Qdrant as a SHOULD (OR) condition.
-    """
+def _build_user_acl_filter(caller_id: str, user_email: str) -> Filter:
     return Filter(
         should=[
-            # (a) chunk belongs to this user
-            FieldCondition(
-                key   = "id",
-                match = MatchValue(value=caller_id),
-            ),
-            # (b) chunk has no id at all (shared / non-Gmail data)
-            IsNullCondition(
-                is_null=PayloadField(key="id")
-            ),
+            # Gmail: own chunks
+            FieldCondition(key="id", match=MatchValue(value=caller_id)),
+            # Drive: user is in allowed_users
+            FieldCondition(key="allowed_users", match=MatchAny(any=[user_email])),
+            # Drive: public file
+            FieldCondition(key="is_public", match=MatchValue(value=True)),
+            # Regular chunks (PDF, DOCX etc.) — no owner_email = visible to everyone
+            IsNullCondition(is_null=PayloadField(key="owner_email")),
+            IsEmptyCondition(is_empty=PayloadField(key="owner_email")),
         ]
     )
-
 
 def _merge_filters(
     legacy_filters   : dict | None,
@@ -176,6 +168,7 @@ class Retriever:
         top_n            : int | None       = None,
         retrieval_filter : dict | None      = None,
         caller_id        : str | None       = None,   # ← NEW: id of the caller
+        user_email       : str              = "", 
         is_admin         : bool             = False,  # ← NEW: skip ACL if True
     ) -> list[dict]:
         """
@@ -202,7 +195,7 @@ class Retriever:
         # Build ACL filter
         acl_filter = None
         if caller_id and not is_admin:
-            acl_filter = _build_user_acl_filter(caller_id)
+            acl_filter = _build_user_acl_filter(caller_id, user_email)
             print(f"[RETRIEVER] ACL filter: id={caller_id} (own Gmail + shared docs)")
         elif is_admin:
             print(f"[RETRIEVER] ACL filter: ADMIN — no filter applied")
