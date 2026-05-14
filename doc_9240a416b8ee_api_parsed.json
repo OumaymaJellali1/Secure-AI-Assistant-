@@ -1,0 +1,9 @@
+{
+  "text": "An API, or Application Programming Interface, is a set of rules and definitions that allows different software applications to communicate with each other. It acts as a bridge between systems, enabling them to exchange data or functionality without needing to understand each other’s internal code or structure.\r\n\r\n1. Basic idea of an API\r\n\r\nThink of an API as a messenger or waiter in a restaurant:\r\n\r\nYou (the user) are the client (application).\r\nThe kitchen is the server (system or database).\r\nThe waiter is the API.\r\n\r\nYou don’t go into the kitchen to cook your food. Instead, you tell the waiter your order, and the waiter brings back what you requested. Similarly, an API sends your request to another system and returns the response.\r\n\r\n2. Why APIs exist\r\n\r\nModern software systems are complex and often split into parts. APIs are used to:\r\n\r\nConnect different applications together\r\nShare data between systems\r\nAllow services to communicate securely and efficiently\r\nReuse existing functionality instead of rebuilding it\r\n\r\nFor example:\r\n\r\nA weather app uses an API to get real-time weather data\r\nA social media app uses APIs to post messages or fetch user profiles\r\nA payment system uses APIs to process transactions securely\r\n3. How an API works\r\n\r\nMost modern APIs follow a simple request-response cycle:\r\n\r\nA client (your app or browser) sends a request\r\nThe request goes to a server via an API endpoint (a URL)\r\nThe server processes the request\r\nThe server sends back a response, usually in JSON or XML format",
+  "metadata": {
+    "file_name": "doc_9240a416b8ee_api.txt",
+    "encoding": "utf-8",
+    "word_count": 249,
+    "line_count": 34
+  }
+}

@@ -137,6 +137,8 @@ def _store_with_access_control(embedded: list[dict]) -> dict:
                 "allowed_users" : meta.get("allowed_users", []),
                 "is_public"     : meta.get("is_public", False),
                 "drive_file_id" : meta.get("drive_file_id"),
+                "modified_time" : meta.get("modified_time"),
+
             }
 
             sv = chunk["sparse_vector"]

@@ -15,6 +15,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from auth.gmail_auth import get_gmail_service
 from File_processing.eml_handler import extract_eml
 from chunking.eml_chunker import _chunk_body
+from embedding.qdrant_store import _get_client, COLLECTION_NAME
 
 
 def crawl_user(
@@ -59,7 +60,10 @@ def crawl_user(
         for msg_ref in messages:
             if max_emails and total_fetched >= max_emails:
                 break
-
+        # ── Skip if already in Qdrant ──────────────────────────
+            if _is_email_already_crawled(msg_ref["id"]):
+              print(f"[CRAWLER]   Skipping (already crawled): {msg_ref['id']}")
+              continue
             # ── fetch raw RFC-822 bytes ──────────────────────────
             msg = service.users().messages().get(
                 userId="me",
@@ -145,6 +149,29 @@ def _message_to_chunks(
     # 5. Build flat chunk list from structured extract_eml result
     return _build_chunks_from_result(result, id, user_email)
 
+def _is_email_already_crawled(msg_id: str) -> bool:
+    """
+    Returns True if this Gmail message ID already has chunks in Qdrant.
+    Emails don't change after received, so presence alone is enough —
+    no need to compare a modified_time like Drive files.
+    """
+    try:
+        client = _get_client()
+        results, _ = client.scroll(
+            collection_name = COLLECTION_NAME,
+            scroll_filter   = {
+                "must": [
+                    {"key": "source", "match": {"value": f"{msg_id}.gmail"}}
+                ]
+            },
+            limit        = 1,
+            with_payload = False,
+            with_vectors = False,
+        )
+        return len(results) > 0
+    except Exception as e:
+        print(f"[CRAWLER]   Qdrant check failed for {msg_id}: {e}")
+    return False
 
 def _decode_raw(msg: dict) -> bytes | None:
     """Decode the base64url-encoded raw RFC-822 bytes from a Gmail API response."""

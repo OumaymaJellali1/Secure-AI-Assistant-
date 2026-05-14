@@ -9,7 +9,7 @@ import os
 import sys
 import tempfile
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
-
+from embedding.qdrant_store import _get_client, COLLECTION_NAME
 from auth.drive_auth import get_drive_service
 from db.drive_permissions import upsert_file
 from embedding.ingest import ingest_file, EXT_TO_SOURCE_TYPE
@@ -58,6 +58,32 @@ MIME_TO_EXT = {
 
 # ── Main crawler ──────────────────────────────────────────────────────────────
 
+def _is_already_crawled(file_id: str, modified_time: str) -> bool:
+    """
+    Returns True if a file with this drive_file_id already exists in Qdrant
+    AND its stored modified_time matches the Drive API value.
+    If so, there's no need to re-crawl it.
+    """
+    try:
+        client = _get_client()
+        results, _ = client.scroll(
+            collection_name = COLLECTION_NAME,
+            scroll_filter   = {
+                "must": [
+                    {"key": "drive_file_id", "match": {"value": file_id}}
+                ]
+            },
+            limit           = 1,
+            with_payload    = True,
+            with_vectors    = False,
+        )
+        if results:
+            stored_modified = results[0].payload.get("modified_time")
+            return stored_modified == modified_time
+    except Exception as e:
+        print(f"[DRIVE]   Qdrant check failed for {file_id}: {e}")
+    return False
+
 def crawl_drive_user(
     id         : str,
     user_email : str,
@@ -87,7 +113,7 @@ def crawl_drive_user(
         # Fetch a page of files
         kwargs = {
             "pageSize" : 100,
-            "fields"   : "nextPageToken, files(id, name, mimeType)",
+            "fields"   : "nextPageToken, files(id, name, mimeType, modifiedTime)",
             "q"        : "trashed = false",
         }
         if page_token:
@@ -109,7 +135,14 @@ def crawl_drive_user(
                 print(f"[DRIVE] Skipping unsupported type: {mime} ({f.get('name')})")
                 continue
 
-            chunks = _file_to_chunks(service, f, id, user_email)
+            modified_time = f.get("modifiedTime", "")
+            if _is_already_crawled(file_id=f["id"], modified_time=modified_time):
+                 print(f"[DRIVE]   Skipping (already crawled, unchanged): {f.get('name')}")
+                 total_fetched += 1
+                 continue
+                
+
+            chunks = _file_to_chunks(service, f, id, user_email, modified_time=modified_time)
             all_chunks.extend(chunks)
             total_fetched += 1
 
@@ -132,6 +165,7 @@ def _file_to_chunks(
     f          : dict,
     id         : str,
     user_email : str,
+    modified_time : str = "",
 ) -> list[dict]:
     """
     For one Drive file:
@@ -232,6 +266,7 @@ def _file_to_chunks(
         chunk["metadata"]["is_public"]     = is_public
         chunk["metadata"]["drive_file_id"] = file_id
         chunk["metadata"]["id"]            = id
+        chunk["metadata"]["modified_time"] = modified_time 
 
     print(f"[DRIVE]   ✓ {len(chunks)} chunks from {file_name}")
     return chunks

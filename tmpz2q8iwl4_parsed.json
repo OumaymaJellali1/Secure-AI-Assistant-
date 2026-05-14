@@ -1,0 +1,116 @@
+{
+  "filename": "tmpz2q8iwl4.pdf",
+  "chunks": [
+    {
+      "type": "text",
+      "content": "Rapport de suivi de projet N°10",
+      "metadata": {
+        "source": "tmpz2q8iwl4.pdf",
+        "page_start": 1,
+        "page_end": 1,
+        "section": "Unknown"
+      }
+    },
+    {
+      "type": "text",
+      "content": "- Intégration réussie du pipeline StackRAG avec les concepts de WebFilter - Intégration des étapes 1 à 4 du pipeline dans le code : - Étape 1 : Réception de la question - Étape 2 : Analyse de la complexité de la question (décomposition ou non) par un agent orchestre (StackRAG) - Étape 3 : Extraction des mots clés - Étape 4 : Reformulation de la requête avec webFilter - Tests unitaires des quatre premières étapes du pipeline - Recherche et mise en place d'alternatives aux API payantes - Développement des étapes restantes du pipeline (étapes 5 à 8) - Tests avec Llama : évaluation de la qualité des réponses et temps de réponse - Tests avec Mistral 7B : comparaison des performances et de la précision - Affiner le système de Reinforcement Learning pour améliorer le rewarding Dépôt GitHub du projet: https://github.com/OumaymaJellali1/Stack_WebFilter_RAG",
+      "metadata": {
+        "source": "tmpz2q8iwl4.pdf",
+        "page_start": 1,
+        "page_end": 1,
+        "section": "1. Liste des tâches réalisées et finalisées"
+      }
+    },
+    {
+      "type": "text",
+      "content": "Question utilisateur",
+      "metadata": {
+        "source": "tmpz2q8iwl4.pdf",
+        "page_start": 2,
+        "page_end": 2,
+        "section": "Unknown"
+      }
+    },
+    {
+      "type": "text",
+      "content": "(max 4 mots/concept)",
+      "metadata": {
+        "source": "tmpz2q8iwl4.pdf",
+        "page_start": 2,
+        "page_end": 2,
+        "section": "Extraction mots-clés"
+      }
+    },
+    {
+      "type": "text",
+      "content": "(StackRAG + opérateurs avancés)",
+      "metadata": {
+        "source": "tmpz2q8iwl4.pdf",
+        "page_start": 2,
+        "page_end": 2,
+        "section": "Reformulation requête"
+      }
+    },
+    {
+      "type": "text",
+      "content": "(Stack Overflow APl, autres sources)",
+      "metadata": {
+        "source": "tmpz2q8iwl4.pdf",
+        "page_start": 2,
+        "page_end": 2,
+        "section": "Recherche WebFILTER"
+      }
+    },
+    {
+      "type": "text",
+      "content": "(date, score, réponse acceptée..)",
+      "metadata": {
+        "source": "tmpz2q8iwl4.pdf",
+        "page_start": 2,
+        "page_end": 2,
+        "section": "Application de filtres dynamiques"
+      }
+    },
+    {
+      "type": "text",
+      "content": "(Pertinence / Qualité / Fiabilité)",
+      "metadata": {
+        "source": "tmpz2q8iwl4.pdf",
+        "page_start": 2,
+        "page_end": 2,
+        "section": "Filtrage RL WebFilter"
+      }
+    },
+    {
+      "type": "text",
+      "content": "(Top k résultats pertinents)",
+      "metadata": {
+        "source": "tmpz2q8iwl4.pdf",
+        "page_start": 2,
+        "page_end": 2,
+        "section": "Re-ranking BM25"
+      }
+    },
+    {
+      "type": "text",
+      "content": "Réponse finale + liens sources",
+      "metadata": {
+        "source": "tmpz2q8iwl4.pdf",
+        "page_start": 2,
+        "page_end": 2,
+        "section": "Génération réponse StackRAG"
+      }
+    },
+    {
+      "type": "table",
+      "content": "| gender | name  | nombre | amount |\n| ------ | ----- | ------ | ------ |\n| f      | souad | 582    | 111    |\n| m      | hamda | 251    | 215    |\n| f      | basma | 222    | 785    |",
+      "metadata": {
+        "source": "tmpz2q8iwl4.pdf",
+        "page_start": 3,
+        "page_end": 3,
+        "section": "Unknown",
+        "table_index": 1
+      }
+    }
+  ]
+}

@@ -1,0 +1,470 @@
+{
+  "filename": "tmpj6ptt0jl.pdf",
+  "chunks": [
+    {
+      "type": "text",
+      "content": "2025  Aug   11 [cs.IR]     arXiv:2508.07956v1",
+      "metadata": {
+        "source": "tmpj6ptt0jl.pdf",
+        "page_start": 1,
+        "page_end": 1,
+        "section": "Unknown"
+      }
+    },
+    {
+      "type": "text",
+      "content": "Retrieval-Augmented Generation (RAG) enhances large language models (LLMs) by integrating up-to-date external knowledge, yet real-world web environments present unique challenges. These limitations manifest as two key challenges: pervasive misinformation in the web environment, which introduces unreliable or misleading content that can degrade retrieval accuracy, and the underutilization of web tools, which, if effectively employed, could enhance query precision and help mitigate this noise, ultimately improving the retrieval results in RAG systems. To address these issues, we propose WebFilter, a novel RAG framework that generates source-restricted queries and filters out unreliable content. This approach combines a retrieval filtering mechanism with a behavior- and outcome-driven reward strategy, optimizing both query formulation and retrieval outcomes. Extensive experiments demonstrate that WebFilter improves answer quality and retrieval precision, outperforming existing RAG methods on both in-domain and out-of-domain benchmarks. Code is available at https://github.com/GuoqingWang1/WebFilter.",
+      "metadata": {
+        "source": "tmpj6ptt0jl.pdf",
+        "page_start": 1,
+        "page_end": 1,
+        "section": "Abstract"
+      }
+    },
+    {
+      "type": "text",
+      "content": "The advancement of large language models (LLMs) has driven significant progress across both industrial and academic fields (Qiu et al. 2024; Zhang et al. 2024; Yu et al. 2025). Despite the wide applicability of LLMs, they often struggle with knowledge-intensive queries because their knowledge can be incomplete or outdated, which leads to factual inaccuracies or hallucinations (Zhang et al. 2023; Sahoo et al. 2024; Ji et al. 2023). To address these challenges, Retrieval-Augmented Generation (RAG) enhances model performance by retrieving relevant external knowledge during inference. This approach enables the model to access up-to-date information and fill in knowledge gaps. RAG is meant to help models access up-to-date information, but the high cost and delay of online retrieval have caused early research (Chen et al. 2025; Jin et al. 2025; Song et al. 2025) to focus mainly on using locally stored knowledge. While these local sources are efficient, they are often outdated or incomplete, which affects model performance in real-world situations. More recent research (Li et al. 2025b; Zheng et al. 2025; Wei et al. 2025) has started exploring.",
+      "metadata": {
+        "source": "tmpj6ptt0jl.pdf",
+        "page_start": 1,
+        "page_end": 1,
+        "section": "Introduction"
+      }
+    },
+    {
+      "type": "table",
+      "content": "| Question:    | I want to know California’s minimum wage                              |\n| ------------ | --------------------------------------------------------------------- |\n| Thinking:    | I’ll search directly for the answer.                                  |\n| Search Agent | Query: California minimum wage                                        |\n| Result:      | Finds a 2021 article stating the wage is $14/hour, which is outdated. |",
+      "metadata": {
+        "source": "tmpj6ptt0jl.pdf",
+        "page_start": 1,
+        "page_end": 1,
+        "section": "Query Generation",
+        "table_index": 1
+      }
+    },
+    {
+      "type": "table",
+      "content": "| Thinking:   | I want to know California’s minimum wage. To avoid outdated info, I’ll add a date filter for the past year. |\n| ----------- | ----------------------------------------------------------------------------------------------------------- |\n| Target File | Noisy file                                                                                                  |\n| Query:      | California minimum wage after: 2024-07-01                                                                   |\n| Result:     | Retrieves an official government page from 2025 stating the wage is $16/hour.                               |",
+      "metadata": {
+        "source": "tmpj6ptt0jl.pdf",
+        "page_start": 1,
+        "page_end": 1,
+        "section": "Web Environment",
+        "table_index": 2
+      }
+    },
+    {
+      "type": "text",
+      "content": "Comparison of WebFilter with Existing Methods: Existing methods (Zheng et al. 2025; Song et al. 2025) often yield unreliable results in misinformation-rich web environments. WebFilter enhances accuracy by using advanced search operators to filter noise and retrieve target files.",
+      "metadata": {
+        "source": "tmpj6ptt0jl.pdf",
+        "page_start": 1,
+        "page_end": 1,
+        "section": "Figure 1"
+      }
+    },
+    {
+      "type": "text",
+      "content": "RAG in web-based environments, showing the benefits of using web search during model training. However, unlike local retrieval, which relies on trusted, static data, web-based retrieval comes with its own challenges: 1) Web environment pervasive misinformation: the open web is saturated with misinformation, low-quality content noise (Yang et al. 2025b,c). This significantly increases the difficulty of identifying credible sources and introduces risks of model hallucination or factual inconsistency during answer generation. 2) Web tools underutilization: local tools and web-based search engines differ significantly in utilization. While web tools provide advanced search operators that help avoid outdated information and enable retrieval from trusted sources, such capabilities are unavailable in offline settings. As a result, locally trained models struggle to learn and use advanced tools, limiting their ability to filter noise and focus on reliable sources. To address these challenges, we present WebFilter, a framework that improves answer accuracy by filtering noise using advanced search operators. Given the imperfections of search engines and their sensitivity to query quality (see Fig. 1), our framework further enhances retrieval accuracy by formulating more effective queries and applying advanced operators. These operators, such as source selection and time filtering, enable precise retrieval by filtering out.",
+      "metadata": {
+        "source": "tmpj6ptt0jl.pdf",
+        "page_start": 1,
+        "page_end": 1,
+        "section": "Challenges in RAG"
+      }
+    },
+    {
+      "type": "text",
+      "content": "noisy sources and enhancing credibility. However, guiding models to correctly use these operators is challenging. Our experiments show that, even with instructions, models rarely proactively use advanced operators. This is because, while existing models (Li et al. 2025b; Zheng et al. 2025; Song et al. 2025) have achieved state-of-the-art results using reinforcement Learning (RL) (Kaelbling, Littman, and Moore 1996), they focus primarily on outcomes, rather than guiding behavior in web-based environments. As a result, they often rely on unreliable shortcuts. Thus, methods that effectively guide models to utilize advanced operators for noise filtering are crucial. Therefore, to systematically integrate web search into model reasoning, we formulate retrieval as a Markov Decision Process (MDP) and guide the model to operate as an information retrieval agent capable of using advanced operators. To more effectively guide model behavior, we introduce an Information-Filtering Reward strategy, which combines two complementary rewards driven by both behavioral and outcome considerations. Specifically: 1. Source-restricting Reward (SR) encourages the model to proactively use advanced search operators (e.g., domain filters, date ranges), shaping query formulation strategies. In the early stages of training, SR promotes exploration even when the model’s performance is suboptimal. As training progresses, SR gradually shifts focus towards accuracy, aligning the model’s query formulation to prioritize precision. This transition helps balance exploration and exploitation, ensuring effective learning and improved retrieval performance. 2. Retrieval-precision Reward (RR) reinforces outcomes by having a more capable, large-scale LLM evaluate the quality of retrieved content and provide feedback, enabling the model to refine its queries and improve source selection based on retrieval results. Through the combination of structured modeling, instruction design, and reward learning, WebFilter overcomes pervasive web misinformation and fully leverages advanced web search tools for precise and reliable retrieval. In summary, our contributions are as follows: - We propose WebFilter, a novel RAG framework explicitly designed for real-world web environments. It formulates retrieval as an MDP and trains LLMs as information retrieval agents, enabling effective mitigation of pervasive misinformation and better utilization of advanced web search tools. - We introduce an information-filtering reward strategy that guides precise, source-restricted retrieval and enables robust misinformation filtering, addressing both pervasive web noise and tool underutilization. - Experiments show that WebFilter achieves state-of-the-art QA performance, with advanced search operator usage rising from 10% to 75%, and significant gains across in-domain and out-of-domain benchmarks. reasoning process of LLMs. For example, methods such as ReSearch (Chen et al. 2025), Search-R1 (Jin et al. 2025), and R1-Searcher (Song et al. 2025) train LLMs to autonomously generate search queries while reasoning with a local search engine. However, LLMs trained in such local settings often struggle to generalize to real-world web environments (Zheng et al. 2025). To overcome this, methods such as WebRL (Qi et al. 2024), WebThinker (Li et al. 2025b), R1-Searcher (Song et al. 2025), DeepResearcher (Zheng et al. 2025), WebAgent-R1 (Wei et al. 2025) leverage online search engines for training. Yet, compared to local settings, online environments pose greater challenges, including high API costs, network latency, and the abundance of false or redundant information, all of which hinder efficient training and retrieval (Zheng et al. 2025). However, due to their reliance on local web environments and the lack of well-specified retrieval data, existing reward schemes fall short in tackling real-world web challenges such as pervasive misinformation and poor use of advanced search operators. To address this issue, we formulate retrieval as a Markov Decision Process, guided by explicit instruction on tool usage and an Information-Filtering Reward strategy, jointly enabling more structured, source-restricted querying and robust information filtering.",
+      "metadata": {
+        "source": "tmpj6ptt0jl.pdf",
+        "page_start": 2,
+        "page_end": 2,
+        "section": "Unknown"
+      }
+    },
+    {
+      "type": "text",
+      "content": "Reinforcement learning (RL) has become increasingly prominent in training LLMs, supporting applications that span from preference alignment (Ouyang et al. 2022; Casper et al. 2023; Kaufmann et al. 2023) to complex tasks (Hao et al. 2023; Pang et al. 2024; Tang et al. 2025; Xie et al. 2025). A growing area of interest is the application of RL to tool-integrated tasks (Li, Zou, and Liu 2025), which involve multi-step interactions and dynamic tool states. The high interactivity with the environment makes them a natural fit for RL. Existing research has explored RL-trained LLM agents for tool-integrated reasoning. For example, ToRL (Li, Zou, and Liu 2025) and Tool-N1 (Zhang et al. 2025) employ rule-based outcome rewards that account for both accuracy and format to guide RL, while other methods (Wang et al. 2025; Sha, Cui, and Wang 2025; Singh et al. 2025) extend this by incorporating tool usage-based reward. However, most RL methods are built on local corpora without source-restricted supervision, limiting their generalization to real-world web environments with noisy information and underused search tools. We address this by formulating retrieval as an MDP and combining tool-use instruction with an Information-Filtering Reward strategy.",
+      "metadata": {
+        "source": "tmpj6ptt0jl.pdf",
+        "page_start": 2,
+        "page_end": 2,
+        "section": "Reinforcement Learning for LLMs"
+      }
+    },
+    {
+      "type": "text",
+      "content": "In this section, we introduce the WebFilter training framework, designed to enhance Retrieval-Augmented Generation (RAG) by improving query formulation and filtering unreliable web content. As shown in Fig. 2, we model the retrieval process as a Markov Decision Process, enabling the model to decide when and how to issue search queries and integrate the retrieved information. To guide this process, we implement an Information-Filtering reward strategy, which evaluates retrieval outcomes and refines query strategies based on...",
+      "metadata": {
+        "source": "tmpj6ptt0jl.pdf",
+        "page_start": 2,
+        "page_end": 2,
+        "section": "Methodology"
+      }
+    },
+    {
+      "type": "text",
+      "content": "Recent work has explored agentic RAG (Chen et al. 2025; Jin et al. 2025; Song et al. 2025) to integrate retrieval into the...",
+      "metadata": {
+        "source": "tmpj6ptt0jl.pdf",
+        "page_start": 2,
+        "page_end": 2,
+        "section": "Related Work"
+      }
+    },
+    {
+      "type": "text",
+      "content": "We model the task completion as a Markov Decision Process (MDP), denoted by (S, A, R, T), where the state sₜ ∈ S represents the history of previous actions at time step t. At each t step, the agent selects an action aₜ ∈ A based on the current state sₜ, following the policy πθ. When the agent selects the \"search\" action (aₜ = search), it updates the state by incorporating the retrieved results. Specifically, dₜ refers to the content retrieved based on the search query at time step t. The state transition is defined as: Q = {q₁, q₂, ..., qₙ} ⊆ y,                        (3) Rsrc = I [∃q ∈ Q, ∃k ∈ K, ReM atch(k, q) = 1] ,                      (4) where Σ∗ denotes the set of all sequences over the vocabulary of the policy model; K ⊆ Σ∗ is a predefined set of advanced search keyword patterns, such as \"site:\", \"-\", or \"AND\"; y ⊆ Σ∗ is a response generated by the policy model; and Q ⊆ y is the set of search queries extracted from y. The binary function ReM atch(k, q) returns 1 if query q matches the regular expression associated with pattern k, and 0 otherwise. The indicator function I[·] equals 1 if the predicate holds and 0 otherwise. We define the restricting Reward Rsrc ∈ {0, 1} to be 1 if any query in Q contains an advanced search pattern from K, and 0 otherwise. This design explicitly promotes the use of advanced search operators in the reinforcement learning process. s = T(s , a ) = [sₜ; aₜ, dₜ] if aₜ = search,        (1) where T represents the deterministic state transition function, and the agent receives a reward rₜ = R(sₜ, aₜ), as determined by the environment. The process terminates when the task is completed or the maximum allowed interactions are reached.",
+      "metadata": {
+        "source": "tmpj6ptt0jl.pdf",
+        "page_start": 3,
+        "page_end": 3,
+        "section": "Problem Formulation"
+      }
+    },
+    {
+      "type": "text",
+      "content": "WebFilter is implemented as a prompt-based Information Retrieval Agent that proactively conducts web searches and reasons over retrieved results before issuing a final answer. It operates under a cost-sensitive policy, minimizing excessive queries and avoiding uncertain responses when confidence is lacking. The agent is explicitly instructed to integrate advanced search operators such as OR, AND, NOT, quotation marks for exact phrases, domain restrictions via site:, and date filters like after:, enabling precise, source-restricted retrieval. It also prioritizes trusted domains (e.g., wikipedia.org, gov.cn), guiding the model to generate focused, reliable, and efficient queries. For implementation details, please refer to our GitHub repository. It provides feedback on operator correctness and quality. Typically, the Retrieval-precision Reward is defined as: z, c = LLMJudge(g, y, IJudge),       (5) where LLMJudge denotes a powerful LLM used to evaluate the model’s predictions, g is the ground-truth answer, y is the response generated by the policy model, and IJudge denotes the prompt template provided to LLMJudge. The scalar z ∈ {0, 1} measures the correctness of the predicted answer, while c ∈ {0, 1} evaluates whether the use of advanced search syntax contributed to the retrieval quality.",
+      "metadata": {
+        "source": "tmpj6ptt0jl.pdf",
+        "page_start": 3,
+        "page_end": 3,
+        "section": "Learning to Use Advanced Search Tools"
+      }
+    },
+    {
+      "type": "text",
+      "content": "The final reward R is computed as: R = -1 if ¬Cformat,",
+      "metadata": {
+        "source": "tmpj6ptt0jl.pdf",
+        "page_start": 3,
+        "page_end": 3,
+        "section": "Reward Aggregation"
+      }
+    },
+    {
+      "type": "text",
+      "content": "Although the MDP formulation structures retrieval actions, it alone cannot ensure precise query formulation or reliable filtering of web content. To address this, we propose an Information-Filtering Reward strategy that integrates both behavior-based and outcome-based incentives. The Source-restricting Reward (SR) acts as a behavior-based restriction, promoting the use of advanced search operators for precise, source-restricted queries. In contrast, the Retrieval-precision Reward (RR) serves as an outcome-based signal, leveraging external critique to assess and refine retrieval quality. Together, these rewards guide the model toward more effective and trustworthy web search. Next, we will describe its design in detail.",
+      "metadata": {
+        "source": "tmpj6ptt0jl.pdf",
+        "page_start": 3,
+        "page_end": 3,
+        "section": "Information-Filtering Reward Strategy"
+      }
+    },
+    {
+      "type": "text",
+      "content": "To encourage precise and source-restricted queries, we design a rule-based Source-restricting Reward that promotes the use of advanced search operators. Specifically, the Source-restricting Reward is defined by the following formula: K = {k₁, k₂, ..., kₘ} ⊆ Σ           ,            (2) R = f(z, c, Rf₁)     if Cformat ∧ Cagg, (6) R = 0.1              if Cformat ∧ ¬Cagg ∧ Csrc, R = 0                otherwise. Here, C denotes correct output format; C indicates Cagg, llm, Rf1 = 0; src means Rsrc = 1. The F1 Reward Rf₁ is computed as: Rf₁ = 2 × IN / (PN + RN),              (7) where PN is the word count of the predicted answer, RN is the word count of the reference answer, and IN is the word count of overlapping words between them. The aggregation function f(·) is defined as: f(u, v, w) = αu + βv + (1 − α − β)w,    (8) where α and β are hyperparameters used to balance the influence of each reward on the policy optimization process.",
+      "metadata": {
+        "source": "tmpj6ptt0jl.pdf",
+        "page_start": 3,
+        "page_end": 3,
+        "section": "Source-restricting Reward (SR)"
+      }
+    },
+    {
+      "type": "text",
+      "content": "Who was the first emperor of the longest Chinese dynasty, I need to identify the longest dynasty and then find who the first king of that dynasty was.",
+      "metadata": {
+        "source": "tmpj6ptt0jl.pdf",
+        "page_start": 4,
+        "page_end": 4,
+        "section": "Search Query:"
+      }
+    },
+    {
+      "type": "text",
+      "content": "King Wu of Zhou",
+      "metadata": {
+        "source": "tmpj6ptt0jl.pdf",
+        "page_start": 4,
+        "page_end": 4,
+        "section": "The first king of the Zhou dynasty"
+      }
+    },
+    {
+      "type": "text",
+      "content": "To do that, I will first search for the longest Chinese dynasty.",
+      "metadata": {
+        "source": "tmpj6ptt0jl.pdf",
+        "page_start": 4,
+        "page_end": 4,
+        "section": "Thinking Step"
+      }
+    },
+    {
+      "type": "text",
+      "content": "The longest Chinese dynasty.",
+      "metadata": {
+        "source": "tmpj6ptt0jl.pdf",
+        "page_start": 4,
+        "page_end": 4,
+        "section": "Final Answer"
+      }
+    },
+    {
+      "type": "text",
+      "content": "Info: The government website does not include a description of the Eiffel Tower. Unable to find accurate information",
+      "metadata": {
+        "source": "tmpj6ptt0jl.pdf",
+        "page_start": 4,
+        "page_end": 4,
+        "section": "Inference"
+      }
+    },
+    {
+      "type": "text",
+      "content": "Info: The Eiffel Tower is located on the Champ de Mars in Paris, France.",
+      "metadata": {
+        "source": "tmpj6ptt0jl.pdf",
+        "page_start": 4,
+        "page_end": 4,
+        "section": "What is the name of the city where the Eiffel Tower is located?"
+      }
+    },
+    {
+      "type": "text",
+      "content": "The results indicate the answer is Paris",
+      "metadata": {
+        "source": "tmpj6ptt0jl.pdf",
+        "page_start": 4,
+        "page_end": 4,
+        "section": "Question from User"
+      }
+    },
+    {
+      "type": "table",
+      "content": "| Query      | Search Engine       | Output 1      | Reward Module | Reward 1    | Advantage 1 |\n| ---------- | ------------------- | ------------- | ------------- | ----------- | ----------- |\n| …          | Retrieval-precision | …             | Reward        | Reward 2    | Group       |\n| Policy LLM | Output n            | Reference LLM | Reward n      | Advantage n |             |",
+      "metadata": {
+        "source": "tmpj6ptt0jl.pdf",
+        "page_start": 4,
+        "page_end": 4,
+        "section": "Rollout Module",
+        "table_index": 3
+      }
+    },
+    {
+      "type": "text",
+      "content": "Upper: The model interacts with web search tools through step-by-step actions, including query generation and evidence selection. Middle: To improve tool usage, we provide explicit instructions and demonstrations on how to issue effective, source-aware queries. Lower: The policy is optimized using a behavior- and outcome-driven Information-Filtering Reward strategy, which encourages both proper tool invocation and high-quality information retrieval.",
+      "metadata": {
+        "source": "tmpj6ptt0jl.pdf",
+        "page_start": 4,
+        "page_end": 4,
+        "section": "Figure X Overview of the WebFilter training framework."
+      }
+    },
+    {
+      "type": "text",
+      "content": "This objective encourages stable policy improvement, enabling effective integration of retrieval-based reasoning into the learning process.",
+      "metadata": {
+        "source": "tmpj6ptt0jl.pdf",
+        "page_start": 4,
+        "page_end": 4,
+        "section": "RL Training Framework"
+      }
+    },
+    {
+      "type": "text",
+      "content": "In this work, we adopt the Group Relative Policy Optimization (GRPO) (Shao et al. 2024), which improves the current policy πθ by leveraging a reference policy πθref and a set of rollouts generated by an old policy πθold. To support search engine calls, the GRPO objective is extended as follows: J(θ) = Eₓ∼D, {y }G ∼π (·|x) G min π θ (ⁱ | )Aⁱ, clip πθ(yi|x), 1 − ϵ, 1 + ϵ Ai πθold (yi|x) − β DKL (πθ ∥ πθref). Here, x denotes an input sampled from the data distribution D, and yi represents a trajectory generated by πθold. DKL is the estimated KL divergence (Shao et al. 2024), and ϵ, β are hyperparameters that control the trust region and regularization strength, respectively. The reward ri for each yi is computed jointly across trajectories: r₁, r₂, . . . , rG = R(y₁, y₂, . . . , yG), and the advantage Ai is normalized within the batch as: Ai = rⁱ − mean(r¹, r², . . . , rᴳ) . std(r₁, r₂, . . . , rG)",
+      "metadata": {
+        "source": "tmpj6ptt0jl.pdf",
+        "page_start": 4,
+        "page_end": 4,
+        "section": "Policy Optimization"
+      }
+    },
+    {
+      "type": "text",
+      "content": "Our experimental setting is built on question answering datasets that assess reasoning and retrieval capabilities in diverse scenarios. For in-domain evaluation, we use the development sets of Natural Questions (NQ) (Kwiatkowski et al. 2019), TriviaQA (TQ) (Joshi et al. 2017), HotpotQA (Yang et al. 2018), and 2Wiki (Ho et al. 2020). For out-of-domain evaluation, we include the complex open-domain reasoning dataset MuSiQue (Trivedi et al. 2022) and the focused benchmark Bamboogle (Press et al. 2022), which differ in question style and information distribution. To ensure a balanced and consistent evaluation across datasets, we select a fixed number of examples from each. Specifically, 512 examples are chosen from the development sets of NQ, TQ, HotpotQA, 2Wiki, and MuSiQue, and all 125 examples are selected from the development set of Bamboogle.",
+      "metadata": {
+        "source": "tmpj6ptt0jl.pdf",
+        "page_start": 4,
+        "page_end": 4,
+        "section": "Experiments"
+      }
+    },
+    {
+      "type": "text",
+      "content": "To evaluate WebFilter’s effectiveness, we compare it against several baselines representing different methodologies: Direct Reasoning: Models relying solely on internal knowledge, such as Qwen3-32B (Yang et al. 2025a), Gemini-2.0-Flash (Team et al. 2023), and GPT-4o (Hurst et al. 2024).",
+      "metadata": {
+        "source": "tmpj6ptt0jl.pdf",
+        "page_start": 4,
+        "page_end": 4,
+        "section": "Baselines"
+      }
+    },
+    {
+      "type": "table",
+      "content": "| Environment      | Method             | NQ   |      | TQ   |      | HotpotQA |      | 2Wiki |      |\n| ---------------- | ------------------ | ---- | ---- | ---- | ---- | -------- | ---- | ----- | ---- |\n|                  |                    | ACCR | ACCL | ACCR | ACCL | ACCR     | ACCL | ACCR  | ACCL |\n|                  | Qwen3-32B          | 16.5 | 36.3 | 11.6 | 52.9 | 29.9     | 19.1 | 26.5  | 19.9 |\n| Direct Reasoning | Gemini-2.0-Flash   | 20.7 | 47.1 | 16.2 | 68.9 | 42.4     | 29.9 | 32.5  | 23.8 |\n|                  | GPT-4o             | 23.1 | 53.9 | 17.6 | 73.2 | 50.2     | 37.1 | 38.6  | 30.5 |\n|                  | Search-o1          | 34.5 | 57.4 | 52.6 | 61.1 | 31.6     | 40.8 | 28.6  | 32.8 |\n| Local RAG        | Search-r1-base     | 45.4 | 60.0 | 71.9 | 76.2 | 55.9     | 63.0 | 44.6  | 47.9 |\n|                  | Search-r1-instruct | 33.1 | 49.6 | 44.7 | 49.2 | 45.7     | 52.5 | 43.4  | 48.8 |\n|                  | R1-Searcher        | 35.4 | 52.3 | 73.1 | 79.1 | 44.8     | 53.1 | 59.4  | 65.8 |\n| Web Search       | DeepResearcher     | 39.6 | 61.9 | 78.4 | 85.0 | 52.8     | 64.3 | 59.7  | 66.6 |\n|                  | WebFilter (Ours)   | 40.1 | 63.1 | 77.5 | 85.4 | 55.1     | 65.2 | 60.1  | 67.5 |",
+      "metadata": {
+        "source": "tmpj6ptt0jl.pdf",
+        "page_start": 5,
+        "page_end": 5,
+        "section": "Table 1: Performance of different methods on in-domain datasets, evaluated with rule-based (ACCR) and LLM-based (ACCL) metrics. Best results are highlighted in bold.",
+        "table_index": 4
+      }
+    },
+    {
+      "type": "text",
+      "content": "Local RAG: Methods retrieving knowledge from offline documents. For example, Search-o1 (Li et al. 2025a) performs multi-step reasoning by generating search queries and using the retrieved snippets as context, while Search-r1-base (Jin et al. 2025) retrieves evidence from Wikipedia during both training and inference. Search-r1-instruct (Jin et al. 2025) differs by initializing the actor with an instruct-tuned language model to guide the retrieval process. Web Search: Methods utilizing online tools. Both our approach and R1-Searcher (Song et al. 2025) rely on the Google API for web search. In addition to Google search, DeepResearcher (Zheng et al. 2025) integrates a Browser tool for web navigation, which leads to increased time spent browsing and accessing websites, thereby slowing down the overall training speed. All methods, including ours, employ Qwen-2.5-7B-instruct (Yang et al. 2024) for model inference.",
+      "metadata": {
+        "source": "tmpj6ptt0jl.pdf",
+        "page_start": 5,
+        "page_end": 5,
+        "section": "Table 1: Performance of different methods on in-domain datasets, evaluated with rule-based (ACCR) and LLM-based (ACCL) metrics. Best results are highlighted in bold."
+      }
+    },
+    {
+      "type": "table",
+      "content": "| Method             | Musique |      | Bamboogle |      |\n| ------------------ | ------- | ---- | --------- | ---- |\n|                    | ACCR    | ACCL | ACCR      | ACCL |\n| Qwen3-32B          | 10.7    | 4.9  | 24.7      | 18.4 |\n| Gemini-2.0-Flash   | 11.4    | 6.1  | 36.5      | 28.0 |\n| GPT-4o             | 22.5    | 15.0 | 52.6      | 43.2 |\n| Search-o1          | 16.8    | 21.3 | 46.6      | 53.6 |\n| Search-r1-base     | 26.7    | 27.5 | 56.6      | 57.6 |\n| Search-r1-instruct | 26.5    | 28.3 | 45.0      | 47.2 |\n| R1-Searcher        | 22.8    | 25.6 | 64.8      | 65.6 |\n| DeepResearcher     | 27.1    | 29.3 | 71.0      | 72.8 |\n| WebFilter (Ours)   | 24.5    | 30.0 | 73.1      | 74.3 |",
+      "metadata": {
+        "source": "tmpj6ptt0jl.pdf",
+        "page_start": 5,
+        "page_end": 5,
+        "section": "Table 2: Performance of methods on out-of-domain datasets.",
+        "table_index": 5
+      }
+    },
+    {
+      "type": "text",
+      "content": "Metrics We evaluate model performance using both rule-based (ACCR) and LLM-based (ACCL) metrics. The rule-based metric uses an F1 score to measure overlap between predictions and reference answers, reflecting factual precision. For ACCL, we adopt the LLM-as-Judge framework (Zheng et al. 2023), where GPT-4o-mini (Hurst et al. 2024) assesses whether model answers align semantically with the references, thus capturing nuances beyond exact matching.",
+      "metadata": {
+        "source": "tmpj6ptt0jl.pdf",
+        "page_start": 5,
+        "page_end": 5,
+        "section": "Results on In-Domain Settings"
+      }
+    },
+    {
+      "type": "text",
+      "content": "We implement our model using the VeRL framework (Sheng et al. 2024) and adopt Qwen2.5-7B-Instruct (Yang et al. 2024) as the backbone. The hyperparameters for the aggregation function are set as α = 0.4 and β = 0.2. The learning rate is set to 1e-5, and training proceeds with a mini-batch size of 4,096. Each iteration processes 256 samples, generating 16 rollouts per sample. Additionally, we apply a sampling temperature of 1.0 and limit the maximum retrieval count to 10. We apply loss masking to update only model-generated tokens. Our Retrieval-precision Reward uses Qwen3-30B-A3B (Yang et al. 2025a) as the judge model, which is free and can be deployed locally. WebFilter achieves state-of-the-art performance across all four in-domain datasets, demonstrating notable strengths in multi-hop reasoning tasks, as shown in Tab. 1. On HotpotQA, it outperforms DeepResearcher by 2.3% in ACCR, despite DeepResearcher relying on a browser tool with higher latency for broader web exploration. This advantage arises from WebFilter’s ability to formulate precise, source-restricted queries using advanced search operators, effectively reducing noise in retrieved documents. Compared to local RAGs, the performance gap on 2Wiki becomes more pronounced, with WebFilter achieving around a 17% higher ACCR through selective access to trusted external sources. These improvements reflect deliberate design choices. Unlike methods limited to fixed domains, such as R1-Searcher, which restricts access to Wikipedia, or those reliant on extensive web browsing, which introduces higher latency (e.g., DeepResearcher), WebFilter focuses on generating precise, source-restricted queries for unrestricted Google API searches. This strategy strikes a balance between retrieval flexibility and high precision, minimizing irrelevant content and enhancing the quality of retrieved contexts. As indicated by gains in ACCL, WebFilter retrieves evidence that aligns more closely with ground-truth answers, thereby supporting stronger reasoning.",
+      "metadata": {
+        "source": "tmpj6ptt0jl.pdf",
+        "page_start": 5,
+        "page_end": 5,
+        "section": "Implementation Details"
+      }
+    },
+    {
+      "type": "text",
+      "content": "Methods|                  |      |          |       |         |           |      |      |      |      |      |      |      | | ---------------- | ---- | -------- | ----- | ------- | --------- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | | NQ               | TQ   | HotpotQA | 2Wiki | Musique | Bamboogle |      |      |      |      |      |      |      | |                  | ACCR | ACCL     | ACCR  | ACCL    | ACCR      | ACCL | ACCR | ACCL | ACCR | ACCL | ACCR | ACCL | | Base             | 41.2 | 63.6     | 78.5  | 82.6    | 49.4      | 59.9 | 55.2 | 58.2 | 22.7 | 26.2 | 64.9 | 65.8 | | Base+SR          | 41.4 | 64.3     | 79.0  | 86.0    | 50.6      | 60.1 | 59.7 | 65.3 | 24.5 | 27.6 | 64.6 | 65.2 | | Base+SR+RR(Ours) | 40.1 | 63.1     | 77.5  | 85.4    | 55.1      | 65.2 | 60.1 | 67.5 | 24.5 | 29.0 | 73.1 | 74.3 | WebFilter w/o SR WebFilter WebFilter w/o SR WebFilter NQ TQ HotpotQA 2Wiki PopQA Musique Bamboogle Figure 3: Frequency of advanced operators across variants.",
+      "metadata": {
+        "source": "tmpj6ptt0jl.pdf",
+        "page_start": 6,
+        "page_end": 6,
+        "section": "Unknown"
+      }
+    },
+    {
+      "type": "text",
+      "content": "WebFilter consistently shows strong generalization on out-of-domain datasets. As shown in Tab. 2, WebFilter achieves the highest ACCL on the challenging open-domain Musique dataset (30.0%) and the web-search-heavy Bamboogle dataset (74.3%). These results suggest that WebFilter retrieves evidence more semantically aligned with ground-truth answers, which is critical for reasoning beyond exact matching. WebFilter also maintains competitive ACCR scores, particularly on Bamboogle (73.1%), demonstrating its ability to preserve factual consistency in new domains. Moreover, it outperforms DeepResearcher on ACCL for Musique (30.0% vs. 29.3%), demonstrating its strength in handling difficult open-domain questions. WebFilter’s ability to retrieve semantically relevant and factually tent information across diverse topics underscores its practical value for real-world applications involving domain shifts and open-ended queries.",
+      "metadata": {
+        "source": "tmpj6ptt0jl.pdf",
+        "page_start": 6,
+        "page_end": 6,
+        "section": "Results on Out-of-Domain Settings"
+      }
+    },
+    {
+      "type": "text",
+      "content": "Tab. 3 shows the performance of WebFilter variants on both in-domain datasets (NQ, TQ, HotpotQA, 2Wiki) and out-of-domain datasets (Musique, Bamboogle). From the results, we observe that incorporating the Source-restricting Reward (SR) leads to noticeable gains on in-domain datasets, improving the model’s ability to retrieve information from reliable sources. SR also encourages the use of advanced operators. As shown in Fig. 3, SR-guided queries include advanced operators more than 75% of the time, compared to less than 10% without SR. Adding the Retrieval-precision Reward (RR) further boosts performance, especially on out-of-domain datasets. RR refines the retrieval process, aligning the generated evidence more closely with ground-truth answers.",
+      "metadata": {
+        "source": "tmpj6ptt0jl.pdf",
+        "page_start": 6,
+        "page_end": 6,
+        "section": "Ablation Study"
+      }
+    },
+    {
+      "type": "text",
+      "content": "Fig. 4 illustrates the training dynamics of our model, focusing on both QA performance and behavioral changes. As shown in Fig. 4a, ACCR steadily increases throughout training, rising from approximately 0.52 to around 0.77 on the TQ dataset. This indicates continuous improvements in retrieval accuracy as the model progresses.",
+      "metadata": {
+        "source": "tmpj6ptt0jl.pdf",
+        "page_start": 6,
+        "page_end": 6,
+        "section": "Training Dynamics Analysis"
+      }
+    },
+    {
+      "type": "text",
+      "content": "Ground Truth: [\"after the apocalypse\"]",
+      "metadata": {
+        "source": "tmpj6ptt0jl.pdf",
+        "page_start": 7,
+        "page_end": 7,
+        "section": "Question: Which film was released more recently, After The Apocalypse or Idol On Parade?"
+      }
+    },
+    {
+      "type": "text",
+      "content": "Ground Truth: [\"astronomer\"]",
+      "metadata": {
+        "source": "tmpj6ptt0jl.pdf",
+        "page_start": 7,
+        "page_end": 7,
+        "section": "Question: What is Robert Jonckheere's occupation?"
+      }
+    },
+    {
+      "type": "text",
+      "content": "Ground Truth: [\"one thousand and one\", \"1001\"] <think> To compare release dates, I need the most recent version of “After The Apocalypse” and the release date of “Idol On Parade.” I will search IMDb for both. </think> <think> To determine Robert Jonckheere's occupation, we need to search the web for information about him. since I don't have any prior knowledge about Robert Jonckheere, I will perform a general web search to find his occupation. </think> <think> It seems to be asking about a commercial advertisement or method for cleaning a large carpet for a very low cost. I need to find an old advertisement that mentions this. </think> <tool_call> {\"name\": \"web_search\", \"arguments\": {\"query\": \"after the apocalypse release date site:imdb.com\"}} </tool_call> <tool_call> {\"name\": \"web_search\", \"arguments\": {\"query\": \"robert jonckheere occupation\"}} </tool_call> <think> The search result gives me two “After The Apocalypse” films, one in 2004 and the other in 2010, and I need to further distinguish which one I am referring to with “tv anime adaptation of Aakae Aaito's post-apocalyptic” in 2025. I will search again for “Idol On Parade”. </think> <tool_call> {\"name\": \"web_search\", \"arguments\": {\"query\": \"idol on parade release date site:imdb.com\"}} </tool_call> <think> The search for “Idol On Parade” confirms that it was released in 1959. The “After The Apocalypse” tv anime adaptation is from 2025, while the 2004 “After The Apocalypse” was a film, and the 2010 “After The Apocalypse” was either another film. Since the adaptation was from 2025, it is the more recent release compared to the 1959 “Idol On Parade”. Therefore, “After The Apocalypse” is the film released more recently. </think> <answer>after the apocalypse</answer> <answer>astronomer</answer> <answer>1001</answer> Figure 5: Case studies showing how WebFilter improves QA by (a) narrowing searches to authoritative sources for precise results, (b) verifying ambiguous or conflicting information via trusted sites, and (c) adaptively refining search queries when initial attempts are insufficient. To capture broader trends, Fig. 4b and Fig. 4c show the average tool call counts and response lengths across all evaluated datasets. In Fig. 4b, tool call counts increase during early training, plateau around step 20, and then rise again. This pattern suggests that the model gradually incorporates more frequent retrieval as training progresses. Meanwhile, Fig. 4c reveals that the average response length grows from about 1,000 tokens to nearly 2,000 tokens, indicating that the model generates more detailed and comprehensive responses over time. Overall, these results demonstrate that our model not only improves retrieval accuracy but also adapts its tool usage and response strategies, leading to more effective and informative outputs. Search Strategy Optimization. WebFilter dynamically adjusts its retrieval strategy when initial searches are insufficient. In Case 3, failing to find relevant information via a Wikipedia-restricted query, the model expands its search without site constraints, ultimately locating references to the product “1001,” which matches the question context. These cases highlight WebFilter’s ability to reason about search scope, verify information across sources, and adapt strategies to improve retrieval effectiveness.",
+      "metadata": {
+        "source": "tmpj6ptt0jl.pdf",
+        "page_start": 7,
+        "page_end": 7,
+        "section": "Question: What according to the commercial cleaned a big, big carpet for less than half a crown?"
+      }
+    },
+    {
+      "type": "text",
+      "content": "We present three representative cases in Fig. to illustrate WebFilter’s intelligent retrieval behaviors. Through thematic analysis, we identify three key behavioral patterns that define the model’s advanced search capabilities:",
+      "metadata": {
+        "source": "tmpj6ptt0jl.pdf",
+        "page_start": 7,
+        "page_end": 7,
+        "section": "Case Study 5"
+      }
+    },
+    {
+      "type": "text",
+      "content": "For domain-specific queries, WebFilter proactively limits search scopes to authoritative sources. In Case 1, when asked about film release dates, it automatically appends “site:imdb.com” to queries. This targeted approach ensures precise, trustworthy results while reducing latency by filtering out irrelevant information.",
+      "metadata": {
+        "source": "tmpj6ptt0jl.pdf",
+        "page_start": 7,
+        "page_end": 7,
+        "section": "Query Source Restriction"
+      }
+    },
+    {
+      "type": "text",
+      "content": "WebFilter demonstrates strong disambiguation skills for resolving conflicting information. In Case 2, when the initial search reveals both an astronomer and a similarly named psychologist, the model detects the ambiguity and performs a refined follow-up search limited to Wikipedia, successfully verifying the correct occupation.",
+      "metadata": {
+        "source": "tmpj6ptt0jl.pdf",
+        "page_start": 7,
+        "page_end": 7,
+        "section": "Misleading Information Filtering"
+      }
+    },
+    {
+      "type": "text",
+      "content": "While our approach shows progress, it has some limitations. To enhance RAG capabilities, improving search quality is crucial, but not sufficient on its own. In many cases, errors occur not because the model fails to retrieve relevant information, but because it struggles to correctly interpret and reason with the retrieved data. Our model, when combined with improvements in reasoning abilities, can deliver even greater value in future work.",
+      "metadata": {
+        "source": "tmpj6ptt0jl.pdf",
+        "page_start": 7,
+        "page_end": 7,
+        "section": "Limitations"
+      }
+    },
+    {
+      "type": "text",
+      "content": "We present WebFilter, a framework that improves Augmented Generation (RAG) by leveraging advanced",
+      "metadata": {
+        "source": "tmpj6ptt0jl.pdf",
+        "page_start": 7,
+        "page_end": 7,
+        "section": "Conclusion"
+      }
+    }
+  ]
+}

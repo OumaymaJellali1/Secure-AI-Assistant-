@@ -1,0 +1,815 @@
+{
+  "chunks": [
+    {
+      "chunk_id": "7bc08b13-0667-4134-a6f1-0d3984669aee",
+      "type": "text",
+      "content": "Introduced By :\n\nBouthaina Abid\n\nOussema Feki\n\nSkandar Allouche\n\n2024/2025",
+      "metadata": {
+        "source": "tmpk9lcbu8f.pptx",
+        "file_id": "334c43c7-e10d-4f30-84d5-fadfe00cc647",
+        "slide": 1,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "d93f660e-5c4b-4be1-858f-5fac26dc9c4f",
+      "type": "text",
+      "content": "1\n\nWHAT IS API-REST?\n\nAn API, or Application Programming Interface, is an intermediary that allows different applications to communicate with each other. REST, which stands for Representational State Transfer, is an architecture designed for distributed systems. It is a structured and lightweight way of designing APIs that leverage the capabilities of the HTTP protocol.",
+      "metadata": {
+        "source": "tmpk9lcbu8f.pptx",
+        "file_id": "334c43c7-e10d-4f30-84d5-fadfe00cc647",
+        "slide": 3,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "3a04f0fc-f68f-45ed-ab96-4c15aac18978",
+      "type": "text",
+      "content": "2\n\nIntroduction to REST APIs:\n\nFlexibitlity,principales\n\nand applications\n\nUnlike APIs like SOAP, which impose a strict XML structure, REST APIs are more flexible and allow data to be handled in various formats, notably JSON, valued for its lightweight nature.\n\nBasic principles: REST APIs use standard HTTP methods and enable request independence, responding in real-time to client applications. These principles explain their wide adoption.\n\nExamples of use: Major platforms (Facebook, Google, Twitter) use REST APIs to integrate their services. For instance, a weather app can retrieve data via a REST API.",
+      "metadata": {
+        "source": "tmpk9lcbu8f.pptx",
+        "file_id": "334c43c7-e10d-4f30-84d5-fadfe00cc647",
+        "slide": 4,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "88a2a645-f484-4814-96cb-20c47eff51d1",
+      "type": "text",
+      "content": "3\n\nHTTP METHODES :\n\nGET\n\nPOST\n\nPUT\n\nDELETE\n\nto retrieve data.\n\nto create new resources.\n\nto update existing resources.\n\nto delete resources\n\nThese methods enable clear and standardized management of actions.",
+      "metadata": {
+        "source": "tmpk9lcbu8f.pptx",
+        "file_id": "334c43c7-e10d-4f30-84d5-fadfe00cc647",
+        "slide": 5,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "40bd5e0c-10d4-414b-a47c-f5a14375524a",
+      "type": "text",
+      "content": "4\n\n01\n\nkey principales :\n\nStatelessness :\n\nOne of the key principles of REST is statelessness, or request independence. Each request sent to the server must contain all the information necessary to be processed, without depending on a previous request. This means the server does not retain session state between requests, which facilitates scalability and reliability.",
+      "metadata": {
+        "source": "tmpk9lcbu8f.pptx",
+        "file_id": "334c43c7-e10d-4f30-84d5-fadfe00cc647",
+        "slide": 6,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "56eff204-02fe-402c-8654-3f0fe01e231d",
+      "type": "text",
+      "content": "5\n\n02\n\nReprésentation des ressources :\n\nData exchanged via a REST API is often in JSON or XML format. JSON is widely preferred for its simplicity and readability. Each resource has a standard representation that enables clients to read and interpret the data in a consistent manner.",
+      "metadata": {
+        "source": "tmpk9lcbu8f.pptx",
+        "file_id": "334c43c7-e10d-4f30-84d5-fadfe00cc647",
+        "slide": 7,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "e921da12-dd5f-42ea-ad8c-ba63cab0e0e7",
+      "type": "text",
+      "content": "6\n\n03\n\nURI (Uniform Resource Identifier) :\n\nEach resource in a REST API is identified by a unique URI.\n\nFor example, https://api.example.com/users/123 could be a URI to access information for a specific user.",
+      "metadata": {
+        "source": "tmpk9lcbu8f.pptx",
+        "file_id": "334c43c7-e10d-4f30-84d5-fadfe00cc647",
+        "slide": 8,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "912232bf-553e-4347-b67c-7769295b7715",
+      "type": "text",
+      "content": "7\n\n04\n\nHTTP STATUS CODE :\n\nREST APIs use HTTP status codes to communicate the result of requests:\n\n200 for a successful request,\n\n404 for a resource not found,\n\n500 for a server error, etc.\n\nThese codes allow clients to instantly understand the status of their request.",
+      "metadata": {
+        "source": "tmpk9lcbu8f.pptx",
+        "file_id": "334c43c7-e10d-4f30-84d5-fadfe00cc647",
+        "slide": 9,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "e8b50278-57c3-42c0-804f-1869cab858f7",
+      "type": "text",
+      "content": "8\n\n:\n\nStructure of a REST Request:\n\nEach request consists of three main parts:\n\nThe header, which contains request information, such as authentication details.\n\nThe URI, which identifies the target resource.\n\nThe body, primarily used for POST and PUT requests, to include additional data, such as information for a new user.",
+      "metadata": {
+        "source": "tmpk9lcbu8f.pptx",
+        "file_id": "334c43c7-e10d-4f30-84d5-fadfe00cc647",
+        "slide": 10,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "1f34de67-05fa-4f23-8106-5068c4bde3b9",
+      "type": "text",
+      "content": "9\n\nEndpoints and routes :\n\nAn endpoint is a unique access point to an API, typically represented by a URL. Each endpoint is associated with a specific function, such as /users to retrieve user information. Routes define the path to access different resources, for example, /users/123 to access the user with ID 123.",
+      "metadata": {
+        "source": "tmpk9lcbu8f.pptx",
+        "file_id": "334c43c7-e10d-4f30-84d5-fadfe00cc647",
+        "slide": 11,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "8eb50bb7-18b5-4f72-909e-ac43556c68c4",
+      "type": "text",
+      "content": "10\n\nError Handling:\n\nError handling is essential in a REST API. In addition to status codes, REST APIs should return explicit error messages to facilitate debugging. For example, if a resource creation attempt fails, the server might return an error message with a 400 code and an explanation, such as \"The name field is required.\"",
+      "metadata": {
+        "source": "tmpk9lcbu8f.pptx",
+        "file_id": "334c43c7-e10d-4f30-84d5-fadfe00cc647",
+        "slide": 12,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "b0d9fb40-c77a-4005-a10c-463e64b3040e",
+      "type": "text",
+      "content": "11\n\nSecurity in REST APIs:\n\nAuthentification :\n\nOne of the most common methods is the use of tokens, such as JSON Web Tokens (JWT) or API keys. The token is sent in the header of each request, allowing the identity of the user or application accessing the API to be verified without maintaining state between requests",
+      "metadata": {
+        "source": "tmpk9lcbu8f.pptx",
+        "file_id": "334c43c7-e10d-4f30-84d5-fadfe00cc647",
+        "slide": 13,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "25810e79-0502-48a6-ae02-ce5579f56864",
+      "type": "text",
+      "content": "12\n\nHTTPS vs HTTP :\n\nThe use of HTTPS (HTTP Secure) is essential to secure the data exchanged between the client and the server. HTTPS encrypts the information, preventing it from being intercepted by third parties, particularly protecting sensitive data such as credentials and passwords.",
+      "metadata": {
+        "source": "tmpk9lcbu8f.pptx",
+        "file_id": "334c43c7-e10d-4f30-84d5-fadfe00cc647",
+        "slide": 14,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "61937f6a-c209-4a11-bccb-32fdfe854bbf",
+      "type": "text",
+      "content": "13\n\nprevention of sql-injection attacks :\n\nREST APIs are vulnerable to injection attacks, such as SQL injections, if they accept unsecured inputs. It is crucial to validate and filter all data sent by the client to prevent the execution of malicious commands.\n\nBy limiting the types of requests accepted and enforcing strict rules, the risk of exploitation is significantly reduced.",
+      "metadata": {
+        "source": "tmpk9lcbu8f.pptx",
+        "file_id": "334c43c7-e10d-4f30-84d5-fadfe00cc647",
+        "slide": 15,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "140eaad6-d976-42bd-b490-37fbd3b14633",
+      "type": "text",
+      "content": "14\n\n5 - HTTP Verbs in REST",
+      "metadata": {
+        "source": "tmpk9lcbu8f.pptx",
+        "file_id": "334c43c7-e10d-4f30-84d5-fadfe00cc647",
+        "slide": 16,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "f82e1db1-30eb-4518-b826-f74dda9390c0",
+      "type": "text",
+      "content": "15\n\nHTTP verbs are a set of standardized HTTP methods used to specify the desired action to be performed on a resource. In a REST API, these verbs are the means by which clients communicate their intentions to the server.\n\nHTTP Verbs\n\nServer\n\nClient",
+      "metadata": {
+        "source": "tmpk9lcbu8f.pptx",
+        "file_id": "334c43c7-e10d-4f30-84d5-fadfe00cc647",
+        "slide": 17,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "ef1a8d7e-eed2-4666-95e5-02ab6955e37c",
+      "type": "text",
+      "content": "16\n\nThese are the 4 main HTTP Verbs in REST",
+      "metadata": {
+        "source": "tmpk9lcbu8f.pptx",
+        "file_id": "334c43c7-e10d-4f30-84d5-fadfe00cc647",
+        "slide": 18,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "16528b84-22de-4b74-8b5c-8509932d8ad4",
+      "type": "text",
+      "content": "17\n\n1\n\nGET : Retrieve a Resource\n\nPurpose : The GET method is used to request and retrieve data from a server without modifying it. For example, if you’re retrieving a user’s profile information, you’d typically use a GET request.\n\nIdempotency : GET is idempotent, meaning calling it multiple times produces the same result without any side effects. For instance, if you request a user’s profile ten times, you get the same data back each time.\n\nPractical Example : In a web application, every time a page loads and displays data without needing input or modification like viewing a product list.\n\nCaching : GET requests are often cached, which helps reduce load on the server by storing and reusing previous responses.",
+      "metadata": {
+        "source": "tmpk9lcbu8f.pptx",
+        "file_id": "334c43c7-e10d-4f30-84d5-fadfe00cc647",
+        "slide": 19,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "ef4723d3-58eb-4e85-821f-f84a3581f666",
+      "type": "text",
+      "content": "18\n\n2\n\nPOST : Create a New Resource\n\nPurpose : POST is used to create a new resource on the server. Unlike GET, POST changes the server’s state by adding new data.\n\nNon-Idempotency : POST is non-idempotent. This means if you send the same POST request multiple times, you might create multiple resources. For example, submitting a form twice could lead to duplicate entries.\n\nPractical Example : Registering a new user, adding a new product, or submitting an online order are common scenarios where POST is used. Each action results in a new record on the server.\n\nCommon Usage : POST requests include a body with data, such as JSON, XML, or form data. This data is then used to create a new resource.",
+      "metadata": {
+        "source": "tmpk9lcbu8f.pptx",
+        "file_id": "334c43c7-e10d-4f30-84d5-fadfe00cc647",
+        "slide": 20,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "0728fcff-5d09-4bd5-b27f-839dd58a3b25",
+      "type": "text",
+      "content": "19\n\n3\n\nPUT : Update or Replace a Resource\n\nPurpose : The PUT method updates or fully replaces a resource at a specified URI. It’s used to send a complete update, where the entire resource is modified.\n\nIdempotency : PUT is idempotent, meaning repeated requests with the same data produce the same result. For example, if you update a user’s profile with the same details five times, the profile remains the same.\n\nPractical Example : In an e-commerce application, if a user edits their address details, a PUT request can replace the current address with the new one.\n\nUse Cases : PUT often requires sending the full updated resource. So, if you only want to change one field, you must include all fields for a complete replacement.",
+      "metadata": {
+        "source": "tmpk9lcbu8f.pptx",
+        "file_id": "334c43c7-e10d-4f30-84d5-fadfe00cc647",
+        "slide": 21,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "8b70cb21-298b-4bfb-9066-7845d742bd89",
+      "type": "text",
+      "content": "20\n\n4\n\nDELETE : Remove a Resource\n\nPurpose : DELETE is used to remove a specified resource from the server, like deleting a user account or removing an item from a shopping cart.\n\nIdempotency : DELETE is idempotent. Calling DELETE multiple times on the same resource has the same outcome, the resource is deleted, and further calls have no effect.\n\nImportant Note : While DELETE removes the resource, some systems may mark it as deleted rather than erasing it permanently, depending on data retention policies.\n\nPractical Example : In social media apps, deleting a post or a comment typically involves a DELETE request to remove it from the server.",
+      "metadata": {
+        "source": "tmpk9lcbu8f.pptx",
+        "file_id": "334c43c7-e10d-4f30-84d5-fadfe00cc647",
+        "slide": 22,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "42280da9-349f-40e6-b9de-7ff15256dd26",
+      "type": "text",
+      "content": "21\n\nOther HTTP Verbs in REST",
+      "metadata": {
+        "source": "tmpk9lcbu8f.pptx",
+        "file_id": "334c43c7-e10d-4f30-84d5-fadfe00cc647",
+        "slide": 23,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "1f680b95-d58a-4f9c-b582-d5befbb310d7",
+      "type": "text",
+      "content": "22\n\nHEAD\n\nPurpose : HEAD requests work like GET requests but only return headers without the response body. It’s often used to check if a resource exists or to see metadata (like file size) without downloading the whole resource.\n\nExample : Before downloading a large file, a HEAD request could check the file size to ensure you have enough storage space.",
+      "metadata": {
+        "source": "tmpk9lcbu8f.pptx",
+        "file_id": "334c43c7-e10d-4f30-84d5-fadfe00cc647",
+        "slide": 24,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "07a7419b-062e-4e4b-890b-4ced7736c10e",
+      "type": "text",
+      "content": "24\n\nOPTIONS\n\nPurpose : OPTIONS is used to discover what methods are allowed for a particular resource. It’s helpful in CORS (Cross-Origin Resource Sharing) when a client and server communicate across domains.\n\nExample : If an API only allows GET and POST on a resource, sending an OPTIONS request will reveal those allowed methods.",
+      "metadata": {
+        "source": "tmpk9lcbu8f.pptx",
+        "file_id": "334c43c7-e10d-4f30-84d5-fadfe00cc647",
+        "slide": 26,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "7c0aef9f-c655-40f9-b9ef-35e4403ad3b9",
+      "type": "text",
+      "content": "25\n\nExample\n\nIf a client sends an OPTIONS request, the server might respond with headers indicating the methods it allows:",
+      "metadata": {
+        "source": "tmpk9lcbu8f.pptx",
+        "file_id": "334c43c7-e10d-4f30-84d5-fadfe00cc647",
+        "slide": 27,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "5c3bc7d2-c338-445b-96b9-8e6972555893",
+      "type": "text",
+      "content": "26\n\nPATCH\n\nPurpose : PATCH partially updates a resource, unlike PUT, which typically requires the entire resource data. PATCH is efficient for making minor updates without sending the full data payload.\n\nExample : Updating only a user’s email in a profile without modifying other details like name or phone number.",
+      "metadata": {
+        "source": "tmpk9lcbu8f.pptx",
+        "file_id": "334c43c7-e10d-4f30-84d5-fadfe00cc647",
+        "slide": 28,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "3a16cd51-56b7-4a90-95e9-a935489c917c",
+      "type": "text",
+      "content": "27\n\nExample\n\nSuppose you have a user profile resource at https://api.example.com/users/123, where 123 is the user ID. The user profile might have several fields like username, email, and bio.\n\n\"id\": 123,\"username\": \"johndoe\",\"email\": \"johndoe@example.com\",\"bio\": \"Software developer and tech enthusiast.\"\n\nIf you make a PATCH Request like this one : { \"bio\": \"Software developer, tech enthusiast, and open-source contributor.\" }, you will get a result like this:",
+      "metadata": {
+        "source": "tmpk9lcbu8f.pptx",
+        "file_id": "334c43c7-e10d-4f30-84d5-fadfe00cc647",
+        "slide": 29,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "4a9ae73e-7296-4e1b-b87b-b451d5081789",
+      "type": "text",
+      "content": "29\n\nThese HTTP methods are the foundation of RESTful APIs, offering a standardized way to perform actions on resources. Each method provides specific functionality and predictable behavior, making it easy to understand and work with APIs. Using these methods correctly enables clients and servers to communicate efficiently and ensures a clear, consistent approach to managing resources.",
+      "metadata": {
+        "source": "tmpk9lcbu8f.pptx",
+        "file_id": "334c43c7-e10d-4f30-84d5-fadfe00cc647",
+        "slide": 31,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "4e210fb9-e395-4385-a460-38d4f396df4c",
+      "type": "text",
+      "content": "30\n\n6 - HTTP Status in REST",
+      "metadata": {
+        "source": "tmpk9lcbu8f.pptx",
+        "file_id": "334c43c7-e10d-4f30-84d5-fadfe00cc647",
+        "slide": 32,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "1baa88b2-71f8-482d-aecf-fdb0602e645f",
+      "type": "text",
+      "content": "31\n\n1\n\nWhat are HTTP Status ?\n\nThey are three-digit codes sent by the server in response to a client’s request, indicating the outcome of that request.\n\nThese codes help the client understand if their request was successful, if an error occurred, or if further action is required. Using them correctly ensures efficient communication and a better user experience.",
+      "metadata": {
+        "source": "tmpk9lcbu8f.pptx",
+        "file_id": "334c43c7-e10d-4f30-84d5-fadfe00cc647",
+        "slide": 33,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "51e51f32-23e3-42c9-b88a-3db1d93909b6",
+      "type": "text",
+      "content": "32\n\n2\n\nKey Categories of HTTP Status Codes\n\n1xx (Informational) : Rarely used in REST, these codes indicate that a request has been received and is being processed.\n\n2xx (Success) : Indicate that the client’s request was successfully received and processed.\n\n200 OK : The most common success code; it means that the request was successful and data is returned, if applicable.\n\n201 Created : Used when a new resource has been successfully created (common for POST requests).\n\n3xx (Redirection) : These indicate that further action is needed, like a redirect.",
+      "metadata": {
+        "source": "tmpk9lcbu8f.pptx",
+        "file_id": "334c43c7-e10d-4f30-84d5-fadfe00cc647",
+        "slide": 34,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "503df5dc-c330-4a33-83e4-55f12183f66a",
+      "type": "text",
+      "content": "33\n\n2\n\nKey Categories of HTTP Status Codes\n\n4xx (Client Errors) : Indicate an issue with the client’s request. For example :\n\n400 Bad Request : The server couldn’t understand the request due to invalid syntax.\n\n404 Not Found : Commonly returned when a requested resource does not exist.\n\n5xx (Server Errors) : Indicate that the server encountered an error while trying to process the request. For example :\n\n500 Internal Server Error : A general-purpose error when the server fails to handle the request.\n\n503 Service Unavailable : Indicates that the server is currently unavailable, often due to maintenance or overloading.",
+      "metadata": {
+        "source": "tmpk9lcbu8f.pptx",
+        "file_id": "334c43c7-e10d-4f30-84d5-fadfe00cc647",
+        "slide": 35,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "a567665b-ecf5-410a-becc-01af9fd743d0",
+      "type": "text",
+      "content": "36\n\nMain HTTP Status Codes",
+      "metadata": {
+        "source": "tmpk9lcbu8f.pptx",
+        "file_id": "334c43c7-e10d-4f30-84d5-fadfe00cc647",
+        "slide": 38,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "922062f7-1440-47a4-b31e-992756757a56",
+      "type": "text",
+      "content": "37\n\nImportance of Using the Right Status Codes\n\nEnhanced Communication : Correctly used status codes allow clients (such as web applications) to handle responses appropriately, improving the application's overall flow.\n\nBetter Error Handling : When a client receives an accurate status code, it can display a more meaningful error message to the user, helping to identify issues faster.\n\nImproved Security : Using clear status codes helps prevent clients from unknowingly retrying invalid requests, which could lead to potential security issues or server overload.",
+      "metadata": {
+        "source": "tmpk9lcbu8f.pptx",
+        "file_id": "334c43c7-e10d-4f30-84d5-fadfe00cc647",
+        "slide": 39,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "47c50639-031f-4188-b25e-f469efc88062",
+      "type": "text",
+      "content": "38\n\nImportance of Using the Right Status Codes\n\nHighlight the importance of selecting appropriate status codes for better communication, user experience, and efficient handling of requests.\n\nCorrect usage of HTTP status codes is foundational to building reliable, user-friendly, and robust APIs in RESTful architectures.",
+      "metadata": {
+        "source": "tmpk9lcbu8f.pptx",
+        "file_id": "334c43c7-e10d-4f30-84d5-fadfe00cc647",
+        "slide": 40,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "e18c666e-7e10-4670-80f7-bb8095a11425",
+      "type": "text",
+      "content": "39\n\n7 - Difference between REST and SOAP",
+      "metadata": {
+        "source": "tmpk9lcbu8f.pptx",
+        "file_id": "334c43c7-e10d-4f30-84d5-fadfe00cc647",
+        "slide": 41,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "f18c41f4-b235-42fc-8f0c-f090a9955d52",
+      "type": "text",
+      "content": "40\n\nDifferences and Similarities between REST and SOAP\n\nDefinition\n\nREST\n\nSOAP\n\nREST (Representational State Transfer) An architectural style for designing networked applications using stateless communication, primarily via HTTP.\n\nSOAP (Simple Object Access Protocol)\n\nA protocol for exchanging structured information in a platform-independent way, using XML as its message format.",
+      "metadata": {
+        "source": "tmpk9lcbu8f.pptx",
+        "file_id": "334c43c7-e10d-4f30-84d5-fadfe00cc647",
+        "slide": 42,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "b9dc2d63-5b1f-49da-ad33-2b82b60a203c",
+      "type": "text",
+      "content": "41\n\nDifferences and Similarities between REST and SOAP\n\nData Format\n\nREST\n\nSOAP\n\nREST typically uses JSON (but also supports XML, plain text, etc.)\n\nSOAP uses XML exclusively",
+      "metadata": {
+        "source": "tmpk9lcbu8f.pptx",
+        "file_id": "334c43c7-e10d-4f30-84d5-fadfe00cc647",
+        "slide": 43,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "6ce3d07a-4833-42a9-8a9c-8891677b2d48",
+      "type": "text",
+      "content": "42\n\nDifferences and Similarities between REST and SOAP\n\nCommunication Style\n\nREST\n\nSOAP\n\nREST is stateless, meaning each request from a client to server must contain all information needed to understand and process the request\n\nSOAP can be stateful ( maintaining sessions in specific cases), though it’s also commonly stateless",
+      "metadata": {
+        "source": "tmpk9lcbu8f.pptx",
+        "file_id": "334c43c7-e10d-4f30-84d5-fadfe00cc647",
+        "slide": 44,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "8cc95bbe-bf30-4124-b4ca-abd4cd284786",
+      "type": "text",
+      "content": "43\n\nDifferences and Similarities between REST and SOAP\n\nCommunication Style\n\nREST\n\nSOAP\n\nStateless means that each request from the client to the server is independent.\n\nIn REST, this statelessness means that every request must carry all the information needed for the server to process it\n\nStateful means that the server retains information about the client, or \"state,\" across multiple requests.\n\nSOAP can support statefulness, which is useful for situations that require multi-step transactions(for example in online banking).",
+      "metadata": {
+        "source": "tmpk9lcbu8f.pptx",
+        "file_id": "334c43c7-e10d-4f30-84d5-fadfe00cc647",
+        "slide": 45,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "e3dd06ab-36c6-411d-a08a-8f6882c11c9f",
+      "type": "text",
+      "content": "44\n\nDifferences and Similarities between REST and SOAP\n\nProtocol Flexibility\n\nREST\n\nSOAP\n\nREST primarily uses HTTP\n\nSOAP can operate over various protocols, including HTTP, SMTP, and others, making it more flexible in specific environments.",
+      "metadata": {
+        "source": "tmpk9lcbu8f.pptx",
+        "file_id": "334c43c7-e10d-4f30-84d5-fadfe00cc647",
+        "slide": 46,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "f467f9d7-9a22-4e16-b245-ead8741765a5",
+      "type": "text",
+      "content": "45\n\nDifferences and Similarities between REST and SOAP\n\nTypical Use Cases\n\nREST\n\nSOAP\n\nPreferred for web APIs and web services that require high scalability, speed and lightweight communications where simplicity and efficiency matter, such as social media platforms, e-commerce applications, and microservices architectures\n\nCommonly used in enterprise-level services where security and reliability are critical, like in banking, payment gateways, government applications, telecom, and financial services that require strict contracts and complex transactions",
+      "metadata": {
+        "source": "tmpk9lcbu8f.pptx",
+        "file_id": "334c43c7-e10d-4f30-84d5-fadfe00cc647",
+        "slide": 47,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "8cab123c-ffaa-4e2d-a95a-60a12f9a46f5",
+      "type": "text",
+      "content": "48\n\n8 - REST AND SECURITY",
+      "metadata": {
+        "source": "tmpk9lcbu8f.pptx",
+        "file_id": "334c43c7-e10d-4f30-84d5-fadfe00cc647",
+        "slide": 50,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "ca33e487-7f57-4e22-afef-12dcb2122be7",
+      "type": "text",
+      "content": "49\n\nOverview\n\nREST has become a widely adopted architectural style for building APIs, with authentication being a key aspect. It involves verifying the identity of users or applications before granting access. Unlike traditional web authentication, which relies on sessions, REST is stateless—each request is independent and requires its own verification. This statelessness enhances scalability and robustness. REST APIs also allow clients to choose from standardized authentication methods like API keys, tokens, or OAuth, offering flexibility, security, and promoting interoperability between services.",
+      "metadata": {
+        "source": "tmpk9lcbu8f.pptx",
+        "file_id": "334c43c7-e10d-4f30-84d5-fadfe00cc647",
+        "slide": 51,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "ae55c751-01f7-4239-b20f-2d3699d6fe41",
+      "type": "text",
+      "content": "50\n\nApi Key\n\nIn API key authentication, the API provider assigns a unique key to each client accessing the API. The client must include this API key in their requests to authenticate themselves. It can be placed in the header, body, or query parameters, depending on the API's design as outlined in the API documentation.\n\nAPI key authentication is straightforward to implement and allows for dedicated permission sets for individual keys. This makes it a popular choice for scenarios where moderate security is sufficient. Additionally, API keys can be revoked if compromised, allowing the client to request a new one.",
+      "metadata": {
+        "source": "tmpk9lcbu8f.pptx",
+        "file_id": "334c43c7-e10d-4f30-84d5-fadfe00cc647",
+        "slide": 52,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "eca21674-7fe7-49f1-b6da-c6d27b495a41",
+      "type": "text",
+      "content": "51\n\nOAuth 2.0\n\nOAuth 2.0, which stands for \"Open Authorization,\" is a standard that enables a website or application to access resources hosted by other web apps on behalf of a user. Introduced in 2012 as a replacement for OAuth 1.0, it has become the industry standard for online authorization.\n\nOAuth 2.0 allows for consented access, restricting what actions the client application can perform on resources on behalf of the user, without ever sharing the user's credentials. While primarily designed for web applications, the specification also accommodates various client types, including browser-based applications, server-side web applications, native/mobile apps, and connected devices.",
+      "metadata": {
+        "source": "tmpk9lcbu8f.pptx",
+        "file_id": "334c43c7-e10d-4f30-84d5-fadfe00cc647",
+        "slide": 53,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "05a373b5-ace3-4590-9b65-3e71fdbbc713",
+      "type": "text",
+      "content": "52\n\nSecuring Data : HTTPS an Encryption\n\nHTTPS (Hypertext Transfer Protocol Secure) encrypts data exchanged between a client and server, safeguarding sensitive information like login credentials from eavesdropping and man-in-the-middle attacks. In addition to securing data in transit, encryption of data at rest ensures that stored information on servers or databases remains protected and unreadable to unauthorized users. Together, HTTPS and data encryption provide a comprehensive security strategy, ensuring the privacy of both transmitted and stored data.",
+      "metadata": {
+        "source": "tmpk9lcbu8f.pptx",
+        "file_id": "334c43c7-e10d-4f30-84d5-fadfe00cc647",
+        "slide": 54,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "142bf8f1-1aac-47b2-9dc0-9132f88d2fa3",
+      "type": "text",
+      "content": "53\n\nManaging Permissions and Roles with JWT\n\nWhen a user logs in, a JWT is created that contains information about the user's role (like admin or user) and their specific permissions. This token is sent with each request to the API, allowing the server to quickly check what the user is allowed to do without needing to look up their details in a database each time. This makes it easy to implement role-based access control (RBAC), ensuring that users can only access resources they're authorized to see. Additionally, JWTs can have expiration times, helping to manage session lengths and improve security by making it easier to revoke access when necessary.",
+      "metadata": {
+        "source": "tmpk9lcbu8f.pptx",
+        "file_id": "334c43c7-e10d-4f30-84d5-fadfe00cc647",
+        "slide": 55,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "5b37e227-10d3-458d-9ebd-6db34e7df5b6",
+      "type": "text",
+      "content": "54\n\n9 - Limitations And Challenges",
+      "metadata": {
+        "source": "tmpk9lcbu8f.pptx",
+        "file_id": "334c43c7-e10d-4f30-84d5-fadfe00cc647",
+        "slide": 56,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "901db553-e6a6-4c76-ae3e-7041ebde9d66",
+      "type": "text",
+      "content": "55\n\nOverview\n\nREST is widely used for building web services, but it comes with several limitations and challenges. Developers often face complexities when handling transactions across multiple resources, a lack of standardized service discovery methods, and difficulties in managing API versions. Recognizing these challenges is essential for creating efficient and maintainable RESTful APIs.",
+      "metadata": {
+        "source": "tmpk9lcbu8f.pptx",
+        "file_id": "334c43c7-e10d-4f30-84d5-fadfe00cc647",
+        "slide": 57,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "401f328c-ca80-44b5-8a4a-eb7a2ee1c623",
+      "type": "text",
+      "content": "56\n\nComplexity of Multi-Resource Transactions\n\nIn real-world applications, actions often require updating multiple resources at once, such as processing an order that involves changes to inventory, user accounts, and payment records. However, RESTful APIs do not natively support atomic transactions across multiple resources, which can result in data inconsistencies if one operation fails while others succeed. To handle this, developers may use strategies like compensating transactions or orchestration patterns. While effective, these approaches add complexity to the system, making it more challenging to maintain and understand.",
+      "metadata": {
+        "source": "tmpk9lcbu8f.pptx",
+        "file_id": "334c43c7-e10d-4f30-84d5-fadfe00cc647",
+        "slide": 58,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "856c9b64-c586-4f42-a1b8-b568fc5378e7",
+      "type": "text",
+      "content": "57\n\nAbsence of Standard for Service Discovery\n\nIn traditional web services, clients often need to know the available endpoints and their functionality in advance. This lack of a unified discovery mechanism can make it challenging for clients to dynamically locate and interact with various RESTful services, particularly in larger ecosystems with multiple APIs. Without a standard approach, developers must rely on documentation or external tools to manage service discovery, which can lead to errors. As a result, integrating new services or updating existing ones becomes more cumbersome, hampering the flexibility and scalability that REST aims to provide.",
+      "metadata": {
+        "source": "tmpk9lcbu8f.pptx",
+        "file_id": "334c43c7-e10d-4f30-84d5-fadfe00cc647",
+        "slide": 59,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "a6a83c9d-98ac-4ba9-97ec-dd25816fe5f8",
+      "type": "text",
+      "content": "58\n\nAPI Version Management\n\nAs APIs evolve, breaking changes can affect clients relying on older versions. Since REST doesn't have built-in versioning, developers must implement their own strategies, such as using URL paths (e.g., /api/v1/resource) or custom headers for versioning. Each method has its trade-offs, and poor versioning can cause confusion, higher maintenance, and service disruptions. Careful planning is crucial to ensure APIs evolve smoothly without impacting users.",
+      "metadata": {
+        "source": "tmpk9lcbu8f.pptx",
+        "file_id": "334c43c7-e10d-4f30-84d5-fadfe00cc647",
+        "slide": 60,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "171a4bf1-b7af-44b1-b355-313c6f261149",
+      "type": "text",
+      "content": "59\n\nConclusion\n\nIn conclusion, Service-Oriented Architecture (SOA) and REST are key to building modern, scalable, and maintainable systems. SOA emphasizes modularity and service independence, making it ideal for complex systems, while REST has become the standard for web APIs due to its simplicity, scalability, and use of standard HTTP methods. While REST is powerful, it faces challenges like handling complex transactions and evolving APIs, but alternatives like GraphQL and gRPC are emerging. Overall, REST remains central to modern web development, and understanding its principles is essential for designing efficient, distributed systems.",
+      "metadata": {
+        "source": "tmpk9lcbu8f.pptx",
+        "file_id": "334c43c7-e10d-4f30-84d5-fadfe00cc647",
+        "slide": 61,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "dcc6de75-73f6-466f-a61f-0da62ef7aa7f",
+      "type": "text",
+      "content": "Thank You For Your Attention",
+      "metadata": {
+        "source": "tmpk9lcbu8f.pptx",
+        "file_id": "334c43c7-e10d-4f30-84d5-fadfe00cc647",
+        "slide": 62,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "19b6db86-cb30-4d8d-a8ea-047db4acb5a6",
+      "type": "text",
+      "content": "61\n\n1\n\nWhich HTTP verb is typically used to retrieve data from a server without modifying it?\n\nA) POST\n\nB) PUT\n\nC) GET\n\nD) DELETE",
+      "metadata": {
+        "source": "tmpk9lcbu8f.pptx",
+        "file_id": "334c43c7-e10d-4f30-84d5-fadfe00cc647",
+        "slide": 64,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "47c28289-b409-4d92-a0e4-587f26b44a81",
+      "type": "text",
+      "content": "62\n\n2\n\nWhich HTTP verb is used to create a new resource on the server?\n\nA) GET\n\nB) DELETE\n\nC) POST\n\nD) PATCH",
+      "metadata": {
+        "source": "tmpk9lcbu8f.pptx",
+        "file_id": "334c43c7-e10d-4f30-84d5-fadfe00cc647",
+        "slide": 65,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "7da54ff2-112b-4899-9d95-794c4739eb02",
+      "type": "text",
+      "content": "63\n\n3\n\nWhat is the main purpose of the HTTP PUT method ?\n\nA) To delete a resource\n\nB) To partially update a resource\n\nC) To fully replace an existing resource\n\nD) To fetch a resource",
+      "metadata": {
+        "source": "tmpk9lcbu8f.pptx",
+        "file_id": "334c43c7-e10d-4f30-84d5-fadfe00cc647",
+        "slide": 66,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "233b7390-2e7b-4109-86d5-bb8bf92c6f47",
+      "type": "text",
+      "content": "64\n\n4\n\nWhich HTTP status code indicates a successful request that has resulted in a new resource being created?\n\nA) 200\n\nB) 201\n\nC) 204\n\nD) 400",
+      "metadata": {
+        "source": "tmpk9lcbu8f.pptx",
+        "file_id": "334c43c7-e10d-4f30-84d5-fadfe00cc647",
+        "slide": 67,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "e5882191-43f3-4ca7-af3a-2c478dfbbad1",
+      "type": "text",
+      "content": "65\n\n5\n\nWhat does the HTTP status code 404 represent?\n\nA) Unauthorized access\n\nB) Resource not found\n\nC) Server error\n\nD) Forbidden access",
+      "metadata": {
+        "source": "tmpk9lcbu8f.pptx",
+        "file_id": "334c43c7-e10d-4f30-84d5-fadfe00cc647",
+        "slide": 68,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "2cd3c7d6-86e4-4582-9718-32a6cd798581",
+      "type": "text",
+      "content": "66\n\n6\n\nWhich HTTP status code means \"No Content,\" indicating the request was successful but there is no body to return?\n\nA) 200\n\nB) 201\n\nC) 204\n\nD) 500",
+      "metadata": {
+        "source": "tmpk9lcbu8f.pptx",
+        "file_id": "334c43c7-e10d-4f30-84d5-fadfe00cc647",
+        "slide": 69,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "113fd904-fff2-41a6-a4db-b6477666e946",
+      "type": "text",
+      "content": "67\n\n7\n\nWhich of the following best describes the data format used in REST APIs?\n\nA) Only XML\n\nB) Only JSON\n\nC) JSON and XML (among others)\n\nD) Only YAML",
+      "metadata": {
+        "source": "tmpk9lcbu8f.pptx",
+        "file_id": "334c43c7-e10d-4f30-84d5-fadfe00cc647",
+        "slide": 70,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "1a9fb6a4-4b3b-4924-8a31-9415a8606c94",
+      "type": "text",
+      "content": "68\n\n8\n\nWhich protocol is used for SOAP services?\n\nA) Only HTTP\n\nB) HTTP and SMTP\n\nC) SMTP only\n\nD) Only HTTPS",
+      "metadata": {
+        "source": "tmpk9lcbu8f.pptx",
+        "file_id": "334c43c7-e10d-4f30-84d5-fadfe00cc647",
+        "slide": 71,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "43faacb2-f295-448a-b45d-93089646e7ee",
+      "type": "text",
+      "content": "69\n\n9\n\nWhat is a primary advantage of REST over SOAP in web services?\n\nA) REST is more secure\n\nB) REST is lighter and easier to scale\n\nC) SOAP is more scalable than REST\n\nD) REST only supports XML",
+      "metadata": {
+        "source": "tmpk9lcbu8f.pptx",
+        "file_id": "334c43c7-e10d-4f30-84d5-fadfe00cc647",
+        "slide": 72,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "0394f057-2a69-4aed-a45b-497b099ef14c",
+      "type": "text",
+      "content": "70\n\n10\n\nWhich of the following is true about SOAP but not REST?\n\nA) SOAP can only use JSON\n\nB) SOAP provides built-in security features\n\nC) REST requires a WSDL file\n\nD) REST is always stateful",
+      "metadata": {
+        "source": "tmpk9lcbu8f.pptx",
+        "file_id": "334c43c7-e10d-4f30-84d5-fadfe00cc647",
+        "slide": 73,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "1be4f5ea-b34e-4463-9214-7e5eb3a8e781",
+      "type": "text",
+      "content": "71\n\n11\n\nWhat does OAuth 2.0 stand for?\n\nA) Open Authentication\n\nB) Open Authorization\n\nC) Online Authentication\n\nD) Online Authorization",
+      "metadata": {
+        "source": "tmpk9lcbu8f.pptx",
+        "file_id": "334c43c7-e10d-4f30-84d5-fadfe00cc647",
+        "slide": 74,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "ef27e23c-a3bf-4d91-bdd0-b32635ac95fb",
+      "type": "text",
+      "content": "72\n\n12\n\nWhere can an API key be included in an API request?\n\nA) Only in the header\n\nB) Only in the query parameters\n\nC) In the header, body, or query parameters\n\nD) It must always be in the body",
+      "metadata": {
+        "source": "tmpk9lcbu8f.pptx",
+        "file_id": "334c43c7-e10d-4f30-84d5-fadfe00cc647",
+        "slide": 75,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "138cb824-050c-49aa-8b19-cd0dec8308a6",
+      "type": "text",
+      "content": "73\n\n13\n\nWhat is the primary function of an API key in authentication?\n\nA) To encrypt API requests\n\nB) To assign a unique identifier to each client accessing the API\n\nC) To store the user’s credentials securely\n\nD) To create access tokens for clients",
+      "metadata": {
+        "source": "tmpk9lcbu8f.pptx",
+        "file_id": "334c43c7-e10d-4f30-84d5-fadfe00cc647",
+        "slide": 76,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "eb021b17-fbda-4bb2-a5f4-e77af25366a0",
+      "type": "text",
+      "content": "74\n\n14\n\nHow does JWT authentication help in implementing Role-Based Access Control (RBAC)?\n\nA) It allows the server to query the database for the user's roles and permissions on each request\n\nB) It sends the user's role and permissions with each request, allowing the server to quickly check what the user is allowed to do\n\nC) It stores all user data on the client side\n\nD) It provides the user with complete access to all resources on the server",
+      "metadata": {
+        "source": "tmpk9lcbu8f.pptx",
+        "file_id": "334c43c7-e10d-4f30-84d5-fadfe00cc647",
+        "slide": 77,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "f94fa866-abdd-4377-b082-9820a4db499e",
+      "type": "text",
+      "content": "75\n\n15\n\nWhy is handling atomic transactions important in real-world applications?\n\nA) To ensure that all operations can be completed independently\n\nB) To prevent data inconsistencies when multiple resources are updated simultaneously\n\nC) To make the system easier to maintain and understand\n\nD) To allow for infinite scalability",
+      "metadata": {
+        "source": "tmpk9lcbu8f.pptx",
+        "file_id": "334c43c7-e10d-4f30-84d5-fadfe00cc647",
+        "slide": 78,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "f2753cbf-43f2-4f9c-9469-235af858375d",
+      "type": "text",
+      "content": "76\n\n16\n\nWhat can result from relying on documentation or external tools for service discovery in traditional web services?\n\nA) Faster integration of new services without errors\n\nB) A risk of errors due to out-of-date or incomplete documentation\n\nC) The ability to integrate new services seamlessly without external dependencies\n\nD) Simplified scalability and flexibility of the API ecosystem",
+      "metadata": {
+        "source": "tmpk9lcbu8f.pptx",
+        "file_id": "334c43c7-e10d-4f30-84d5-fadfe00cc647",
+        "slide": 79,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "c691c37c-672e-4abf-a0a4-2edf70fec769",
+      "type": "text",
+      "content": "77\n\n17\n\nWhy is versioning important in RESTful APIs?\n\nA) To allow multiple clients to use the API simultaneously\n\nB) To ensure that clients are always using the most recent version of the API\n\nC) To manage breaking changes and ensure clients relying on older versions still function properly\n\nD) To reduce the number of endpoints in the API",
+      "metadata": {
+        "source": "tmpk9lcbu8f.pptx",
+        "file_id": "334c43c7-e10d-4f30-84d5-fadfe00cc647",
+        "slide": 80,
+        "section": null
+      }
+    },
+    {
+      "chunk_id": "378f4d68-2969-4534-9682-02980dd265bf",
+      "type": "text",
+      "content": "78\n\n18\n\nWhat is the primary purpose of HTTPS (Hypertext Transfer Protocol Secure)?\n\nA) To speed up the data transfer between the client and server\n\nB) To encrypt data exchanged between the client and server, preventing eavesdropping and man-in-the-middle attacks\n\nC) To provide a faster connection for secure websites\n\nD) To enable users to access websites without a password",
+      "metadata": {
+        "source": "tmpk9lcbu8f.pptx",
+        "file_id": "334c43c7-e10d-4f30-84d5-fadfe00cc647",
+        "slide": 81,
+        "section": null
+      }
+    }
+  ],
+  "metadata": {
+    "source": "tmpk9lcbu8f.pptx",
+    "file_id": "334c43c7-e10d-4f30-84d5-fadfe00cc647",
+    "slide_count": 81,
+    "text_count": 79,
+    "table_count": 2,
+    "image_count": 0
+  }
+}
