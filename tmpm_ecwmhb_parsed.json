@@ -1,9 +1,0 @@
-{
-    "chunk_id": "f90314b1-e609-45e0-ad08-06b7084c2e8a",
-    "type": "image",
-    "content": "The image presents a flowchart titled \"Hybrid Search for GenAI Applications,\" which illustrates the process of combining vector search and full-text search to retrieve relevant results. The flowchart is divided into three main sections: Query, User Query, and Query.\n\n**Main Points:**\n\n* **Query**\n\t+ A black Converse shoe icon\n\t+ A stack of cards with numbers on them\n\t+ A database icon\n\t+ A red Converse shoe icon\n* **User Query**\n\t+ A pink box labeled \"Vector Search\"\n\t+ A blue box labeled \"Full Text Search\"\n\t+ A purple box labeled \"Index Vectors\"\n\t+ A purple box labeled \"Index Text\"\n\t+ A green box labeled \"Hybrid Results\"\n\t+ A purple box labeled \"Ranked Results\"\n* **Query**\n\t+ A black Converse shoe icon\n\t+ A clipboard icon\n\t+ A database icon\n\t+ A black Converse shoe icon\n\n**Process Flow:**\n\n1. The user submits a query.\n2. The query is processed through vector search and full-text search.\n3. The vector search retrieves similar index vectors.\n4. The full-text search retrieves results by keyword from index text.\n5. The results from both searches are combined into hybrid results.\n6. The hybrid results are ranked.\n\n**Key Takeaways:**\n\n* The hybrid search approach combines the strengths of vector search and full-text search to provide more accurate and relevant results.\n* The process involves retrieving similar index vectors and results by keyword, which are then combined and ranked to produce the final output.\n\nOverall, the flowchart provides a clear and concise overview of the hybrid search process for GenAI applications, highlighting the key steps involved in combining vector search and full-text search to retrieve relevant results.",
-    "metadata": {
-        "source": "C:\\Users\\hp\\AppData\\Local\\Temp\\tmpm_ecwmhb.png",
-        "image_index": 1
-    }
-}

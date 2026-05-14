@@ -1,9 +1,0 @@
-{
-    "chunk_id": "d79e91af-9466-435d-a672-ff8b6dd4cdb1",
-    "type": "image",
-    "content": "The image presents a flowchart illustrating the organizational structure of a company, with each department and its corresponding sub-departments represented by distinct icons and labels. The chart is divided into three main sections: the top section features the company name, \"GERANT,\" while the middle and bottom sections display various departments and sub-departments.\n\n**Top Section:**\n\n* **GERANT**\n\t+ Icon: A person's head\n\t+ Label: GERANT\n\n**Middle Section:**\n\n* **RESPONSABLE MAINTENANCE**\n\t+ Icon: A wrench and screwdriver crossed over each other\n\t+ Label: RESPONSABLE MAINTENANCE\n\t+ Sub-departments:\n\t\t- GROUPE 1\n\t\t\t- Icon: Two people\n\t\t\t- Label: GROUPE 1\n\t\t- GROUPE 2\n\t\t\t- Icon: Three people\n\t\t\t- Label: GROUPE 2\n* **RESPONSABLE PRODUCTION ET ALIMENTATION SOUS TRAITANT**\n\t+ Icon: A factory\n\t+ Label: RESPONSABLE PRODUCTION ET ALIMENTATION SOUS TRAITANT\n\t+ Sub-departments:\n\t\t- CAO\n\t\t\t- Icon: A gear\n\t\t\t- Label: CAO\n\t\t- CONTROLE QUALITE\n\t\t\t- Icon: A medal\n\t\t\t- Label: CONTROLE QUALITE\n* **SECRETATIRE DE DIRECTION**\n\t+ Icon: A document\n\t+ Label: SECRETATIRE DE DIRECTION\n\t+ Sub-departments:\n\t\t- MAGASIN IMPORT-EXPORT\n\t\t\t- Icon: A box\n\t\t\t- Label: MAGASIN IMPORT-EXPORT\n\t\t- COUPE\n\t\t\t- Icon: Scissors\n\t\t\t- Label: COUPE\n\t\t- SECRETATIRE ADMINISTRATIVE\n\t\t\t- Icon: A desk\n\t\t\t- Label: SECRETATIRE ADMINISTRATIVE\n* **RESPONSABLE QUALITE ET SOUS TRAITANCE**\n\t+ Icon: A shield with a checkmark\n\t+ Label: RESPONSABLE QUALITE ET SOUS TRAITANCE\n\t+ Sub-departments:\n\t\t- CONTROLE QUALITE SOUS-TRAITANT\n\t\t\t- Icon: A shield with a checkmark\n\t\t\t- Label: CONTROLE QUALITE SOUS-TRAITANT\n\nThe flowchart provides a clear visual",
-    "metadata": {
-        "source": "C:\\Users\\hp\\AppData\\Local\\Temp\\tmpjj_ncjyj.png",
-        "image_index": 1
-    }
-}
